@@ -14,7 +14,8 @@
     "check": "bun run --filter '*' check",
     "test": "bun run --filter '*' test",
     "lint": "prettier --check . && eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "clean": "rm -rf node_modules client/node_modules server/node_modules client/dist server/dist"
   },
   "devDependencies": {
     "eslint": "^10.2.1",
