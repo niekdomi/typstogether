@@ -11,13 +11,14 @@
     "sourceMap": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "rewriteRelativeImportExtensions": true,
-    "useDefineForClassFields": true,
-    "allowJs": true,
-    "checkJs": true
+    "useDefineForClassFields": true
   },
   "exclude": ["node_modules", "dist", "build"]
 }
