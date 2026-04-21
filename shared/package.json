@@ -1,0 +1,11 @@
+{
+  "name": "@typstogether/shared",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./types.ts",
+    "./permissions": "./permissions.ts",
+    "./collab": "./collab.ts"
+  }
+}

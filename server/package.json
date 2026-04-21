@@ -17,6 +17,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@typstogether/shared": "workspace:*",
     "@elysiajs/cors": "^1.4.1",
     "@hocuspocus/extension-database": "^3.4.4",
     "@hocuspocus/extension-logger": "^3.4.4",
