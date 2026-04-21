@@ -1,0 +1,8 @@
+dictionaries = ["en_us"]
+words = []
+include_paths = [
+  "**/*.md",
+  "**/*.svelte",
+  "**/*.ts",
+]
+use_global = false
