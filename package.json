@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "packageManager": "bun",
+  "packageManager": "bun@1.3.13",
   "workspaces": [
     "client",
     "server",
