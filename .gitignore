@@ -6,7 +6,7 @@ node_modules
 .zed
 
 # Build output
-/dist
+dist/
 
 # OS
 .DS_Store
