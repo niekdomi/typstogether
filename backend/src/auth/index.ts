@@ -18,6 +18,11 @@ export const auth = betterAuth({
       clientId: process.env["GITHUB_CLIENT_ID"] ?? "",
       clientSecret: process.env["GITHUB_CLIENT_SECRET"] ?? "",
     },
+    gitlab: {
+      clientId: process.env["GITLAB_CLIENT_ID"] ?? "",
+      clientSecret: process.env["GITLAB_CLIENT_SECRET"] ?? "",
+      issuer: "https://gitlab.ost.ch", // NOTE: This is currently OST specific
+    },
     google: {
       clientId: process.env["GOOGLE_CLIENT_ID"] ?? "",
       clientSecret: process.env["GOOGLE_CLIENT_SECRET"] ?? "",
