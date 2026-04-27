@@ -8,16 +8,15 @@ import { defineConfig } from "eslint/config";
 import { includeIgnoreFile } from "@eslint/compat";
 
 const gitignorePath = path.resolve(import.meta.dirname, ".gitignore");
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const svelteTypeChecked =
   svelte.configs["flat/recommended-type-checked"] ?? svelte.configs.recommended;
 
 export default defineConfig(
+  { ignores: ["eslint.config.js"] },
   includeIgnoreFile(gitignorePath),
   js.configs.recommended,
   ...ts.configs.strictTypeChecked,
   ...ts.configs.stylisticTypeChecked,
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   ...svelteTypeChecked,
   prettier,
   ...svelte.configs.prettier,

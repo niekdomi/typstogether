@@ -1,5 +1,10 @@
 dictionaries = ["en_us"]
-words = []
+words = [
+  "bunx",
+  "bytea",
+  "collab",
+  "ost",
+]
 include_paths = [
   "**/*.md",
   "**/*.svelte",
