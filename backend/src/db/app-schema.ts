@@ -31,8 +31,8 @@ const timestamps = {
     .$onUpdate(() => new Date()),
 };
 
-export const projects = pgTable(
-  "projects",
+export const project = pgTable(
+  "project",
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
@@ -44,17 +44,17 @@ export const projects = pgTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("projects_slug_unique").on(table.slug),
-    index("projects_owner_user_id_idx").on(table.ownerUserId),
+    uniqueIndex("project_slug_unique").on(table.slug),
+    index("project_owner_user_id_idx").on(table.ownerUserId),
   ]
 );
 
-export const projectMembers = pgTable(
-  "project_members",
+export const projectMember = pgTable(
+  "project_member",
   {
     projectId: text("project_id")
       .notNull()
-      .references(() => projects.id, { onDelete: "cascade" }),
+      .references(() => project.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -63,17 +63,17 @@ export const projectMembers = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.projectId, table.userId] }),
-    index("project_members_user_id_idx").on(table.userId),
+    index("project_member_user_id_idx").on(table.userId),
   ]
 );
 
-export const projectInvites = pgTable(
-  "project_invites",
+export const projectInvite = pgTable(
+  "project_invite",
   {
     id: text("id").primaryKey(),
     projectId: text("project_id")
       .notNull()
-      .references(() => projects.id, { onDelete: "cascade" }),
+      .references(() => project.id, { onDelete: "cascade" }),
     tokenHash: text("token_hash").notNull(),
     createdByUserId: text("created_by_user_id")
       .notNull()
@@ -86,73 +86,73 @@ export const projectInvites = pgTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("project_invites_token_hash_unique").on(table.tokenHash),
-    index("project_invites_project_id_idx").on(table.projectId),
-    index("project_invites_created_by_user_id_idx").on(table.createdByUserId),
+    uniqueIndex("project_invite_token_hash_unique").on(table.tokenHash),
+    index("project_invite_project_id_idx").on(table.projectId),
+    index("project_invite_created_by_user_id_idx").on(table.createdByUserId),
     check(
-      "project_invites_max_uses_positive_check",
+      "project_invite_max_uses_positive_check",
       sql`${table.maxUses} is null or ${table.maxUses} > 0`
     ),
-    check("project_invites_use_count_non_negative_check", sql`${table.useCount} >= 0`),
+    check("project_invite_use_count_non_negative_check", sql`${table.useCount} >= 0`),
   ]
 );
 
-export const collabDocuments = pgTable(
-  "collab_documents",
+export const collabDocument = pgTable(
+  "collab_document",
   {
     projectId: text("project_id")
       .primaryKey()
-      .references(() => projects.id, { onDelete: "cascade" }),
+      .references(() => project.id, { onDelete: "cascade" }),
     state: bytea("state").notNull(),
     ...timestamps,
   },
-  (table) => [index("collab_documents_updated_at_idx").on(table.updatedAt)]
+  (table) => [index("collab_document_updated_at_idx").on(table.updatedAt)]
 );
 
-export const projectsRelations = relations(projects, ({ one, many }) => ({
+export const projectRelations = relations(project, ({ one, many }) => ({
   owner: one(user, {
-    fields: [projects.ownerUserId],
+    fields: [project.ownerUserId],
     references: [user.id],
   }),
-  members: many(projectMembers),
-  invites: many(projectInvites),
-  collabDocument: one(collabDocuments),
+  members: many(projectMember),
+  invites: many(projectInvite),
+  collabDocument: one(collabDocument),
 }));
 
-export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
-  project: one(projects, {
-    fields: [projectMembers.projectId],
-    references: [projects.id],
+export const projectMemberRelations = relations(projectMember, ({ one }) => ({
+  project: one(project, {
+    fields: [projectMember.projectId],
+    references: [project.id],
   }),
   user: one(user, {
-    fields: [projectMembers.userId],
+    fields: [projectMember.userId],
     references: [user.id],
   }),
 }));
 
-export const projectInvitesRelations = relations(projectInvites, ({ one }) => ({
-  project: one(projects, {
-    fields: [projectInvites.projectId],
-    references: [projects.id],
+export const projectInviteRelations = relations(projectInvite, ({ one }) => ({
+  project: one(project, {
+    fields: [projectInvite.projectId],
+    references: [project.id],
   }),
   createdBy: one(user, {
-    fields: [projectInvites.createdByUserId],
+    fields: [projectInvite.createdByUserId],
     references: [user.id],
   }),
 }));
 
-export const collabDocumentsRelations = relations(collabDocuments, ({ one }) => ({
-  project: one(projects, {
-    fields: [collabDocuments.projectId],
-    references: [projects.id],
+export const collabDocumentRelations = relations(collabDocument, ({ one }) => ({
+  project: one(project, {
+    fields: [collabDocument.projectId],
+    references: [project.id],
   }),
 }));
 
-export type Project = typeof projects.$inferSelect;
-export type NewProject = typeof projects.$inferInsert;
-export type ProjectMember = typeof projectMembers.$inferSelect;
-export type NewProjectMember = typeof projectMembers.$inferInsert;
-export type ProjectInvite = typeof projectInvites.$inferSelect;
-export type NewProjectInvite = typeof projectInvites.$inferInsert;
-export type CollabDocument = typeof collabDocuments.$inferSelect;
-export type NewCollabDocument = typeof collabDocuments.$inferInsert;
+export type Project = typeof project.$inferSelect;
+export type NewProject = typeof project.$inferInsert;
+export type ProjectMember = typeof projectMember.$inferSelect;
+export type NewProjectMember = typeof projectMember.$inferInsert;
+export type ProjectInvite = typeof projectInvite.$inferSelect;
+export type NewProjectInvite = typeof projectInvite.$inferInsert;
+export type CollabDocument = typeof collabDocument.$inferSelect;
+export type NewCollabDocument = typeof collabDocument.$inferInsert;
