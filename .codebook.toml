@@ -3,6 +3,7 @@ words = [
   "bunx",
   "bytea",
   "collab",
+  "ost",
 ]
 include_paths = [
   "**/*.md",
