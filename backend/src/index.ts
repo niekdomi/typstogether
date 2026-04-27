@@ -7,4 +7,4 @@ const app = new Elysia()
   .all("/api/auth/*", ({ request }) => auth.handler(request))
   .listen(3000);
 
-console.log(`Backend running on port ${app.server?.port ?? "unknown"}`);
+console.log("Backend running on port", app.server?.port);
