@@ -63,9 +63,9 @@ jobs:
       - name: Type check
         run: bun run check
 
-  migration:
+  migration-sync:
     runs-on: ubuntu-latest
-    name: Migration check
+    name: Verify schema/migration sync
     timeout-minutes: 5
     permissions:
       contents: read
@@ -84,7 +84,8 @@ jobs:
         run: |
           cd backend
           bun run db:generate
-          git diff --exit-code drizzle/
+          git add drizzle/
+          git diff --cached --exit-code drizzle/
 
   test:
     runs-on: ubuntu-latest
