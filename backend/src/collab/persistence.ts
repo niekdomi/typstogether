@@ -1,7 +1,8 @@
 import { Database } from "@hocuspocus/extension-database";
+import { eq } from "drizzle-orm";
+
 import { db } from "../db";
 import { collabDocument } from "../db/app-schema";
-import { eq } from "drizzle-orm";
 
 export const persistance = new Database({
   async fetch({ documentName }) {

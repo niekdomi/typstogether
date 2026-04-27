@@ -1,4 +1,5 @@
 import { Elysia, status } from "elysia";
+
 import { auth } from "./index";
 
 const sessionMiddleware = new Elysia({ name: "session-middleware" }).derive(

@@ -1,8 +1,9 @@
-import { auth } from "../auth";
 import type { onAuthenticatePayload } from "@hocuspocus/server";
+import { and, eq, isNull, or } from "drizzle-orm";
+
+import { auth } from "../auth";
 import { db } from "../db";
 import { project, projectMember } from "../db/app-schema";
-import { and, eq, isNull, or } from "drizzle-orm";
 
 export async function onAuthenticate(data: onAuthenticatePayload) {
   const session = await auth.api.getSession({ headers: data.requestHeaders });

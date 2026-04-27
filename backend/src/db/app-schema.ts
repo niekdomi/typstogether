@@ -11,6 +11,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+
 import { user } from "./auth-schema";
 
 export const projectRole = pgEnum("project_role", ["editor", "viewer"]);

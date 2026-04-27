@@ -1,5 +1,6 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
+
 import { auth } from "./auth";
 import { projectRoutes } from "./routes/projects";
 
