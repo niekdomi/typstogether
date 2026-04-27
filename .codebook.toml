@@ -1,15 +1,17 @@
 dictionaries = ["en_us"]
 words = [
-  "bunx",
-  "bytea",
-  "collab",
-  "elysia",
-  "elysiajs",
-  "ost",
+    "bunx",
+    "bytea",
+    "collab",
+    "crossws",
+    "elysia",
+    "elysiajs",
+    "hocuspocus",
+    "ost",
 ]
 include_paths = [
-  "**/*.md",
-  "**/*.svelte",
-  "**/*.ts",
+    "**/*.md",
+    "**/*.svelte",
+    "**/*.ts",
 ]
 use_global = false

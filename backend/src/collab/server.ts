@@ -4,10 +4,10 @@ import crossws from "crossws/adapters/bun";
 
 import { collabPort } from "../env";
 import { onAuthenticate } from "./auth";
-import { persistance } from "./persistence";
+import { persistence } from "./persistence";
 
 const hocuspocus = new Hocuspocus({
-  extensions: [new Logger(), persistance],
+  extensions: [new Logger(), persistence],
   onAuthenticate,
 });
 

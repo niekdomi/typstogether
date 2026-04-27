@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { collabDocument } from "../db/app-schema";
 
-export const persistance = new Database({
+export const persistence = new Database({
   async fetch({ documentName }) {
     const [row] = await db
       .select({ state: collabDocument.state })
