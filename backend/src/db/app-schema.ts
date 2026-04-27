@@ -104,11 +104,7 @@ export const collabDocuments = pgTable(
       .primaryKey()
       .references(() => projects.id, { onDelete: "cascade" }),
     state: bytea("state").notNull(),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at")
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
+    ...timestamps,
   },
   (table) => [index("collab_documents_updated_at_idx").on(table.updatedAt)]
 );
