@@ -1,7 +1,7 @@
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import { auth } from "./index";
 
-export const sessionMiddleware = new Elysia({ name: "session-middleware" }).derive(
+const sessionMiddleware = new Elysia({ name: "session-middleware" }).derive(
   { as: "scoped" },
   async ({ request }) => {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -12,3 +12,12 @@ export const sessionMiddleware = new Elysia({ name: "session-middleware" }).deri
     };
   }
 );
+
+export const requireAuth = new Elysia({ name: "require-auth" })
+  .use(sessionMiddleware)
+  .resolve({ as: "scoped" }, ({ user, session }) => {
+    if (!user || !session) {
+      return status(401, "Unauthorized");
+    }
+    return { user, session };
+  });

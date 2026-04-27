@@ -8,6 +8,20 @@
       "when": 1777288891674,
       "tag": "0000_shallow_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777307306873,
+      "tag": "0001_cuddly_killmonger",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777319400447,
+      "tag": "0002_solid_gertrude_yorkes",
+      "breakpoints": true
     }
   ]
 }
