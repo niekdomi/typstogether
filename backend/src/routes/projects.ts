@@ -1,5 +1,6 @@
-import { Elysia, t } from "elysia";
+import { Elysia, status, t } from "elysia";
 import { and, eq, isNull, or } from "drizzle-orm";
+
 import { requireAuth } from "../auth/middleware";
 import { db } from "../db";
 import { project, projectMember } from "../db/app-schema";
@@ -7,8 +8,8 @@ import { project, projectMember } from "../db/app-schema";
 export const projectRoutes = new Elysia({ prefix: "/projects" })
   .use(requireAuth)
 
-  .get("/", async ({ user }) => {
-    return db
+  .get("/", async ({ user }) =>
+    db
       .select({ project })
       .from(project)
       .leftJoin(projectMember, eq(project.id, projectMember.projectId))
@@ -17,12 +18,12 @@ export const projectRoutes = new Elysia({ prefix: "/projects" })
           isNull(project.deletedAt),
           or(eq(project.ownerUserId, user.id), eq(projectMember.userId, user.id))
         )
-      );
-  })
+      )
+  )
 
-  .get("/:id", async ({ user, params, set }) => {
+  .get("/:id", async ({ user, params }) => {
     const [row] = await db
-      .select()
+      .select({ project })
       .from(project)
       .leftJoin(projectMember, eq(project.id, projectMember.projectId))
       .where(
@@ -35,8 +36,7 @@ export const projectRoutes = new Elysia({ prefix: "/projects" })
       .limit(1);
 
     if (!row) {
-      set.status = 404;
-      return "Project not found";
+      return status(404, "Project not found");
     }
 
     return row.project;
@@ -57,24 +57,18 @@ export const projectRoutes = new Elysia({ prefix: "/projects" })
     { body: t.Object({ name: t.String({ minLength: 1 }) }) }
   )
 
-  .delete("/:id", async ({ user, params, set }) => {
-    const [row] = await db
-      .select()
-      .from(project)
-      .where(and(eq(project.id, params.id), isNull(project.deletedAt)))
-      .limit(1);
+  .delete("/:id", async ({ user, params }) => {
+    const [deleted] = await db
+      .update(project)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(eq(project.id, params.id), eq(project.ownerUserId, user.id), isNull(project.deletedAt))
+      )
+      .returning({ id: project.id });
 
-    if (!row) {
-      set.status = 404;
-      return "Project not found";
+    if (!deleted) {
+      return status(404, "Project not found");
     }
-
-    if (row.ownerUserId !== user.id) {
-      set.status = 403;
-      return "Forbidden";
-    }
-
-    await db.update(project).set({ deletedAt: new Date() }).where(eq(project.id, params.id));
 
     return { success: true };
   });
