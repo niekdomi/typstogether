@@ -13,8 +13,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
-export const projectRole = pgEnum("project_role", ["editor"]);
-export const inviteRole = pgEnum("invite_role", ["editor"]);
+export const projectRole = pgEnum("project_role", ["editor", "viewer"]);
+export const inviteRole = pgEnum("invite_role", ["editor", "viewer"]);
 
 const bytea = customType<{
   data: Uint8Array;
