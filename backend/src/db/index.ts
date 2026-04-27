@@ -1,9 +1,7 @@
 import { drizzle } from "drizzle-orm/bun-sql";
 import { SQL } from "bun";
+import { databaseUrl } from "../env";
 import * as schema from "./schema";
-
-const databaseUrl =
-  process.env["DATABASE_URL"] ?? "postgres://postgres:postgres@localhost:5432/typstogether";
 
 export const client = new SQL(databaseUrl);
 

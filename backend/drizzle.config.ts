@@ -1,10 +1,11 @@
 import { defineConfig } from "drizzle-kit";
+import { databaseUrl } from "./src/env";
 
 export default defineConfig({
-  schema: "./src/db/schema.ts",
   out: "./drizzle",
+  schema: "./src/db/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env["DATABASE_URL"] ?? "postgres://postgres:postgres@localhost:5432/typstogether",
+    url: databaseUrl,
   },
 });
