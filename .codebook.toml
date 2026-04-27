@@ -1,4 +1,12 @@
 dictionaries = ["en_us"]
-words = ["bytea", "bunx", "collab"]
-include_paths = ["**/*.md", "**/*.svelte", "**/*.ts"]
+words = [
+  "bunx",
+  "bytea",
+  "collab",
+]
+include_paths = [
+  "**/*.md",
+  "**/*.svelte",
+  "**/*.ts",
+]
 use_global = false
