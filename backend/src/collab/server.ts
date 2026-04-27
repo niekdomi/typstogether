@@ -27,7 +27,7 @@ const ws = crossws({
           peer.close(code, reason);
         },
       };
-      connection.set(peer.id, hocuspocus.handleConnection(wsLike, peer.request as Request));
+      connection.set(peer.id, hocuspocus.handleConnection(wsLike, peer.request));
     },
     message(peer, message) {
       connection.get(peer.id)?.handleMessage(message.uint8Array());
