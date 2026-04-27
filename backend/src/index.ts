@@ -2,6 +2,7 @@ import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 
 import { auth } from "./auth";
+import { startCollabServer } from "./collab/server";
 import { projectRoutes } from "./routes/projects";
 
 const app = new Elysia()
@@ -11,3 +12,5 @@ const app = new Elysia()
   .listen(3000);
 
 console.log("Backend running on port", app.server?.port);
+
+startCollabServer();
