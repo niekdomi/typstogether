@@ -36,17 +36,13 @@ export const project = pgTable(
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
-    slug: text("slug").notNull(),
     ownerUserId: text("owner_user_id")
       .notNull()
       .references(() => user.id, { onDelete: "restrict" }),
     deletedAt: timestamp("deleted_at"),
     ...timestamps,
   },
-  (table) => [
-    uniqueIndex("project_slug_unique").on(table.slug, table.ownerUserId),
-    index("project_owner_user_id_idx").on(table.ownerUserId),
-  ]
+  (table) => [index("project_owner_user_id_idx").on(table.ownerUserId)]
 );
 
 export const projectMember = pgTable(

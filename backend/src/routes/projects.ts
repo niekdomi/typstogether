@@ -4,13 +4,6 @@ import { sessionMiddleware } from "../auth/middleware";
 import { db } from "../db";
 import { project, projectMember } from "../db/app-schema";
 
-const generateSlug = (name: string) =>
-  name
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
-
 export const projectRoutes = new Elysia({ prefix: "/projects" })
   .use(sessionMiddleware)
   .get("/", async ({ user, set }) => {
@@ -66,12 +59,11 @@ export const projectRoutes = new Elysia({ prefix: "/projects" })
         return "Unauthorized";
       }
 
-      const slug = generateSlug(body.name);
       const id = crypto.randomUUID();
 
       const [created] = await db
         .insert(project)
-        .values({ id, name: body.name, slug, ownerUserId: user.id })
+        .values({ id, name: body.name, ownerUserId: user.id })
         .returning();
 
       return created;
