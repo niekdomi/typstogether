@@ -23,6 +23,7 @@
     "@hocuspocus/extension-logger": "^4.0.0",
     "@hocuspocus/server": "^4.0.0",
     "better-auth": "^1.6.9",
+    "crossws": "^0.4.5",
     "drizzle-orm": "^0.45.2",
     "elysia": "^1.4.28",
     "y-protocols": "^1.0.7",
