@@ -44,7 +44,7 @@ export const project = pgTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("project_slug_unique").on(table.slug),
+    uniqueIndex("project_slug_unique").on(table.slug, table.ownerUserId),
     index("project_owner_user_id_idx").on(table.ownerUserId),
   ]
 );
