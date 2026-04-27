@@ -1,17 +1,13 @@
 import { Elysia, t } from "elysia";
 import { and, eq, isNull, or } from "drizzle-orm";
-import { sessionMiddleware } from "../auth/middleware";
+import { requireAuth } from "../auth/middleware";
 import { db } from "../db";
 import { project, projectMember } from "../db/app-schema";
 
 export const projectRoutes = new Elysia({ prefix: "/projects" })
-  .use(sessionMiddleware)
-  .get("/", async ({ user, set }) => {
-    if (!user) {
-      set.status = 401;
-      return "Unauthorized";
-    }
+  .use(requireAuth)
 
+  .get("/", async ({ user }) => {
     return db
       .select({ project })
       .from(project)
@@ -25,11 +21,6 @@ export const projectRoutes = new Elysia({ prefix: "/projects" })
   })
 
   .get("/:id", async ({ user, params, set }) => {
-    if (!user) {
-      set.status = 401;
-      return "Unauthorized";
-    }
-
     const [row] = await db
       .select()
       .from(project)
@@ -53,12 +44,7 @@ export const projectRoutes = new Elysia({ prefix: "/projects" })
 
   .post(
     "/",
-    async ({ user, body, set }) => {
-      if (!user) {
-        set.status = 401;
-        return "Unauthorized";
-      }
-
+    async ({ user, body }) => {
       const id = crypto.randomUUID();
 
       const [created] = await db
@@ -72,11 +58,6 @@ export const projectRoutes = new Elysia({ prefix: "/projects" })
   )
 
   .delete("/:id", async ({ user, params, set }) => {
-    if (!user) {
-      set.status = 401;
-      return "Unauthorized";
-    }
-
     const [row] = await db
       .select()
       .from(project)
