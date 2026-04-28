@@ -11,9 +11,7 @@
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --target=bun --outdir=dist",
     "check": "tsc --noEmit",
-    "test": "bun test",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "test": "bun test"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.9",
