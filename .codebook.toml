@@ -3,8 +3,10 @@ words = [
   "bunx",
   "bytea",
   "collab",
+  "crossws",
   "elysia",
   "elysiajs",
+  "hocuspocus",
   "ost",
 ]
 include_paths = [

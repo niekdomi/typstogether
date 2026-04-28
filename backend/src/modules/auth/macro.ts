@@ -1,4 +1,5 @@
 import { Elysia, status } from "elysia";
+
 import { auth } from "./service";
 
 export const authMacro = new Elysia({ name: "auth-macro" }).macro({

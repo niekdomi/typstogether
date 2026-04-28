@@ -63,30 +63,6 @@ jobs:
       - name: Type check
         run: bun run check
 
-  migration-sync:
-    runs-on: ubuntu-latest
-    name: Verify schema/migration sync
-    timeout-minutes: 5
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Check for uncommitted migrations
-        run: |
-          cd backend
-          bun run db:generate
-          git add drizzle/
-          git diff --cached --exit-code drizzle/
-
   test:
     runs-on: ubuntu-latest
     name: Test

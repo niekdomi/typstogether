@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
 
-import { db, type Db } from "../../db";
+import { type Db, db as defaultDb } from "../../db";
 import { project, projectMember } from "../../db/app-schema";
 import type { CreateProjectInput } from "./model";
 
@@ -67,4 +67,4 @@ export class ProjectService {
   }
 }
 
-export const projectService = new ProjectService(db);
+export const projectService = new ProjectService(defaultDb);
