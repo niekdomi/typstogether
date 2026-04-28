@@ -3,25 +3,20 @@ import { Elysia, status, t } from "elysia";
 import { authMacro } from "../auth/macro";
 import { projectService } from "./service";
 
-type AccessLevel = "member" | "owner";
-
-const loadProject = async (userId: string, id: string, level: AccessLevel) => {
-  const project = await projectService.findAuthorized(userId, id, level);
-  if (!project) {
-    return status(404, "Project not found");
-  }
-  return { project };
-};
+const projectOr404 = <T>(project: T | undefined) =>
+  project ? { project } : status(404, "Project not found");
 
 export const projectAccessMacro = new Elysia({ name: "project-access-macro" })
   .use(authMacro)
   .macro("projectMember", {
     auth: true,
     params: t.Object({ id: t.String() }),
-    resolve: ({ params, user }) => loadProject(user.id, params.id, "member"),
+    resolve: async ({ params, user }) =>
+      projectOr404(await projectService.findAccessibleBy(user.id, params.id)),
   })
   .macro("projectOwner", {
     auth: true,
     params: t.Object({ id: t.String() }),
-    resolve: ({ params, user }) => loadProject(user.id, params.id, "owner"),
+    resolve: async ({ params, user }) =>
+      projectOr404(await projectService.findOwnedBy(user.id, params.id)),
   });

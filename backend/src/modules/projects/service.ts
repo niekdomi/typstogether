@@ -1,34 +1,43 @@
-import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
+import { type InferSelectModel, and, desc, eq, inArray, isNull, or } from "drizzle-orm";
 
 import { type Db, db as defaultDb } from "../../db";
 import { project, projectMember } from "../../db/app-schema";
 import type { CreateProjectInput } from "./model";
 
-type AccessLevel = "member" | "owner";
+export type Project = InferSelectModel<typeof project>;
 
 export class ProjectService {
   constructor(private readonly db: Db) {}
 
-  list(userId: string) {
-    return this.db
+  async list(userId: string): Promise<Project[]> {
+    const rows = await this.db
       .select()
       .from(project)
       .where(and(isNull(project.deletedAt), this.accessibleBy(userId)))
       .orderBy(desc(project.updatedAt));
+
+    return rows;
   }
 
-  async findAuthorized(userId: string, id: string, level: AccessLevel) {
-    const predicate = level === "owner" ? this.ownedBy(userId) : this.accessibleBy(userId);
-
+  async findAccessibleBy(userId: string, id: string): Promise<Project | undefined> {
     const [row] = await this.db
       .select()
       .from(project)
-      .where(and(eq(project.id, id), isNull(project.deletedAt), predicate));
+      .where(and(eq(project.id, id), isNull(project.deletedAt), this.accessibleBy(userId)));
 
     return row;
   }
 
-  async create(userId: string, input: CreateProjectInput) {
+  async findOwnedBy(userId: string, id: string): Promise<Project | undefined> {
+    const [row] = await this.db
+      .select()
+      .from(project)
+      .where(and(eq(project.id, id), isNull(project.deletedAt), this.ownedBy(userId)));
+
+    return row;
+  }
+
+  async create(userId: string, input: CreateProjectInput): Promise<Project | undefined> {
     const id = crypto.randomUUID();
 
     const [created] = await this.db
@@ -39,7 +48,7 @@ export class ProjectService {
     return created;
   }
 
-  async delete(id: string) {
+  async delete(id: string): Promise<Project | undefined> {
     const [deleted] = await this.db
       .update(project)
       .set({ deletedAt: new Date() })
