@@ -8,4 +8,5 @@ export const client = new SQL(databaseUrl);
 export const db = drizzle({ client, schema });
 
 export type Db = typeof db;
+// eslint-disable-next-line unicorn/prefer-export-from
 export { schema };
