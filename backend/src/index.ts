@@ -1,12 +1,17 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 
-import { auth } from "./auth";
-import { projectRoutes } from "./routes/projects";
+import { NotFoundError } from "./errors";
+import { authRoutes } from "./modules/auth";
+import { projectRoutes } from "./modules/projects";
 
 const app = new Elysia()
   .use(cors()) // TODO: Restrict to specific domain
-  .all("/api/auth/*", ({ request }) => auth.handler(request))
+  .onError(({ error, status }) => {
+    if (error instanceof NotFoundError) return status(404, error.message);
+    return;
+  })
+  .use(authRoutes)
   .use(projectRoutes)
   .listen(3000);
 
