@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { status } from "elysia";
 
 import { db, type Db } from "../../db";
@@ -13,7 +13,8 @@ export class ProjectService {
     return this.db
       .select()
       .from(project)
-      .where(and(isNull(project.deletedAt), accessibleBy(this.db, userId)));
+      .where(and(isNull(project.deletedAt), accessibleBy(this.db, userId)))
+      .orderBy(desc(project.updatedAt));
   }
 
   async get(userId: string, id: string) {
