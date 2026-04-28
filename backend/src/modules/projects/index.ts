@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 
-import { authMacro } from "../../auth/middleware";
+import { authMacro } from "../auth/macro";
 import { projectModels } from "./model";
 import { projectService } from "./service";
 
