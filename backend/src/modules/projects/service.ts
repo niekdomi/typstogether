@@ -1,8 +1,7 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
 
 import { db, type Db } from "../../db";
-import { project } from "../../db/app-schema";
-import { accessibleBy, ownedBy } from "./access";
+import { project, projectMember } from "../../db/app-schema";
 import type { CreateProjectInput } from "./model";
 
 type AccessLevel = "member" | "owner";
@@ -14,12 +13,12 @@ export class ProjectService {
     return this.db
       .select()
       .from(project)
-      .where(and(isNull(project.deletedAt), accessibleBy(this.db, userId)))
+      .where(and(isNull(project.deletedAt), this.accessibleBy(userId)))
       .orderBy(desc(project.updatedAt));
   }
 
   async findAuthorized(userId: string, id: string, level: AccessLevel) {
-    const predicate = level === "owner" ? ownedBy(userId) : accessibleBy(this.db, userId);
+    const predicate = level === "owner" ? this.ownedBy(userId) : this.accessibleBy(userId);
 
     const [row] = await this.db
       .select()
@@ -48,6 +47,23 @@ export class ProjectService {
       .returning();
 
     return deleted;
+  }
+
+  private ownedBy(userId: string) {
+    return eq(project.ownerUserId, userId);
+  }
+
+  private accessibleBy(userId: string) {
+    return or(
+      this.ownedBy(userId),
+      inArray(
+        project.id,
+        this.db
+          .select({ id: projectMember.projectId })
+          .from(projectMember)
+          .where(eq(projectMember.userId, userId))
+      )
+    );
   }
 }
 
