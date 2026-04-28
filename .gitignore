@@ -21,5 +21,5 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Drizzle migrations (using db:push instead)
+# Drizzle migrations (Ignore during early development)
 backend/drizzle/
