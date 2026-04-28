@@ -20,6 +20,7 @@
   "devDependencies": {
     "@eslint/compat": "^2.0.5",
     "@eslint/js": "^10.0.1",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import-x": "^4.16.2",
@@ -30,14 +31,21 @@
     "prettier": "^3.8.3",
     "prettier-plugin-svelte": "^3.5.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.0"
+    "typescript-eslint": "^8.59.1"
   },
   "prettier": {
     "trailingComma": "es5",
     "printWidth": 100,
     "proseWrap": "always",
     "plugins": [
+      "@trivago/prettier-plugin-sort-imports",
       "prettier-plugin-svelte"
-    ]
+    ],
+    "importOrder": [
+      "<THIRD_PARTY_MODULES>",
+      "^[./]"
+    ],
+    "importOrderSeparation": true,
+    "importOrderSortSpecifiers": true
   }
 }

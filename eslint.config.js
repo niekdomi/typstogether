@@ -1,13 +1,13 @@
-import globals from "globals";
+import { includeIgnoreFile } from "@eslint/compat";
 import js from "@eslint/js";
-import path from "node:path";
 import prettier from "eslint-config-prettier";
 import promise from "eslint-plugin-promise";
 import svelte from "eslint-plugin-svelte";
 import unicorn from "eslint-plugin-unicorn";
-import ts from "typescript-eslint";
 import { defineConfig } from "eslint/config";
-import { includeIgnoreFile } from "@eslint/compat";
+import globals from "globals";
+import path from "node:path";
+import ts from "typescript-eslint";
 
 const gitignorePath = path.resolve(import.meta.dirname, ".gitignore");
 const svelteTypeChecked =

@@ -11,11 +11,11 @@
   },
   "dependencies": {
     "@elysiajs/eden": "^1.4.9",
-    "@hocuspocus/provider": "^3.4.4",
+    "@hocuspocus/provider": "^4.0.0",
     "@typstogether/backend": "workspace:*",
-    "@vedivad/codemirror-typst": "^0.10.2",
-    "@vedivad/typst-web-service": "^0.10.2",
-    "@vedivad/typst-web-yjs": "^0.10.2",
+    "@vedivad/codemirror-typst": "^0.11.0",
+    "@vedivad/typst-web-service": "^0.11.0",
+    "@vedivad/typst-web-yjs": "^0.11.0",
     "elysia": "^1.4.28",
     "sv-router": "^0.16.0",
     "y-codemirror.next": "^0.3.5",
@@ -24,9 +24,9 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
-    "svelte": "^5.55.4",
+    "svelte": "^5.55.5",
     "svelte-check": "^4.4.6",
-    "vite": "^8.0.9",
+    "vite": "^8.0.10",
     "vite-plugin-wasm": "^3.6.0"
   }
 }
