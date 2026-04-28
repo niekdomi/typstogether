@@ -1,47 +1,32 @@
-import { and, eq, isNull, or } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { status } from "elysia";
 
-import { db as defaultDb } from "../../db";
-import { project, projectMember } from "../../db/app-schema";
+import { db, type Db } from "../../db";
+import { project } from "../../db/app-schema";
+import { accessibleBy } from "./access";
 import type { CreateProjectInput } from "./model";
-
-type Db = typeof defaultDb;
 
 export class ProjectService {
   constructor(private readonly db: Db) {}
 
   list(userId: string) {
     return this.db
-      .select({ project })
+      .select()
       .from(project)
-      .leftJoin(projectMember, eq(project.id, projectMember.projectId))
-      .where(
-        and(
-          isNull(project.deletedAt),
-          or(eq(project.ownerUserId, userId), eq(projectMember.userId, userId))
-        )
-      );
+      .where(and(isNull(project.deletedAt), accessibleBy(this.db, userId)));
   }
 
   async get(userId: string, id: string) {
     const [row] = await this.db
-      .select({ project })
+      .select()
       .from(project)
-      .leftJoin(projectMember, eq(project.id, projectMember.projectId))
-      .where(
-        and(
-          eq(project.id, id),
-          isNull(project.deletedAt),
-          or(eq(project.ownerUserId, userId), eq(projectMember.userId, userId))
-        )
-      )
-      .limit(1);
+      .where(and(eq(project.id, id), isNull(project.deletedAt), accessibleBy(this.db, userId)));
 
     if (!row) {
       return status(404, "Project not found");
     }
 
-    return row.project;
+    return row;
   }
 
   async create(userId: string, input: CreateProjectInput) {
@@ -70,4 +55,4 @@ export class ProjectService {
   }
 }
 
-export const projectService = new ProjectService(defaultDb);
+export const projectService = new ProjectService(db);
