@@ -1,7 +1,7 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { auth } from "./auth";
-import { projectRoutes } from "./routes/projects";
+import { projectRoutes } from "./modules/projects";
 
 const app = new Elysia()
   .use(cors()) // TODO: Restrict to specific domain
