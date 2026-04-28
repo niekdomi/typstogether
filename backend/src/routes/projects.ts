@@ -7,6 +7,10 @@ import { project, projectMember } from "../db/app-schema";
 
 export const projectRoutes = new Elysia({ prefix: "/projects" })
   .use(authMacro)
+  .model({
+    "project.idParams": t.Object({ id: t.String() }),
+    "project.create": t.Object({ name: t.String({ minLength: 1 }) }),
+  })
 
   .get(
     "/",
@@ -22,6 +26,21 @@ export const projectRoutes = new Elysia({ prefix: "/projects" })
           )
         ),
     { auth: true }
+  )
+
+  .post(
+    "/",
+    async ({ user, body }) => {
+      const id = crypto.randomUUID();
+
+      const [created] = await db
+        .insert(project)
+        .values({ id, name: body.name, ownerUserId: user.id })
+        .returning();
+
+      return created;
+    },
+    { body: "project.create", auth: true }
   )
 
   .get(
@@ -46,22 +65,7 @@ export const projectRoutes = new Elysia({ prefix: "/projects" })
 
       return row.project;
     },
-    { auth: true }
-  )
-
-  .post(
-    "/",
-    async ({ user, body }) => {
-      const id = crypto.randomUUID();
-
-      const [created] = await db
-        .insert(project)
-        .values({ id, name: body.name, ownerUserId: user.id })
-        .returning();
-
-      return created;
-    },
-    { body: t.Object({ name: t.String({ minLength: 1 }) }), auth: true }
+    { params: "project.idParams", auth: true }
   )
 
   .delete(
@@ -85,5 +89,5 @@ export const projectRoutes = new Elysia({ prefix: "/projects" })
 
       return { success: true };
     },
-    { auth: true }
+    { params: "project.idParams", auth: true }
   );
