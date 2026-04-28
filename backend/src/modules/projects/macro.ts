@@ -18,7 +18,7 @@ export const projectAccessMacro = new Elysia({ name: "project-access-macro" }).m
         return status(404, "Project not found");
       }
 
-      const project = await projectService.findAccessible(session.user.id, id, level);
+      const project = await projectService.findAuthorized(session.user.id, id, level);
       if (!project) {
         return status(404, "Project not found");
       }

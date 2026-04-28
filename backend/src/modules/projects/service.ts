@@ -18,7 +18,7 @@ export class ProjectService {
       .orderBy(desc(project.updatedAt));
   }
 
-  async findAccessible(userId: string, id: string, level: AccessLevel) {
+  async findAuthorized(userId: string, id: string, level: AccessLevel) {
     const predicate = level === "owner" ? ownedBy(userId) : accessibleBy(this.db, userId);
 
     const [row] = await this.db
