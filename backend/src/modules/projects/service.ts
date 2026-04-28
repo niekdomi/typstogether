@@ -1,10 +1,11 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
-import { status } from "elysia";
 
 import { db, type Db } from "../../db";
 import { project } from "../../db/app-schema";
 import { accessibleBy, ownedBy } from "./access";
 import type { CreateProjectInput } from "./model";
+
+type AccessLevel = "member" | "owner";
 
 export class ProjectService {
   constructor(private readonly db: Db) {}
@@ -17,15 +18,13 @@ export class ProjectService {
       .orderBy(desc(project.updatedAt));
   }
 
-  async get(userId: string, id: string) {
+  async findAccessible(userId: string, id: string, level: AccessLevel) {
+    const predicate = level === "owner" ? ownedBy(userId) : accessibleBy(this.db, userId);
+
     const [row] = await this.db
       .select()
       .from(project)
-      .where(and(eq(project.id, id), isNull(project.deletedAt), accessibleBy(this.db, userId)));
-
-    if (!row) {
-      return status(404, "Project not found");
-    }
+      .where(and(eq(project.id, id), isNull(project.deletedAt), predicate));
 
     return row;
   }
@@ -41,18 +40,14 @@ export class ProjectService {
     return created;
   }
 
-  async delete(userId: string, id: string) {
+  async delete(id: string) {
     const [deleted] = await this.db
       .update(project)
       .set({ deletedAt: new Date() })
-      .where(and(eq(project.id, id), ownedBy(userId), isNull(project.deletedAt)))
-      .returning({ id: project.id });
+      .where(and(eq(project.id, id), isNull(project.deletedAt)))
+      .returning();
 
-    if (!deleted) {
-      return status(404, "Project not found");
-    }
-
-    return { success: true };
+    return deleted;
   }
 }
 

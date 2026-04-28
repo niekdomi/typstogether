@@ -1,11 +1,13 @@
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 
 import { authMacro } from "../auth/macro";
+import { projectAccessMacro } from "./macro";
 import { projectModels } from "./model";
 import { projectService } from "./service";
 
 export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/projects" })
   .use(authMacro)
+  .use(projectAccessMacro)
   .model(projectModels)
 
   .get("/", ({ user }) => projectService.list(user.id), { auth: true })
@@ -15,12 +17,19 @@ export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/proj
     auth: true,
   })
 
-  .get("/:id", ({ user, params }) => projectService.get(user.id, params.id), {
+  .get("/:id", ({ project }) => project, {
     params: "project.idParams",
-    auth: true,
+    projectAccess: "member",
   })
 
-  .delete("/:id", ({ user, params }) => projectService.delete(user.id, params.id), {
-    params: "project.idParams",
-    auth: true,
-  });
+  .delete(
+    "/:id",
+    async ({ project }) => {
+      const deleted = await projectService.delete(project.id);
+      if (!deleted) {
+        return status(404, "Project not found");
+      }
+      return deleted;
+    },
+    { params: "project.idParams", projectAccess: "owner" }
+  );
