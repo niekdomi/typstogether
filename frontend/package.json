@@ -10,6 +10,7 @@
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
+    "@elysia/eden": "^1.4.10",
     "@elysiajs/eden": "^1.4.9",
     "@hocuspocus/provider": "^4.0.0",
     "@typstogether/backend": "workspace:*",
