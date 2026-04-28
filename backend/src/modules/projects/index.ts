@@ -4,7 +4,7 @@ import { authMacro } from "../auth/macro";
 import { projectModels } from "./model";
 import { projectService } from "./service";
 
-export const projectRoutes = new Elysia({ prefix: "/projects" })
+export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/projects" })
   .use(authMacro)
   .model(projectModels)
 
