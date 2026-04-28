@@ -59,9 +59,7 @@ export class ProjectService {
     const [deleted] = await this.db
       .update(project)
       .set({ deletedAt: new Date() })
-      .where(
-        and(eq(project.id, id), eq(project.ownerUserId, userId), isNull(project.deletedAt))
-      )
+      .where(and(eq(project.id, id), eq(project.ownerUserId, userId), isNull(project.deletedAt)))
       .returning({ id: project.id });
 
     if (!deleted) {
