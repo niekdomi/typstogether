@@ -1,9 +1,9 @@
-import { and, desc } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { status } from "elysia";
 
 import { db, type Db } from "../../db";
 import { project } from "../../db/app-schema";
-import { accessibleBy, notDeleted, ownedBy, withId } from "./access";
+import { accessibleBy, ownedBy } from "./access";
 import type { CreateProjectInput } from "./model";
 
 export class ProjectService {
@@ -13,7 +13,7 @@ export class ProjectService {
     return this.db
       .select()
       .from(project)
-      .where(and(notDeleted(), accessibleBy(this.db, userId)))
+      .where(and(isNull(project.deletedAt), accessibleBy(this.db, userId)))
       .orderBy(desc(project.updatedAt));
   }
 
@@ -21,7 +21,7 @@ export class ProjectService {
     const [row] = await this.db
       .select()
       .from(project)
-      .where(and(withId(id), notDeleted(), accessibleBy(this.db, userId)));
+      .where(and(eq(project.id, id), isNull(project.deletedAt), accessibleBy(this.db, userId)));
 
     if (!row) {
       return status(404, "Project not found");
@@ -45,7 +45,7 @@ export class ProjectService {
     const [deleted] = await this.db
       .update(project)
       .set({ deletedAt: new Date() })
-      .where(and(withId(id), ownedBy(userId), notDeleted()))
+      .where(and(eq(project.id, id), ownedBy(userId), isNull(project.deletedAt)))
       .returning({ id: project.id });
 
     if (!deleted) {
