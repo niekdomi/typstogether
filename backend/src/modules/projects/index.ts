@@ -1,4 +1,4 @@
-import { Elysia, status } from "elysia";
+import { Elysia } from "elysia";
 
 import { authMacro } from "../auth/macro";
 import { projectAccessMacro } from "./macro";
@@ -19,14 +19,4 @@ export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/proj
 
   .get("/:id", ({ project }) => project, { projectMember: true })
 
-  .delete(
-    "/:id",
-    async ({ project }) => {
-      const deleted = await projectService.delete(project.id);
-      if (!deleted) {
-        return status(404, "Project not found");
-      }
-      return deleted;
-    },
-    { projectOwner: true }
-  );
+  .delete("/:id", ({ project }) => projectService.delete(project.id), { projectOwner: true });

@@ -2,6 +2,7 @@ import { type InferSelectModel, and, desc, eq, inArray, isNull, or } from "drizz
 
 import { type Db, db as defaultDb } from "../../db";
 import { project, projectMember } from "../../db/app-schema";
+import { NotFoundError } from "../../errors";
 import type { CreateProjectInput } from "./model";
 
 export type Project = InferSelectModel<typeof project>;
@@ -10,30 +11,34 @@ export class ProjectService {
   constructor(private readonly db: Db) {}
 
   async list(userId: string): Promise<Project[]> {
-    const rows = await this.db
+    return await this.db
       .select()
       .from(project)
       .where(and(isNull(project.deletedAt), this.accessibleBy(userId)))
       .orderBy(desc(project.updatedAt));
-
-    return rows;
   }
 
-  async findAccessibleBy(userId: string, id: string): Promise<Project | undefined> {
+  async getAccessibleBy(userId: string, id: string): Promise<Project> {
     const [row] = await this.db
       .select()
       .from(project)
       .where(and(eq(project.id, id), isNull(project.deletedAt), this.accessibleBy(userId)));
 
+    if (!row) {
+      throw new NotFoundError("Project not found");
+    }
     return row;
   }
 
-  async findOwnedBy(userId: string, id: string): Promise<Project | undefined> {
+  async getOwnedBy(userId: string, id: string): Promise<Project> {
     const [row] = await this.db
       .select()
       .from(project)
       .where(and(eq(project.id, id), isNull(project.deletedAt), this.ownedBy(userId)));
 
+    if (!row) {
+      throw new NotFoundError("Project not found");
+    }
     return row;
   }
 
@@ -48,13 +53,16 @@ export class ProjectService {
     return created;
   }
 
-  async delete(id: string): Promise<Project | undefined> {
+  async delete(id: string): Promise<Project> {
     const [deleted] = await this.db
       .update(project)
       .set({ deletedAt: new Date() })
       .where(and(eq(project.id, id), isNull(project.deletedAt)))
       .returning();
 
+    if (!deleted) {
+      throw new NotFoundError("Project not found");
+    }
     return deleted;
   }
 
