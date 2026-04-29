@@ -2,18 +2,18 @@ import { Elysia, t } from "elysia";
 
 import { projectAccessMacro } from "./macro";
 import { projectMembershipModel, projectModel, projectModels } from "./model";
-import { projectService } from "./service";
+import * as projects from "./service";
 
 export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/projects" })
   .use(projectAccessMacro)
   .model(projectModels)
 
-  .get("/", ({ user }) => projectService.list(user.id), {
+  .get("/", ({ user }) => projects.list(user.id), {
     auth: true,
     response: t.Array(projectMembershipModel),
   })
 
-  .post("/", ({ user, body }) => projectService.create(user.id, body), {
+  .post("/", ({ user, body }) => projects.create(user.id, body), {
     body: "project.create",
     auth: true,
     response: projectModel,
@@ -24,7 +24,7 @@ export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/proj
     response: projectMembershipModel,
   })
 
-  .delete("/:id", ({ project }) => projectService.delete(project.id), {
+  .delete("/:id", ({ project }) => projects.remove(project.id), {
     projectOwner: true,
     response: projectModel,
   });

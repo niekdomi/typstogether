@@ -3,13 +3,14 @@ import { Elysia } from "elysia";
 import { ForbiddenError } from "../../errors";
 import { authMacro } from "../auth/macro";
 import { type ByIdProjectParams, byIdProjectModel } from "./model";
-import { type ProjectRole, projectService } from "./service";
+import * as projects from "./service";
+import { type ProjectRole } from "./service";
 
 const requireRole = (allowed: readonly ProjectRole[]) => ({
   auth: true as const,
   params: byIdProjectModel,
   resolve: async ({ params, user }: { params: ByIdProjectParams; user: { id: string } }) => {
-    const { project, role } = await projectService.getMembership(user.id, params.id);
+    const { project, role } = await projects.getMembership(user.id, params.id);
     if (!allowed.includes(role)) {
       throw new ForbiddenError(`${allowed.join(" or ")} role required`);
     }
