@@ -61,7 +61,7 @@ export class ProjectService {
     throw new NotFoundError("Project not found");
   }
 
-  async create(userId: string, input: CreateProjectInput): Promise<Project | undefined> {
+  async create(userId: string, input: CreateProjectInput): Promise<Project> {
     const id = crypto.randomUUID();
 
     const [created] = await this.db
@@ -69,6 +69,7 @@ export class ProjectService {
       .values({ id, name: input.name, ownerUserId: userId })
       .returning();
 
+    if (!created) throw new Error("Failed to create project");
     return created;
   }
 
