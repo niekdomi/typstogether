@@ -25,3 +25,10 @@ export class GoneError extends Error {
     this.name = "GoneError";
   }
 }
+
+export class ConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConflictError";
+  }
+}

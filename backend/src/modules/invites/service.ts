@@ -2,7 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import { type Db, db as defaultDb } from "../../db";
 import { type ProjectInvite, project, projectInvite } from "../../db/app-schema";
-import { GoneError, NotFoundError } from "../../errors";
+import { ConflictError, GoneError, NotFoundError } from "../../errors";
 import { memberService } from "../members/service";
 import { type ProjectMembership } from "../projects/service";
 import type { CreateInviteInput } from "./model";
@@ -86,7 +86,12 @@ export class InviteService {
 
       if (!proj) throw new NotFoundError("Invite project not found");
 
-      return await memberService.ensureMembership(tx, proj, userId, invite.role);
+      if (proj.ownerUserId === userId) {
+        throw new ConflictError("You already own this project");
+      }
+
+      await memberService.create(tx, proj.id, userId, invite.role);
+      return { project: proj, role: invite.role };
     });
   }
 }

@@ -1,10 +1,10 @@
 import { and, eq } from "drizzle-orm";
 
 import { type Db, type Tx, db as defaultDb } from "../../db";
-import { type Project, type ProjectMember, projectMember } from "../../db/app-schema";
+import { type ProjectMember, projectMember } from "../../db/app-schema";
 import { user } from "../../db/auth-schema";
-import { NotFoundError } from "../../errors";
-import { type ProjectMembership, type ProjectRole } from "../projects/service";
+import { ConflictError, NotFoundError } from "../../errors";
+import { type ProjectRole } from "../projects/service";
 
 export type ProjectMemberRole = Exclude<ProjectRole, "owner">;
 
@@ -27,27 +27,19 @@ export class MemberService {
       .where(eq(projectMember.projectId, projectId));
   }
 
-  async ensureMembership(
+  async create(
     tx: Tx,
-    project: Project,
+    projectId: string,
     userId: string,
-    desiredRole: ProjectMemberRole
-  ): Promise<ProjectMembership> {
-    if (project.ownerUserId === userId) return { project: project, role: "owner" };
-
-    const [inserted] = await tx
+    role: ProjectMemberRole
+  ): Promise<ProjectMember> {
+    const [member] = await tx
       .insert(projectMember)
-      .values({ projectId: project.id, userId, role: desiredRole })
+      .values({ projectId, userId, role })
       .onConflictDoNothing()
       .returning();
-    if (inserted) return { project: project, role: desiredRole };
-
-    const [existing] = await tx
-      .select()
-      .from(projectMember)
-      .where(and(eq(projectMember.projectId, project.id), eq(projectMember.userId, userId)));
-    if (!existing) throw new Error("Failed to upsert member");
-    return { project: project, role: existing.role };
+    if (!member) throw new ConflictError("User is already a member of this project");
+    return member;
   }
 
   async remove(projectId: string, userId: string): Promise<ProjectMember> {

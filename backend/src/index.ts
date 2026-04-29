@@ -1,7 +1,13 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 
-import { ForbiddenError, GoneError, NotFoundError, UnauthorizedError } from "./errors";
+import {
+  ConflictError,
+  ForbiddenError,
+  GoneError,
+  NotFoundError,
+  UnauthorizedError,
+} from "./errors";
 import { authRoutes } from "./modules/auth";
 import { inviteRoutes } from "./modules/invites";
 import { memberRoutes } from "./modules/members";
@@ -14,6 +20,7 @@ const app = new Elysia()
     if (error instanceof ForbiddenError) return status(403, error.message);
     if (error instanceof UnauthorizedError) return status(401, error.message);
     if (error instanceof GoneError) return status(410, error.message);
+    if (error instanceof ConflictError) return status(409, error.message);
     return;
   })
   .use(authRoutes)
