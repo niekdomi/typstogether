@@ -18,13 +18,7 @@ export class ProjectService {
   constructor(private readonly db: Db) {}
 
   async list(userId: string): Promise<ProjectMembership[]> {
-    const rows = await this.db
-      .select({ project, memberRole: projectMember.role })
-      .from(project)
-      .leftJoin(
-        projectMember,
-        and(eq(projectMember.projectId, project.id), eq(projectMember.userId, userId))
-      )
+    const rows = await this.membershipSelect(userId)
       .where(
         and(
           isNull(project.deletedAt),
@@ -40,14 +34,9 @@ export class ProjectService {
   }
 
   async getMembership(userId: string, id: string): Promise<ProjectMembership> {
-    const [row] = await this.db
-      .select({ project, memberRole: projectMember.role })
-      .from(project)
-      .leftJoin(
-        projectMember,
-        and(eq(projectMember.projectId, project.id), eq(projectMember.userId, userId))
-      )
-      .where(and(eq(project.id, id), isNull(project.deletedAt)));
+    const [row] = await this.membershipSelect(userId).where(
+      and(eq(project.id, id), isNull(project.deletedAt))
+    );
 
     if (row) {
       if (row.project.ownerUserId === userId) {
@@ -62,11 +51,9 @@ export class ProjectService {
   }
 
   async create(userId: string, input: CreateProjectInput): Promise<Project> {
-    const id = crypto.randomUUID();
-
     const [created] = await this.db
       .insert(project)
-      .values({ id, name: input.name, ownerUserId: userId })
+      .values({ name: input.name, ownerUserId: userId })
       .returning();
 
     if (!created) throw new Error("Failed to create project");
@@ -84,6 +71,16 @@ export class ProjectService {
       throw new NotFoundError("Project not found");
     }
     return deleted;
+  }
+
+  private membershipSelect(userId: string) {
+    return this.db
+      .select({ project, memberRole: projectMember.role })
+      .from(project)
+      .leftJoin(
+        projectMember,
+        and(eq(projectMember.projectId, project.id), eq(projectMember.userId, userId))
+      );
   }
 }
 

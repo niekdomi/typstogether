@@ -35,7 +35,9 @@ const timestamps = {
 export const project = pgTable(
   "project",
   {
-    id: text("id").primaryKey(),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
     ownerUserId: text("owner_user_id")
       .notNull()
