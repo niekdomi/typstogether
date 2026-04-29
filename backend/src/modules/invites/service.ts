@@ -2,7 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import { type Db, type Tx } from "../../db";
 import { type ProjectInvite, projectInvite } from "../../db/app-schema";
-import { currentDb, withTx } from "../../db/context";
+import { currentDb } from "../../db/context";
 import { ConflictError, GoneError, NotFoundError } from "../../errors";
 import * as members from "../members/service";
 import * as projects from "../projects/service";
@@ -69,31 +69,30 @@ export async function revoke(
   return revoked;
 }
 
-export async function redeem(userId: string, token: string): Promise<ProjectMembership> {
+export async function redeem(
+  userId: string,
+  token: string,
+  db: Db | Tx = currentDb()
+): Promise<ProjectMembership> {
   const tokenHash = hashToken(token);
 
-  return await withTx(async () => {
-    const db = currentDb();
+  const [invite] = await db
+    .select()
+    .from(projectInvite)
+    .where(eq(projectInvite.tokenHash, tokenHash));
 
-    const [invite] = await db
-      .select()
-      .from(projectInvite)
-      .where(eq(projectInvite.tokenHash, tokenHash))
-      .for("update");
+  if (!invite) throw new NotFoundError("Invite not found");
 
-    if (!invite) throw new NotFoundError("Invite not found");
+  if (invite.revokedAt || invite.expiresAt.getTime() <= Date.now()) {
+    throw new GoneError("Invite is no longer valid");
+  }
 
-    if (invite.revokedAt || invite.expiresAt.getTime() <= Date.now()) {
-      throw new GoneError("Invite is no longer valid");
-    }
+  const proj = await projects.findActive(invite.projectId, db);
 
-    const proj = await projects.findActive(invite.projectId, db);
+  if (proj.ownerUserId === userId) {
+    throw new ConflictError("You already own this project");
+  }
 
-    if (proj.ownerUserId === userId) {
-      throw new ConflictError("You already own this project");
-    }
-
-    await members.create(proj.id, userId, invite.role, db);
-    return { project: proj, role: invite.role };
-  });
+  await members.create(proj.id, userId, invite.role, db);
+  return { project: proj, role: invite.role };
 }
