@@ -1,11 +1,9 @@
-import { type InferSelectModel, and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
 
 import { type Db, db as defaultDb } from "../../db";
-import { project, projectMember } from "../../db/app-schema";
+import { type Project, project, projectMember } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import type { CreateProjectInput } from "./model";
-
-export type Project = InferSelectModel<typeof project>;
 
 export type ProjectRole = "owner" | "editor" | "viewer";
 

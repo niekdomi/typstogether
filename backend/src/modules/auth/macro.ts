@@ -1,5 +1,6 @@
-import { Elysia, status } from "elysia";
+import { Elysia } from "elysia";
 
+import { UnauthorizedError } from "../../errors";
 import { auth } from "./service";
 
 export const authMacro = new Elysia({ name: "auth-macro" }).macro({
@@ -8,7 +9,7 @@ export const authMacro = new Elysia({ name: "auth-macro" }).macro({
       const session = await auth.api.getSession({ headers: request.headers });
 
       if (!session?.user) {
-        return status(401, "Unauthorized");
+        throw new UnauthorizedError("Unauthorized");
       }
 
       return { user: session.user, session: session.session };
