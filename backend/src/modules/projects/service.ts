@@ -42,6 +42,15 @@ export async function list(
   }));
 }
 
+export async function findActive(id: string, db: Db | Tx = currentDb()): Promise<Project> {
+  const [proj] = await db
+    .select()
+    .from(project)
+    .where(and(eq(project.id, id), isNull(project.deletedAt)));
+  if (!proj) throw new NotFoundError("Project not found");
+  return proj;
+}
+
 export async function getMembership(
   userId: string,
   id: string,

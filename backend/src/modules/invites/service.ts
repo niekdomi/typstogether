@@ -1,10 +1,11 @@
 import { and, eq, isNull } from "drizzle-orm";
 
 import { type Db, type Tx } from "../../db";
-import { type ProjectInvite, project, projectInvite } from "../../db/app-schema";
+import { type ProjectInvite, projectInvite } from "../../db/app-schema";
 import { currentDb, withTx } from "../../db/context";
 import { ConflictError, GoneError, NotFoundError } from "../../errors";
 import * as members from "../members/service";
+import * as projects from "../projects/service";
 import { type ProjectMembership } from "../projects/service";
 import type { CreateInviteInput } from "./model";
 
@@ -86,18 +87,13 @@ export async function redeem(userId: string, token: string): Promise<ProjectMemb
       throw new GoneError("Invite is no longer valid");
     }
 
-    const [proj] = await db
-      .select()
-      .from(project)
-      .where(and(eq(project.id, invite.projectId), isNull(project.deletedAt)));
-
-    if (!proj) throw new NotFoundError("Invite project not found");
+    const proj = await projects.findActive(invite.projectId, db);
 
     if (proj.ownerUserId === userId) {
       throw new ConflictError("You already own this project");
     }
 
-    await members.create(proj.id, userId, invite.role);
+    await members.create(proj.id, userId, invite.role, db);
     return { project: proj, role: invite.role };
   });
 }
