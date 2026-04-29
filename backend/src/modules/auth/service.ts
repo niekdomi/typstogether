@@ -3,10 +3,11 @@ import { betterAuth } from "better-auth";
 
 import { db } from "../../db";
 import * as authSchema from "../../db/auth-schema";
+import { authBaseUrl, authSecret, githubOAuth, gitlabOAuth, googleOAuth } from "../../env";
 
 export const auth = betterAuth({
-  baseURL: process.env["BETTER_AUTH_URL"] ?? "http://localhost:3000",
-  secret: process.env["BETTER_AUTH_SECRET"] ?? "development-secret-change-me",
+  baseURL: authBaseUrl,
+  secret: authSecret,
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: authSchema,
@@ -15,18 +16,8 @@ export const auth = betterAuth({
     enabled: false,
   },
   socialProviders: {
-    github: {
-      clientId: process.env["GITHUB_CLIENT_ID"] ?? "",
-      clientSecret: process.env["GITHUB_CLIENT_SECRET"] ?? "",
-    },
-    gitlab: {
-      clientId: process.env["GITLAB_CLIENT_ID"] ?? "",
-      clientSecret: process.env["GITLAB_CLIENT_SECRET"] ?? "",
-      issuer: "https://gitlab.ost.ch", // NOTE: This is currently OST specific
-    },
-    google: {
-      clientId: process.env["GOOGLE_CLIENT_ID"] ?? "",
-      clientSecret: process.env["GOOGLE_CLIENT_SECRET"] ?? "",
-    },
+    github: githubOAuth,
+    gitlab: gitlabOAuth,
+    google: googleOAuth,
   },
 });
