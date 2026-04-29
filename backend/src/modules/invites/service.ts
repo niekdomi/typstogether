@@ -70,7 +70,8 @@ export class InviteService {
       const [invite] = await tx
         .select()
         .from(projectInvite)
-        .where(eq(projectInvite.tokenHash, tokenHash));
+        .where(eq(projectInvite.tokenHash, tokenHash))
+        .for("update");
 
       if (!invite) throw new NotFoundError("Invite not found");
 
