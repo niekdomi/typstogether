@@ -77,14 +77,14 @@ export class InviteService {
       throw new GoneError("Invite is no longer valid");
     }
 
-    const proj = await projectService.findActive(invite.projectId);
+    const project = await projectService.findActive(invite.projectId);
 
-    if (proj.ownerUserId === userId) {
+    if (project.ownerUserId === userId) {
       throw new ConflictError("You already own this project");
     }
 
-    await memberService.create(proj.id, userId, invite.role);
-    return { project: proj, role: invite.role };
+    await memberService.create(project.id, userId, invite.role);
+    return { project: project, role: invite.role };
   }
 }
 
