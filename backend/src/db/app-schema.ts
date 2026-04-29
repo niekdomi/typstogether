@@ -1,9 +1,7 @@
-import { relations, sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import {
-  check,
   customType,
   index,
-  integer,
   pgEnum,
   pgTable,
   primaryKey,
@@ -69,7 +67,9 @@ export const projectMember = pgTable(
 export const projectInvite = pgTable(
   "project_invite",
   {
-    id: text("id").primaryKey(),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     projectId: text("project_id")
       .notNull()
       .references(() => project.id, { onDelete: "cascade" }),
@@ -79,8 +79,6 @@ export const projectInvite = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     role: inviteRole("role").notNull().default("editor"),
     expiresAt: timestamp("expires_at").notNull(),
-    maxUses: integer("max_uses"),
-    useCount: integer("use_count").notNull().default(0),
     revokedAt: timestamp("revoked_at"),
     ...timestamps,
   },
@@ -88,11 +86,6 @@ export const projectInvite = pgTable(
     uniqueIndex("project_invite_token_hash_unique").on(table.tokenHash),
     index("project_invite_project_id_idx").on(table.projectId),
     index("project_invite_created_by_user_id_idx").on(table.createdByUserId),
-    check(
-      "project_invite_max_uses_positive_check",
-      sql`${table.maxUses} is null or ${table.maxUses} > 0`
-    ),
-    check("project_invite_use_count_non_negative_check", sql`${table.useCount} >= 0`),
   ]
 );
 

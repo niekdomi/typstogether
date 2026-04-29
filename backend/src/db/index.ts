@@ -9,3 +9,4 @@ const client = new SQL(databaseUrl);
 export const db = drizzle({ client, schema });
 
 export type Db = typeof db;
+export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];

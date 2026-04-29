@@ -1,11 +1,12 @@
 import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
 
-import { type Db, db as defaultDb } from "../../db";
+import { type Db, type Tx, db as defaultDb } from "../../db";
 import { type Project, project, projectMember } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import type { CreateProjectInput } from "./model";
 
 export type ProjectRole = "owner" | "editor" | "viewer";
+export type ProjectMemberRole = Exclude<ProjectRole, "owner">;
 
 export interface ProjectMembership {
   project: Project;
@@ -69,6 +70,29 @@ export class ProjectService {
       throw new NotFoundError("Project not found");
     }
     return deleted;
+  }
+
+  async ensureMembership(
+    tx: Tx,
+    proj: Project,
+    userId: string,
+    desiredRole: ProjectMemberRole
+  ): Promise<ProjectMembership> {
+    if (proj.ownerUserId === userId) return { project: proj, role: "owner" };
+
+    const [inserted] = await tx
+      .insert(projectMember)
+      .values({ projectId: proj.id, userId, role: desiredRole })
+      .onConflictDoNothing()
+      .returning();
+    if (inserted) return { project: proj, role: desiredRole };
+
+    const [existing] = await tx
+      .select()
+      .from(projectMember)
+      .where(and(eq(projectMember.projectId, proj.id), eq(projectMember.userId, userId)));
+    if (!existing) throw new Error("Failed to upsert member");
+    return { project: proj, role: existing.role };
   }
 
   private membershipSelect(userId: string) {
