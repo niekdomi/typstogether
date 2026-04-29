@@ -1,13 +1,13 @@
-import { type Tx } from "../src/db";
+import { type Db } from "../src/db";
 import { type NewProject, type Project, project } from "../src/db/app-schema";
 import { user } from "../src/db/auth-schema";
 
 type NewUser = typeof user.$inferInsert;
 type User = typeof user.$inferSelect;
 
-export async function createUser(tx: Tx, overrides: Partial<NewUser> = {}): Promise<User> {
+export async function createUser(db: Db, overrides: Partial<NewUser> = {}): Promise<User> {
   const id = crypto.randomUUID();
-  const [inserted] = await tx
+  const [inserted] = await db
     .insert(user)
     .values({
       id,
@@ -21,11 +21,11 @@ export async function createUser(tx: Tx, overrides: Partial<NewUser> = {}): Prom
 }
 
 export async function createProject(
-  tx: Tx,
+  db: Db,
   ownerUserId: string,
   overrides: Partial<NewProject> = {}
 ): Promise<Project> {
-  const [inserted] = await tx
+  const [inserted] = await db
     .insert(project)
     .values({
       name: `Test project ${crypto.randomUUID().slice(0, 8)}`,

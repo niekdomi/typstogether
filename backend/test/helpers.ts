@@ -1,25 +1,17 @@
-import { type Tx, db } from "../src/db";
-
-class Rollback extends Error {
-  constructor() {
-    super("rollback");
-    this.name = "Rollback";
-  }
-}
+import { db } from "../src/db";
+import { project, projectInvite, projectMember } from "../src/db/app-schema";
+import { user } from "../src/db/auth-schema";
 
 /**
- * Run `fn` inside a transaction that always rolls back. Use to isolate tests
- * from each other and from the dev database without manual cleanup.
+ * Truncate all app tables. Use in `afterEach` to isolate tests from each other.
+ * Order matters because of foreign keys; deleting from `user` first relies on
+ * cascade rules covering everything downstream.
  */
-export async function withRollback(fn: (tx: Tx) => Promise<void>): Promise<void> {
-  try {
-    await db.transaction(async (tx) => {
-      await fn(tx);
-      throw new Rollback();
-    });
-  } catch (error) {
-    if (!(error instanceof Rollback)) throw error;
-  }
+export async function cleanDb(): Promise<void> {
+  await db.delete(projectMember);
+  await db.delete(projectInvite);
+  await db.delete(project);
+  await db.delete(user);
 }
 
 /**

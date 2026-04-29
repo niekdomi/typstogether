@@ -1,117 +1,110 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 
 import { createProject, createUser } from "../../../test/factories";
-import { expectThrows, withRollback } from "../../../test/helpers";
+import { cleanDb, expectThrows } from "../../../test/helpers";
+import { db } from "../../db";
 import { ConflictError, NotFoundError } from "../../errors";
-import * as members from "./service";
+import { MemberService, memberService } from "./service";
 
-describe("members.list", () => {
+afterEach(cleanDb);
+
+describe("MemberService.list", () => {
   test("returns empty for project with no members", async () => {
-    await withRollback(async (tx) => {
-      const owner = await createUser(tx);
-      const project = await createProject(tx, owner.id);
+    const owner = await createUser(db);
+    const project = await createProject(db, owner.id);
 
-      const result = await members.list(project.id, tx);
+    const result = await memberService.list(project.id);
 
-      expect(result).toEqual([]);
-    });
+    expect(result).toEqual([]);
   });
 
   test("returns members joined to user info", async () => {
-    await withRollback(async (tx) => {
-      const owner = await createUser(tx);
-      const member = await createUser(tx);
-      const project = await createProject(tx, owner.id);
-      await members.create(project.id, member.id, "editor", tx);
+    const owner = await createUser(db);
+    const member = await createUser(db);
+    const project = await createProject(db, owner.id);
+    await memberService.create(project.id, member.id, "editor");
 
-      const result = await members.list(project.id, tx);
+    const result = await memberService.list(project.id);
 
-      expect(result).toHaveLength(1);
-      expect(result[0]!.member.userId).toBe(member.id);
-      expect(result[0]!.member.role).toBe("editor");
-      expect(result[0]!.user.id).toBe(member.id);
-      expect(result[0]!.user.email).toBe(member.email);
-    });
+    expect(result).toHaveLength(1);
+    expect(result[0]!.member.userId).toBe(member.id);
+    expect(result[0]!.member.role).toBe("editor");
+    expect(result[0]!.user.id).toBe(member.id);
+    expect(result[0]!.user.email).toBe(member.email);
   });
 });
 
-describe("members.create", () => {
+describe("MemberService.create", () => {
   test("inserts a new member with the given role", async () => {
-    await withRollback(async (tx) => {
-      const owner = await createUser(tx);
-      const member = await createUser(tx);
-      const project = await createProject(tx, owner.id);
+    const owner = await createUser(db);
+    const member = await createUser(db);
+    const project = await createProject(db, owner.id);
 
-      const result = await members.create(project.id, member.id, "editor", tx);
+    const result = await memberService.create(project.id, member.id, "editor");
 
-      expect(result.userId).toBe(member.id);
-      expect(result.projectId).toBe(project.id);
-      expect(result.role).toBe("editor");
-    });
+    expect(result.userId).toBe(member.id);
+    expect(result.projectId).toBe(project.id);
+    expect(result.role).toBe("editor");
   });
 
   test("throws ConflictError when the user is already a member", async () => {
-    await withRollback(async (tx) => {
-      const owner = await createUser(tx);
-      const member = await createUser(tx);
-      const project = await createProject(tx, owner.id);
-      await members.create(project.id, member.id, "editor", tx);
+    const owner = await createUser(db);
+    const member = await createUser(db);
+    const project = await createProject(db, owner.id);
+    await memberService.create(project.id, member.id, "editor");
 
-      await expectThrows(() => members.create(project.id, member.id, "viewer", tx), ConflictError);
-    });
+    await expectThrows(() => memberService.create(project.id, member.id, "viewer"), ConflictError);
+  });
+
+  test("constructor accepts a Db instance", () => {
+    // sanity: services can be constructed directly (e.g. for stubbed deps)
+    const svc = new MemberService(db);
+    expect(svc).toBeInstanceOf(MemberService);
   });
 });
 
-describe("members.remove", () => {
+describe("MemberService.remove", () => {
   test("removes an existing member", async () => {
-    await withRollback(async (tx) => {
-      const owner = await createUser(tx);
-      const member = await createUser(tx);
-      const project = await createProject(tx, owner.id);
-      await members.create(project.id, member.id, "editor", tx);
+    const owner = await createUser(db);
+    const member = await createUser(db);
+    const project = await createProject(db, owner.id);
+    await memberService.create(project.id, member.id, "editor");
 
-      const removed = await members.remove(project.id, member.id, tx);
+    const removed = await memberService.remove(project.id, member.id);
 
-      expect(removed.userId).toBe(member.id);
-      expect(await members.list(project.id, tx)).toEqual([]);
-    });
+    expect(removed.userId).toBe(member.id);
+    expect(await memberService.list(project.id)).toEqual([]);
   });
 
   test("throws NotFoundError when the user is not a member", async () => {
-    await withRollback(async (tx) => {
-      const owner = await createUser(tx);
-      const stranger = await createUser(tx);
-      const project = await createProject(tx, owner.id);
+    const owner = await createUser(db);
+    const stranger = await createUser(db);
+    const project = await createProject(db, owner.id);
 
-      await expectThrows(() => members.remove(project.id, stranger.id, tx), NotFoundError);
-    });
+    await expectThrows(() => memberService.remove(project.id, stranger.id), NotFoundError);
   });
 });
 
-describe("members.changeRole", () => {
+describe("MemberService.changeRole", () => {
   test("updates the role of an existing member", async () => {
-    await withRollback(async (tx) => {
-      const owner = await createUser(tx);
-      const member = await createUser(tx);
-      const project = await createProject(tx, owner.id);
-      await members.create(project.id, member.id, "viewer", tx);
+    const owner = await createUser(db);
+    const member = await createUser(db);
+    const project = await createProject(db, owner.id);
+    await memberService.create(project.id, member.id, "viewer");
 
-      const updated = await members.changeRole(project.id, member.id, "editor", tx);
+    const updated = await memberService.changeRole(project.id, member.id, "editor");
 
-      expect(updated.role).toBe("editor");
-    });
+    expect(updated.role).toBe("editor");
   });
 
   test("throws NotFoundError when the user is not a member", async () => {
-    await withRollback(async (tx) => {
-      const owner = await createUser(tx);
-      const stranger = await createUser(tx);
-      const project = await createProject(tx, owner.id);
+    const owner = await createUser(db);
+    const stranger = await createUser(db);
+    const project = await createProject(db, owner.id);
 
-      await expectThrows(
-        () => members.changeRole(project.id, stranger.id, "editor", tx),
-        NotFoundError
-      );
-    });
+    await expectThrows(
+      () => memberService.changeRole(project.id, stranger.id, "editor"),
+      NotFoundError
+    );
   });
 });

@@ -1,12 +1,10 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import { type Db, type Tx } from "../../db";
+import { type Db, db as defaultDb } from "../../db";
 import { type ProjectInvite, projectInvite } from "../../db/app-schema";
-import { currentDb } from "../../db/context";
 import { ConflictError, GoneError, NotFoundError } from "../../errors";
-import * as members from "../members/service";
-import * as projects from "../projects/service";
-import { type ProjectMembership } from "../projects/service";
+import { memberService } from "../members/service";
+import { type ProjectMembership, projectService } from "../projects/service";
 import type { CreateInviteInput } from "./model";
 
 export interface CreateInviteArgs extends CreateInviteInput {
@@ -28,71 +26,66 @@ function hashToken(token: string): string {
   return new Bun.CryptoHasher("sha256").update(token).digest("hex");
 }
 
-export async function list(projectId: string, db: Db | Tx = currentDb()): Promise<ProjectInvite[]> {
-  return await db.select().from(projectInvite).where(eq(projectInvite.projectId, projectId));
-}
+export class InviteService {
+  constructor(private readonly db: Db) {}
 
-export async function create(
-  args: CreateInviteArgs,
-  db: Db | Tx = currentDb()
-): Promise<CreatedInvite> {
-  const token = generateToken();
-  const tokenHash = hashToken(token);
+  async list(projectId: string): Promise<ProjectInvite[]> {
+    return await this.db.select().from(projectInvite).where(eq(projectInvite.projectId, projectId));
+  }
 
-  const [invite] = await db
-    .insert(projectInvite)
-    .values({ ...args, tokenHash })
-    .returning();
+  async create(args: CreateInviteArgs): Promise<CreatedInvite> {
+    const token = generateToken();
+    const tokenHash = hashToken(token);
 
-  if (!invite) throw new Error("Failed to create invite");
-  return { invite, token };
-}
+    const [invite] = await this.db
+      .insert(projectInvite)
+      .values({ ...args, tokenHash })
+      .returning();
 
-export async function revoke(
-  projectId: string,
-  inviteId: string,
-  db: Db | Tx = currentDb()
-): Promise<ProjectInvite> {
-  const [revoked] = await db
-    .update(projectInvite)
-    .set({ revokedAt: new Date() })
-    .where(
-      and(
-        eq(projectInvite.id, inviteId),
-        eq(projectInvite.projectId, projectId),
-        isNull(projectInvite.revokedAt)
+    if (!invite) throw new Error("Failed to create invite");
+    return { invite, token };
+  }
+
+  async revoke(projectId: string, inviteId: string): Promise<ProjectInvite> {
+    const [revoked] = await this.db
+      .update(projectInvite)
+      .set({ revokedAt: new Date() })
+      .where(
+        and(
+          eq(projectInvite.id, inviteId),
+          eq(projectInvite.projectId, projectId),
+          isNull(projectInvite.revokedAt)
+        )
       )
-    )
-    .returning();
+      .returning();
 
-  if (!revoked) throw new NotFoundError("Invite not found");
-  return revoked;
-}
-
-export async function redeem(
-  userId: string,
-  token: string,
-  db: Db | Tx = currentDb()
-): Promise<ProjectMembership> {
-  const tokenHash = hashToken(token);
-
-  const [invite] = await db
-    .select()
-    .from(projectInvite)
-    .where(eq(projectInvite.tokenHash, tokenHash));
-
-  if (!invite) throw new NotFoundError("Invite not found");
-
-  if (invite.revokedAt || invite.expiresAt.getTime() <= Date.now()) {
-    throw new GoneError("Invite is no longer valid");
+    if (!revoked) throw new NotFoundError("Invite not found");
+    return revoked;
   }
 
-  const proj = await projects.findActive(invite.projectId, db);
+  async redeem(userId: string, token: string): Promise<ProjectMembership> {
+    const tokenHash = hashToken(token);
 
-  if (proj.ownerUserId === userId) {
-    throw new ConflictError("You already own this project");
+    const [invite] = await this.db
+      .select()
+      .from(projectInvite)
+      .where(eq(projectInvite.tokenHash, tokenHash));
+
+    if (!invite) throw new NotFoundError("Invite not found");
+
+    if (invite.revokedAt || invite.expiresAt.getTime() <= Date.now()) {
+      throw new GoneError("Invite is no longer valid");
+    }
+
+    const proj = await projectService.findActive(invite.projectId);
+
+    if (proj.ownerUserId === userId) {
+      throw new ConflictError("You already own this project");
+    }
+
+    await memberService.create(proj.id, userId, invite.role);
+    return { project: proj, role: invite.role };
   }
-
-  await members.create(proj.id, userId, invite.role, db);
-  return { project: proj, role: invite.role };
 }
+
+export const inviteService = new InviteService(defaultDb);
