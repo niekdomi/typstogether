@@ -3,6 +3,7 @@ import { Elysia } from "elysia";
 
 import { NotFoundError } from "./errors";
 import { authRoutes } from "./modules/auth";
+import { startCollabServer } from "./modules/collab/server";
 import { projectRoutes } from "./modules/projects";
 
 const app = new Elysia()
@@ -18,3 +19,5 @@ const app = new Elysia()
   .listen(3000);
 
 console.log("Backend running on port", app.server?.port);
+
+startCollabServer();
