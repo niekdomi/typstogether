@@ -8,7 +8,9 @@ import { projectRoutes } from "./modules/projects";
 const app = new Elysia()
   .use(cors()) // TODO: Restrict to specific domain
   .onError(({ error, status }) => {
-    if (error instanceof NotFoundError) return status(404, error.message);
+    if (error instanceof NotFoundError) {
+      return status(404, error.message);
+    }
     return;
   })
   .use(authRoutes)
