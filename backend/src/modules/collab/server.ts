@@ -3,11 +3,12 @@ import { Hocuspocus } from "@hocuspocus/server";
 import crossws from "crossws/adapters/bun";
 
 import { collabPort } from "../../env";
-import { onAuthenticate } from "./auth";
+import { type CollabContext, onAuthenticate } from "./auth";
 import { persistence } from "./persistence";
 
-const hocuspocus = new Hocuspocus({
+const hocuspocus = new Hocuspocus<CollabContext>({
   extensions: [new Logger(), persistence],
+  quiet: false,
   onAuthenticate,
 });
 

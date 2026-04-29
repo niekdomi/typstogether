@@ -5,7 +5,11 @@ import { db } from "../../db";
 import { project, projectMember } from "../../db/app-schema";
 import { auth } from "../auth/service";
 
-export async function onAuthenticate(data: onAuthenticatePayload) {
+export interface CollabContext {
+  userId: string;
+}
+
+export async function onAuthenticate(data: onAuthenticatePayload): Promise<CollabContext> {
   const session = await auth.api.getSession({ headers: data.requestHeaders });
 
   if (!session) {
