@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import { ForbiddenError, GoneError, NotFoundError, UnauthorizedError } from "./errors";
 import { authRoutes } from "./modules/auth";
 import { inviteRoutes } from "./modules/invites";
+import { memberRoutes } from "./modules/members";
 import { projectRoutes } from "./modules/projects";
 
 const app = new Elysia()
@@ -17,6 +18,7 @@ const app = new Elysia()
   })
   .use(authRoutes)
   .use(projectRoutes)
+  .use(memberRoutes)
   .use(inviteRoutes)
   .listen(3000);
 

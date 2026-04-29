@@ -3,7 +3,8 @@ import { and, eq, isNull } from "drizzle-orm";
 import { type Db, db as defaultDb } from "../../db";
 import { type ProjectInvite, project, projectInvite } from "../../db/app-schema";
 import { GoneError, NotFoundError } from "../../errors";
-import { type ProjectMembership, projectService } from "../projects/service";
+import { memberService } from "../members/service";
+import { type ProjectMembership } from "../projects/service";
 import type { CreateInviteInput } from "./model";
 
 export interface CreateInviteArgs extends CreateInviteInput {
@@ -84,7 +85,7 @@ export class InviteService {
 
       if (!proj) throw new NotFoundError("Invite project not found");
 
-      return await projectService.ensureMembership(tx, proj, userId, invite.role);
+      return await memberService.ensureMembership(tx, proj, userId, invite.role);
     });
   }
 }
