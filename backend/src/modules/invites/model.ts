@@ -18,7 +18,6 @@ export const inviteModels = {
   "invite.create": inviteCreateModel,
   "invite.byToken": inviteByTokenModel,
   "invite.byId": inviteByIdModel,
-  "invite.public": publicInviteModel,
 };
 
 export type CreateInviteInput = typeof inviteCreateModel.static;

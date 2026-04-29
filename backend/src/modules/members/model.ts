@@ -4,7 +4,7 @@ import { t } from "elysia";
 import { projectMember } from "../../db/app-schema";
 import { user } from "../../db/auth-schema";
 
-export const memberRoleModel = t.Union([t.Literal("editor"), t.Literal("viewer")]);
+const memberRoleModel = t.Union([t.Literal("editor"), t.Literal("viewer")]);
 
 export const changeRoleBodyModel = t.Object({ role: memberRoleModel });
 
@@ -22,7 +22,6 @@ export const memberWithUserModel = t.Object({
 export const memberModels = {
   "member.changeRole": changeRoleBodyModel,
   "member.byId": memberByIdModel,
-  "member.withUser": memberWithUserModel,
 };
 
 export type ChangeRoleBody = typeof changeRoleBodyModel.static;
