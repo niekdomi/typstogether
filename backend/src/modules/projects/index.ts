@@ -1,12 +1,10 @@
 import { Elysia } from "elysia";
 
-import { authMacro } from "../auth/macro";
 import { projectAccessMacro } from "./macro";
 import { projectModels } from "./model";
 import { projectService } from "./service";
 
 export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/projects" })
-  .use(authMacro)
   .use(projectAccessMacro)
   .model(projectModels)
 

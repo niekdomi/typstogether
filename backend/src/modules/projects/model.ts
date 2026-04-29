@@ -9,3 +9,4 @@ export const projectModels = {
 };
 
 export type CreateProjectInput = typeof createProjectModel.static;
+export type ByIdProjectParams = typeof byIdProjectModel.static;
