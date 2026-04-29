@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 
 import { projectAccessMacro } from "../projects/macro";
+import { projectMembershipModel } from "../projects/model";
 import { inviteModels, publicInviteModel } from "./model";
 import { inviteService } from "./service";
 
@@ -33,5 +34,5 @@ export const inviteRoutes = new Elysia({ name: "invite-routes" })
   .post(
     "/invites/:token/redeem",
     ({ user, params }) => inviteService.redeem(user.id, params.token),
-    { auth: true, params: "invite.byToken" }
+    { auth: true, params: "invite.byToken", response: projectMembershipModel }
   );

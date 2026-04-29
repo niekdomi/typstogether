@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 
 import { projectAccessMacro } from "../projects/macro";
-import { memberModels, memberWithUserModel } from "./model";
+import { memberModels, memberWithUserModel, projectMemberModel } from "./model";
 import { memberService } from "./service";
 
 export const memberRoutes = new Elysia({ name: "member-routes" })
@@ -16,11 +16,16 @@ export const memberRoutes = new Elysia({ name: "member-routes" })
   .delete(
     "/projects/:id/members/:userId",
     ({ project, params }) => memberService.remove(project.id, params.userId),
-    { projectOwner: true, params: "member.byId" }
+    { projectOwner: true, params: "member.byId", response: projectMemberModel }
   )
 
   .patch(
     "/projects/:id/members/:userId",
     ({ project, params, body }) => memberService.changeRole(project.id, params.userId, body.role),
-    { projectOwner: true, params: "member.byId", body: "member.changeRole" }
+    {
+      projectOwner: true,
+      params: "member.byId",
+      body: "member.changeRole",
+      response: projectMemberModel,
+    }
   );
