@@ -8,6 +8,7 @@ words = [
   "elysiajs",
   "hocuspocus",
   "ost",
+  "typebox",
 ]
 include_paths = [
   "**/*.md",

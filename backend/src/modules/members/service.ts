@@ -29,25 +29,25 @@ export class MemberService {
 
   async ensureMembership(
     tx: Tx,
-    proj: Project,
+    project: Project,
     userId: string,
     desiredRole: ProjectMemberRole
   ): Promise<ProjectMembership> {
-    if (proj.ownerUserId === userId) return { project: proj, role: "owner" };
+    if (project.ownerUserId === userId) return { project: project, role: "owner" };
 
     const [inserted] = await tx
       .insert(projectMember)
-      .values({ projectId: proj.id, userId, role: desiredRole })
+      .values({ projectId: project.id, userId, role: desiredRole })
       .onConflictDoNothing()
       .returning();
-    if (inserted) return { project: proj, role: desiredRole };
+    if (inserted) return { project: project, role: desiredRole };
 
     const [existing] = await tx
       .select()
       .from(projectMember)
-      .where(and(eq(projectMember.projectId, proj.id), eq(projectMember.userId, userId)));
+      .where(and(eq(projectMember.projectId, project.id), eq(projectMember.userId, userId)));
     if (!existing) throw new Error("Failed to upsert member");
-    return { project: proj, role: existing.role };
+    return { project: project, role: existing.role };
   }
 
   async remove(projectId: string, userId: string): Promise<ProjectMember> {
