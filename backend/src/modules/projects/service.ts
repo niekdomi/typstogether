@@ -1,4 +1,4 @@
-import { type InferSelectModel, and, desc, eq, inArray, isNull, or } from "drizzle-orm";
+import { type InferSelectModel, and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
 
 import { type Db, db as defaultDb } from "../../db";
 import { project, projectMember } from "../../db/app-schema";
@@ -7,39 +7,58 @@ import type { CreateProjectInput } from "./model";
 
 export type Project = InferSelectModel<typeof project>;
 
+export type ProjectRole = "owner" | "editor" | "viewer";
+
+export interface ProjectMembership {
+  project: Project;
+  role: ProjectRole;
+}
+
 export class ProjectService {
   constructor(private readonly db: Db) {}
 
-  async list(userId: string): Promise<Project[]> {
-    return await this.db
-      .select()
+  async list(userId: string): Promise<ProjectMembership[]> {
+    const rows = await this.db
+      .select({ project, memberRole: projectMember.role })
       .from(project)
-      .where(and(isNull(project.deletedAt), this.accessibleBy(userId)))
+      .leftJoin(
+        projectMember,
+        and(eq(projectMember.projectId, project.id), eq(projectMember.userId, userId))
+      )
+      .where(
+        and(
+          isNull(project.deletedAt),
+          or(eq(project.ownerUserId, userId), isNotNull(projectMember.userId))
+        )
+      )
       .orderBy(desc(project.updatedAt));
+
+    return rows.map((row) => ({
+      project: row.project,
+      role: row.project.ownerUserId === userId ? "owner" : row.memberRole!,
+    }));
   }
 
-  async getAccessibleBy(userId: string, id: string): Promise<Project> {
+  async getMembership(userId: string, id: string): Promise<ProjectMembership> {
     const [row] = await this.db
-      .select()
+      .select({ project, memberRole: projectMember.role })
       .from(project)
-      .where(and(eq(project.id, id), isNull(project.deletedAt), this.accessibleBy(userId)));
+      .leftJoin(
+        projectMember,
+        and(eq(projectMember.projectId, project.id), eq(projectMember.userId, userId))
+      )
+      .where(and(eq(project.id, id), isNull(project.deletedAt)));
 
-    if (!row) {
-      throw new NotFoundError("Project not found");
+    if (row) {
+      if (row.project.ownerUserId === userId) {
+        return { project: row.project, role: "owner" };
+      }
+      if (row.memberRole) {
+        return { project: row.project, role: row.memberRole };
+      }
     }
-    return row;
-  }
 
-  async getOwnedBy(userId: string, id: string): Promise<Project> {
-    const [row] = await this.db
-      .select()
-      .from(project)
-      .where(and(eq(project.id, id), isNull(project.deletedAt), this.ownedBy(userId)));
-
-    if (!row) {
-      throw new NotFoundError("Project not found");
-    }
-    return row;
+    throw new NotFoundError("Project not found");
   }
 
   async create(userId: string, input: CreateProjectInput): Promise<Project | undefined> {
@@ -64,23 +83,6 @@ export class ProjectService {
       throw new NotFoundError("Project not found");
     }
     return deleted;
-  }
-
-  private ownedBy(userId: string) {
-    return eq(project.ownerUserId, userId);
-  }
-
-  private accessibleBy(userId: string) {
-    return or(
-      this.ownedBy(userId),
-      inArray(
-        project.id,
-        this.db
-          .select({ id: projectMember.projectId })
-          .from(projectMember)
-          .where(eq(projectMember.userId, userId))
-      )
-    );
   }
 }
 

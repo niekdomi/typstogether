@@ -17,6 +17,6 @@ export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/proj
     auth: true,
   })
 
-  .get("/:id", ({ project }) => project, { projectMember: true })
+  .get("/:id", ({ project, role }) => ({ project, role }), { projectMember: true })
 
   .delete("/:id", ({ project }) => projectService.delete(project.id), { projectOwner: true });
