@@ -11,8 +11,8 @@ export const inviteCreateModel = t.Object({
 export const inviteByTokenModel = t.Object({ token: t.String({ minLength: 1 }) });
 export const inviteByIdModel = t.Object({ id: t.String(), inviteId: t.String() });
 
-const projectInviteSchema = createSelectSchema(projectInvite);
-export const publicInviteModel = t.Omit(projectInviteSchema, ["tokenHash"]);
+const projectInviteSelectSchema = createSelectSchema(projectInvite);
+export const publicInviteModel = t.Omit(projectInviteSelectSchema, ["tokenHash"]);
 
 export const inviteModels = {
   "invite.create": inviteCreateModel,

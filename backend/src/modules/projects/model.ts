@@ -6,8 +6,7 @@ import { project } from "../../db/app-schema";
 export const createProjectModel = t.Object({ name: t.String({ minLength: 1 }) });
 export const byIdProjectModel = t.Object({ id: t.String() });
 
-const projectSelectSchema = createSelectSchema(project);
-export const projectModel = projectSelectSchema;
+export const projectModel = createSelectSchema(project);
 
 export const projectRoleModel = t.Union([
   t.Literal("owner"),

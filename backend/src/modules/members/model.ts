@@ -11,8 +11,8 @@ export const changeRoleBodyModel = t.Object({ role: memberRoleModel });
 export const memberByIdModel = t.Object({ id: t.String(), userId: t.String() });
 
 export const projectMemberModel = createSelectSchema(projectMember);
-const userSchema = createSelectSchema(user);
-const publicUserModel = t.Pick(userSchema, ["id", "name", "email", "image"]);
+const userSelectSchema = createSelectSchema(user);
+const publicUserModel = t.Pick(userSelectSchema, ["id", "name", "email", "image"]);
 
 export const memberWithUserModel = t.Object({
   member: projectMemberModel,
