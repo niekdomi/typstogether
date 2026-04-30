@@ -1,23 +1,18 @@
-import { db } from "../src/db";
-import { project, projectInvite, projectMember } from "../src/db/app-schema";
-import { user } from "../src/db/auth-schema";
+import { reset } from "drizzle-seed";
 
-/**
- * Truncate all app tables. Use in `afterEach` to isolate tests from each other.
- * Order matters because of foreign keys; deleting from `user` first relies on
- * cascade rules covering everything downstream.
- */
+import { db } from "../src/db";
+import * as schema from "../src/db/schema";
+
+/** Truncate every table in the schema (TRUNCATE CASCADE under the hood). */
 export async function cleanDb(): Promise<void> {
-  await db.delete(projectMember);
-  await db.delete(projectInvite);
-  await db.delete(project);
-  await db.delete(user);
+  await reset(db, schema);
 }
 
 /**
  * Assert that `fn` throws an instance of `errorClass`. Returns the caught
- * error for further assertions. `expect(...).rejects` in `bun:test` is typed
- * loosely; this wrapper is precise.
+ * error for further property assertions. Wraps around `expect(...).rejects`
+ * which is typed as `void` in `bun:test` and trips
+ * `@typescript-eslint/no-confusing-void-expression` when awaited.
  */
 export async function expectThrows<E extends Error>(
   fn: () => Promise<unknown>,

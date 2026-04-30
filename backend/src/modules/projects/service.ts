@@ -1,9 +1,8 @@
 import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
 
-import { BaseService } from "../../base-service";
-import { db as defaultDb } from "../../db";
 import { type Project, project, projectMember } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
+import { currentDb } from "../../tx";
 import type { CreateProjectInput } from "./model";
 
 export type ProjectRole = "owner" | "editor" | "viewer";
@@ -13,9 +12,9 @@ export interface ProjectMembership {
   role: ProjectRole;
 }
 
-export class ProjectService extends BaseService {
+export class ProjectService {
   private membershipSelect(userId: string) {
-    return this.db
+    return currentDb()
       .select({ project, memberRole: projectMember.role })
       .from(project)
       .leftJoin(
@@ -41,7 +40,7 @@ export class ProjectService extends BaseService {
   }
 
   async findActive(id: string): Promise<Project> {
-    const [proj] = await this.db
+    const [proj] = await currentDb()
       .select()
       .from(project)
       .where(and(eq(project.id, id), isNull(project.deletedAt)));
@@ -67,7 +66,7 @@ export class ProjectService extends BaseService {
   }
 
   async create(userId: string, input: CreateProjectInput): Promise<Project> {
-    const [created] = await this.db
+    const [created] = await currentDb()
       .insert(project)
       .values({ name: input.name, ownerUserId: userId })
       .returning();
@@ -77,7 +76,7 @@ export class ProjectService extends BaseService {
   }
 
   async remove(id: string): Promise<Project> {
-    const [deleted] = await this.db
+    const [deleted] = await currentDb()
       .update(project)
       .set({ deletedAt: new Date() })
       .where(and(eq(project.id, id), isNull(project.deletedAt)))
@@ -88,4 +87,4 @@ export class ProjectService extends BaseService {
   }
 }
 
-export const projectService = new ProjectService(defaultDb);
+export const projectService = new ProjectService();

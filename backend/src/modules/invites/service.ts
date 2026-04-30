@@ -1,9 +1,8 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import { BaseService } from "../../base-service";
-import { db as defaultDb } from "../../db";
 import { type ProjectInvite, projectInvite } from "../../db/app-schema";
 import { ConflictError, GoneError, NotFoundError } from "../../errors";
+import { currentDb } from "../../tx";
 import { memberService } from "../members/service";
 import { type ProjectMembership, projectService } from "../projects/service";
 import type { CreateInviteInput } from "./model";
@@ -27,16 +26,19 @@ function hashToken(token: string): string {
   return new Bun.CryptoHasher("sha256").update(token).digest("hex");
 }
 
-export class InviteService extends BaseService {
+export class InviteService {
   async list(projectId: string): Promise<ProjectInvite[]> {
-    return await this.db.select().from(projectInvite).where(eq(projectInvite.projectId, projectId));
+    return await currentDb()
+      .select()
+      .from(projectInvite)
+      .where(eq(projectInvite.projectId, projectId));
   }
 
   async create(args: CreateInviteArgs): Promise<CreatedInvite> {
     const token = generateToken();
     const tokenHash = hashToken(token);
 
-    const [invite] = await this.db
+    const [invite] = await currentDb()
       .insert(projectInvite)
       .values({ ...args, tokenHash })
       .returning();
@@ -46,7 +48,7 @@ export class InviteService extends BaseService {
   }
 
   async revoke(projectId: string, inviteId: string): Promise<ProjectInvite> {
-    const [revoked] = await this.db
+    const [revoked] = await currentDb()
       .update(projectInvite)
       .set({ revokedAt: new Date() })
       .where(
@@ -65,7 +67,7 @@ export class InviteService extends BaseService {
   async redeem(userId: string, token: string): Promise<ProjectMembership> {
     const tokenHash = hashToken(token);
 
-    const [invite] = await this.db
+    const [invite] = await currentDb()
       .select()
       .from(projectInvite)
       .where(eq(projectInvite.tokenHash, tokenHash));
@@ -87,4 +89,4 @@ export class InviteService extends BaseService {
   }
 }
 
-export const inviteService = new InviteService(defaultDb);
+export const inviteService = new InviteService();

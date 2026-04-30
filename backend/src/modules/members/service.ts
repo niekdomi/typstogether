@@ -1,10 +1,9 @@
 import { and, eq } from "drizzle-orm";
 
-import { BaseService } from "../../base-service";
-import { db as defaultDb } from "../../db";
 import { type ProjectMember, projectMember } from "../../db/app-schema";
 import { user } from "../../db/auth-schema";
 import { ConflictError, NotFoundError } from "../../errors";
+import { currentDb } from "../../tx";
 import { type ProjectRole } from "../projects/service";
 
 export type ProjectMemberRole = Exclude<ProjectRole, "owner">;
@@ -14,9 +13,9 @@ export interface MemberWithUser {
   user: { id: string; name: string; email: string; image: string | null };
 }
 
-export class MemberService extends BaseService {
+export class MemberService {
   async list(projectId: string): Promise<MemberWithUser[]> {
-    return await this.db
+    return await currentDb()
       .select({
         member: projectMember,
         user: { id: user.id, name: user.name, email: user.email, image: user.image },
@@ -27,7 +26,7 @@ export class MemberService extends BaseService {
   }
 
   async create(projectId: string, userId: string, role: ProjectMemberRole): Promise<ProjectMember> {
-    const [member] = await this.db
+    const [member] = await currentDb()
       .insert(projectMember)
       .values({ projectId, userId, role })
       .onConflictDoNothing()
@@ -37,7 +36,7 @@ export class MemberService extends BaseService {
   }
 
   async remove(projectId: string, userId: string): Promise<ProjectMember> {
-    const [removed] = await this.db
+    const [removed] = await currentDb()
       .delete(projectMember)
       .where(and(eq(projectMember.projectId, projectId), eq(projectMember.userId, userId)))
       .returning();
@@ -51,7 +50,7 @@ export class MemberService extends BaseService {
     userId: string,
     newRole: ProjectMemberRole
   ): Promise<ProjectMember> {
-    const [updated] = await this.db
+    const [updated] = await currentDb()
       .update(projectMember)
       .set({ role: newRole })
       .where(and(eq(projectMember.projectId, projectId), eq(projectMember.userId, userId)))
@@ -62,4 +61,4 @@ export class MemberService extends BaseService {
   }
 }
 
-export const memberService = new MemberService(defaultDb);
+export const memberService = new MemberService();
