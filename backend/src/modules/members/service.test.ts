@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 
-import { createProject, createUser } from "../../../test/factories";
+import { projectFactory, userFactory } from "../../../test/factories";
 import { cleanDb, expectThrows } from "../../../test/helpers";
 import { ConflictError, NotFoundError } from "../../errors";
 import { memberService } from "./service";
@@ -9,8 +9,8 @@ afterEach(cleanDb);
 
 describe("MemberService.list", () => {
   test("returns empty for project with no members", async () => {
-    const owner = await createUser();
-    const project = await createProject(owner.id);
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
 
     const result = await memberService.list(project.id);
 
@@ -18,9 +18,9 @@ describe("MemberService.list", () => {
   });
 
   test("returns members joined to user info", async () => {
-    const owner = await createUser();
-    const member = await createUser();
-    const project = await createProject(owner.id);
+    const owner = await userFactory.create();
+    const member = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
     await memberService.create(project.id, member.id, "editor");
 
     const result = await memberService.list(project.id);
@@ -35,9 +35,9 @@ describe("MemberService.list", () => {
 
 describe("MemberService.create", () => {
   test("inserts a new member with the given role", async () => {
-    const owner = await createUser();
-    const member = await createUser();
-    const project = await createProject(owner.id);
+    const owner = await userFactory.create();
+    const member = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
 
     const result = await memberService.create(project.id, member.id, "editor");
 
@@ -47,9 +47,9 @@ describe("MemberService.create", () => {
   });
 
   test("throws ConflictError when the user is already a member", async () => {
-    const owner = await createUser();
-    const member = await createUser();
-    const project = await createProject(owner.id);
+    const owner = await userFactory.create();
+    const member = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
     await memberService.create(project.id, member.id, "editor");
 
     await expectThrows(() => memberService.create(project.id, member.id, "viewer"), ConflictError);
@@ -58,9 +58,9 @@ describe("MemberService.create", () => {
 
 describe("MemberService.remove", () => {
   test("removes an existing member", async () => {
-    const owner = await createUser();
-    const member = await createUser();
-    const project = await createProject(owner.id);
+    const owner = await userFactory.create();
+    const member = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
     await memberService.create(project.id, member.id, "editor");
 
     const removed = await memberService.remove(project.id, member.id);
@@ -70,9 +70,9 @@ describe("MemberService.remove", () => {
   });
 
   test("throws NotFoundError when the user is not a member", async () => {
-    const owner = await createUser();
-    const stranger = await createUser();
-    const project = await createProject(owner.id);
+    const owner = await userFactory.create();
+    const stranger = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
 
     await expectThrows(() => memberService.remove(project.id, stranger.id), NotFoundError);
   });
@@ -80,9 +80,9 @@ describe("MemberService.remove", () => {
 
 describe("MemberService.changeRole", () => {
   test("updates the role of an existing member", async () => {
-    const owner = await createUser();
-    const member = await createUser();
-    const project = await createProject(owner.id);
+    const owner = await userFactory.create();
+    const member = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
     await memberService.create(project.id, member.id, "viewer");
 
     const updated = await memberService.changeRole(project.id, member.id, "editor");
@@ -91,9 +91,9 @@ describe("MemberService.changeRole", () => {
   });
 
   test("throws NotFoundError when the user is not a member", async () => {
-    const owner = await createUser();
-    const stranger = await createUser();
-    const project = await createProject(owner.id);
+    const owner = await userFactory.create();
+    const stranger = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
 
     await expectThrows(
       () => memberService.changeRole(project.id, stranger.id, "editor"),

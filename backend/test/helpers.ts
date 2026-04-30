@@ -8,7 +8,7 @@ export async function cleanDb(): Promise<void> {
 }
 
 export async function expectThrows<E extends Error>(
-  fn: () => Promise<void>,
+  fn: () => Promise<unknown>,
   errorClass: new (...args: never[]) => E
 ): Promise<E> {
   try {
