@@ -1,5 +1,5 @@
 import { PGlite } from "@electric-sql/pglite";
-import { mock } from "bun:test";
+import { afterAll, mock } from "bun:test";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
@@ -12,3 +12,7 @@ await migrate(db, { migrationsFolder: "./drizzle" });
 await mock.module("../src/db", () => ({
   db,
 }));
+
+afterAll(async () => {
+  await client.close();
+});
