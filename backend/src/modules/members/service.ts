@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
-import { type Db, db as defaultDb } from "../../db";
+import { BaseService } from "../../base-service";
+import { db as defaultDb } from "../../db";
 import { type ProjectMember, projectMember } from "../../db/app-schema";
 import { user } from "../../db/auth-schema";
 import { ConflictError, NotFoundError } from "../../errors";
@@ -13,9 +14,7 @@ export interface MemberWithUser {
   user: { id: string; name: string; email: string; image: string | null };
 }
 
-export class MemberService {
-  constructor(private readonly db: Db) {}
-
+export class MemberService extends BaseService {
   async list(projectId: string): Promise<MemberWithUser[]> {
     return await this.db
       .select({

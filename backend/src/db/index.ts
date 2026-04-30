@@ -8,4 +8,7 @@ const client = new SQL(databaseUrl);
 
 export const db = drizzle({ client, schema });
 
-export type Db = typeof db;
+type Database = typeof db;
+type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+
+export type Db = Database | Transaction;

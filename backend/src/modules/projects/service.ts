@@ -1,6 +1,7 @@
 import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
 
-import { type Db, db as defaultDb } from "../../db";
+import { BaseService } from "../../base-service";
+import { db as defaultDb } from "../../db";
 import { type Project, project, projectMember } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import type { CreateProjectInput } from "./model";
@@ -12,9 +13,7 @@ export interface ProjectMembership {
   role: ProjectRole;
 }
 
-export class ProjectService {
-  constructor(private readonly db: Db) {}
-
+export class ProjectService extends BaseService {
   private membershipSelect(userId: string) {
     return this.db
       .select({ project, memberRole: projectMember.role })

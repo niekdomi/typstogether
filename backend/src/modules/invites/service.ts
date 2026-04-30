@@ -1,6 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import { type Db, db as defaultDb } from "../../db";
+import { BaseService } from "../../base-service";
+import { db as defaultDb } from "../../db";
 import { type ProjectInvite, projectInvite } from "../../db/app-schema";
 import { ConflictError, GoneError, NotFoundError } from "../../errors";
 import { memberService } from "../members/service";
@@ -26,9 +27,7 @@ function hashToken(token: string): string {
   return new Bun.CryptoHasher("sha256").update(token).digest("hex");
 }
 
-export class InviteService {
-  constructor(private readonly db: Db) {}
-
+export class InviteService extends BaseService {
   async list(projectId: string): Promise<ProjectInvite[]> {
     return await this.db.select().from(projectInvite).where(eq(projectInvite.projectId, projectId));
   }
@@ -66,25 +65,27 @@ export class InviteService {
   async redeem(userId: string, token: string): Promise<ProjectMembership> {
     const tokenHash = hashToken(token);
 
-    const [invite] = await this.db
-      .select()
-      .from(projectInvite)
-      .where(eq(projectInvite.tokenHash, tokenHash));
+    return this.withTx(async () => {
+      const [invite] = await this.db
+        .select()
+        .from(projectInvite)
+        .where(eq(projectInvite.tokenHash, tokenHash));
 
-    if (!invite) throw new NotFoundError("Invite not found");
+      if (!invite) throw new NotFoundError("Invite not found");
 
-    if (invite.revokedAt || invite.expiresAt.getTime() <= Date.now()) {
-      throw new GoneError("Invite is no longer valid");
-    }
+      if (invite.revokedAt || invite.expiresAt.getTime() <= Date.now()) {
+        throw new GoneError("Invite is no longer valid");
+      }
 
-    const project = await projectService.findActive(invite.projectId);
+      const project = await projectService.findActive(invite.projectId);
 
-    if (project.ownerUserId === userId) {
-      throw new ConflictError("You already own this project");
-    }
+      if (project.ownerUserId === userId) {
+        throw new ConflictError("You already own this project");
+      }
 
-    await memberService.create(project.id, userId, invite.role);
-    return { project: project, role: invite.role };
+      await memberService.create(project.id, userId, invite.role);
+      return { project, role: invite.role };
+    });
   }
 }
 
