@@ -11,7 +11,7 @@ export function currentDb(): Db {
 
 /**
  * Run `fn` inside a transaction. Nested calls join the surrounding tx as a
- * savepoint. Throwing from `fn` rolls back. Service methods that read the DB
+ * checkpoint. Throwing from `fn` rolls back. Service methods that read the DB
  * via `currentDb()` automatically pick up the tx.
  */
 export function withTx<T>(fn: () => Promise<T>): Promise<T> {
