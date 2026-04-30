@@ -65,27 +65,25 @@ export class InviteService extends BaseService {
   async redeem(userId: string, token: string): Promise<ProjectMembership> {
     const tokenHash = hashToken(token);
 
-    return this.withTx(async () => {
-      const [invite] = await this.db
-        .select()
-        .from(projectInvite)
-        .where(eq(projectInvite.tokenHash, tokenHash));
+    const [invite] = await this.db
+      .select()
+      .from(projectInvite)
+      .where(eq(projectInvite.tokenHash, tokenHash));
 
-      if (!invite) throw new NotFoundError("Invite not found");
+    if (!invite) throw new NotFoundError("Invite not found");
 
-      if (invite.revokedAt || invite.expiresAt.getTime() <= Date.now()) {
-        throw new GoneError("Invite is no longer valid");
-      }
+    if (invite.revokedAt || invite.expiresAt.getTime() <= Date.now()) {
+      throw new GoneError("Invite is no longer valid");
+    }
 
-      const project = await projectService.findActive(invite.projectId);
+    const project = await projectService.findActive(invite.projectId);
 
-      if (project.ownerUserId === userId) {
-        throw new ConflictError("You already own this project");
-      }
+    if (project.ownerUserId === userId) {
+      throw new ConflictError("You already own this project");
+    }
 
-      await memberService.create(project.id, userId, invite.role);
-      return { project, role: invite.role };
-    });
+    await memberService.create(project.id, userId, invite.role);
+    return { project: project, role: invite.role };
   }
 }
 
