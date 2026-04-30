@@ -68,7 +68,6 @@ export default defineConfig(
       "unicorn/no-empty-file": "off",
       "unicorn/no-null": "off",
       "unicorn/prevent-abbreviations": "off",
-      curly: ["error", "all"],
       eqeqeq: ["error", "always"],
       yoda: "error",
     },
