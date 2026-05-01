@@ -2,7 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import { type ProjectInvite, projectInvite } from "../../db/app-schema";
 import { ConflictError, GoneError, NotFoundError } from "../../errors";
-import { currentDb } from "../../tx";
+import { currentDb } from "../../transaction";
 import { memberService } from "../members/service";
 import { type ProjectMembership, projectService } from "../projects/service";
 import type { CreateInviteInput } from "./model";

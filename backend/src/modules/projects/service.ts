@@ -2,7 +2,7 @@ import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
 
 import { type Project, project, projectMember } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
-import { currentDb } from "../../tx";
+import { currentDb } from "../../transaction";
 import type { CreateProjectInput } from "./model";
 
 export type ProjectRole = "owner" | "editor" | "viewer";

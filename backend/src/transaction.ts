@@ -10,9 +10,8 @@ export function currentDb(): Db {
 }
 
 /**
- * Run `fn` inside a transaction. Nested calls join the surrounding tx as a
- * checkpoint. Throwing from `fn` rolls back. Service methods that read the DB
- * via `currentDb()` automatically pick up the tx.
+ * Runs `fn` in a transaction; `currentDb()` calls inside it see the tx.
+ * Nested `withTx` calls become savepoints of the outer transaction.
  */
 export function withTx<T>(fn: () => Promise<T>): Promise<T> {
   return currentDb().transaction((tx) => txStorage.run(tx, fn));

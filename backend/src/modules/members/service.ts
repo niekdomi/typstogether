@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { type ProjectMember, projectMember } from "../../db/app-schema";
 import { user } from "../../db/auth-schema";
 import { ConflictError, NotFoundError } from "../../errors";
-import { currentDb } from "../../tx";
+import { currentDb } from "../../transaction";
 import { type ProjectRole } from "../projects/service";
 
 export type ProjectMemberRole = Exclude<ProjectRole, "owner">;
