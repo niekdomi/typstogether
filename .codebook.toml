@@ -8,6 +8,7 @@ words = [
   "elysiajs",
   "hocuspocus",
   "ost",
+  "savepoint",
   "typebox",
 ]
 include_paths = [
