@@ -1,34 +1,23 @@
-export class NotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "NotFoundError";
-  }
+export abstract class HttpError extends Error {
+  abstract readonly status: number;
 }
 
-export class ForbiddenError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ForbiddenError";
-  }
+export class UnauthorizedError extends HttpError {
+  readonly status = 401;
 }
 
-export class UnauthorizedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "UnauthorizedError";
-  }
+export class ForbiddenError extends HttpError {
+  readonly status = 403;
 }
 
-export class GoneError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "GoneError";
-  }
+export class NotFoundError extends HttpError {
+  readonly status = 404;
 }
 
-export class ConflictError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ConflictError";
-  }
+export class ConflictError extends HttpError {
+  readonly status = 409;
+}
+
+export class GoneError extends HttpError {
+  readonly status = 410;
 }
