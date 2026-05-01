@@ -69,18 +69,17 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
-      pull-requests: write
 
     steps:
-      - run: echo "test job not yet enabled"
-      # - name: Checkout repository
-      #   uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-      # - name: Setup Bun
-      #   uses: oven-sh/setup-bun@v2
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
-      # - name: Install dependencies
-      #   run: bun install --frozen-lockfile
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
-      # - name: Test
-      #   run: bun run test
+      - name: Test
+        working-directory: backend
+        run: bun test
