@@ -43,7 +43,7 @@ export default defineConfig(
         { selector: "objectLiteralProperty", format: null },
         { selector: "parameter", format: ["camelCase"], leadingUnderscore: "allow" },
         { selector: "typeLike", format: ["PascalCase"] },
-        { selector: "variable", format: ["camelCase", "PascalCase"] },
+        { selector: "variable", format: ["camelCase", "PascalCase", "SCREAMING_SNAKE_CASE"] },
       ],
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/no-shadow": "error",

@@ -19,7 +19,7 @@ const ws = crossws({
     open(peer) {
       const wsLike = {
         get readyState() {
-          return peer.websocket.readyState ?? 3;
+          return peer.websocket.readyState ?? 3; // 3 = CLOSED
         },
         send(data: unknown) {
           peer.send(data);
@@ -40,7 +40,7 @@ const ws = crossws({
       connection.delete(peer.id);
     },
     error(peer, error) {
-      console.error("Websocket error for peer", peer.id, error);
+      console.error("WebSocket error for peer:", peer.id, error);
     },
   },
 });
