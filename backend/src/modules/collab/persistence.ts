@@ -9,8 +9,7 @@ export const persistence = new Database({
     const [row] = await db
       .select({ state: collabDocument.state })
       .from(collabDocument)
-      .where(eq(collabDocument.projectId, documentName))
-      .limit(1);
+      .where(eq(collabDocument.projectId, documentName));
 
     return row?.state ?? null;
   },
