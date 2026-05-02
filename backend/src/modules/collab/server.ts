@@ -57,5 +57,5 @@ export function startCollabServer() {
     },
   });
 
-  console.log("Collab server running on port", collabPort);
+  console.log("Collab server running on port:", collabPort);
 }
