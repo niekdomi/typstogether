@@ -23,6 +23,3 @@ vite.config.ts.timestamp-*
 
 # Router
 frontend/.router/
-
-# Drizzle migrations (Ignore during early development)
-backend/drizzle/
