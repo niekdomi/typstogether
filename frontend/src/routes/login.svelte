@@ -5,12 +5,12 @@
 
   async function loadProviders() {
     const { data } = await api.auth.providers.get();
-    if (data) providers = data;
+    if (data) {
+      providers = data;
+    }
   }
 
-  $effect(() => {
-    void loadProviders();
-  });
+  $effect(() => void loadProviders());
 
   async function signIn(provider: string) {
     const res = await fetch(`${baseUrl}/api/auth/sign-in/social`, {
