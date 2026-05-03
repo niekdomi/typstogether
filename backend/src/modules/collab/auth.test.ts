@@ -12,9 +12,9 @@ describe("authorizeCollab", () => {
   test("throws ForbiddenError when user has no membership", async () => {
     const owner = await userFactory.create();
     const stranger = await userFactory.create();
-    const proj = await projectFactory.create({ ownerUserId: owner.id });
+    const project = await projectFactory.create({ ownerUserId: owner.id });
 
-    await expectThrows(() => authorizeCollab(stranger.id, proj.id), ForbiddenError);
+    await expectThrows(() => authorizeCollab(stranger.id, project.id), ForbiddenError);
   });
 
   test("throws ForbiddenError for a non-existent project", async () => {
@@ -26,25 +26,25 @@ describe("authorizeCollab", () => {
   test("returns readOnly true for viewer", async () => {
     const owner = await userFactory.create();
     const viewer = await userFactory.create();
-    const proj = await projectFactory.create({ ownerUserId: owner.id });
-    await memberService.create(proj.id, viewer.id, "viewer");
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    await memberService.create(project.id, viewer.id, "viewer");
 
-    expect(await authorizeCollab(viewer.id, proj.id)).toEqual({ readOnly: true });
+    expect(await authorizeCollab(viewer.id, project.id)).toEqual({ readOnly: true });
   });
 
   test("returns readOnly false for editor", async () => {
     const owner = await userFactory.create();
     const editor = await userFactory.create();
-    const proj = await projectFactory.create({ ownerUserId: owner.id });
-    await memberService.create(proj.id, editor.id, "editor");
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    await memberService.create(project.id, editor.id, "editor");
 
-    expect(await authorizeCollab(editor.id, proj.id)).toEqual({ readOnly: false });
+    expect(await authorizeCollab(editor.id, project.id)).toEqual({ readOnly: false });
   });
 
   test("returns readOnly false for owner", async () => {
     const owner = await userFactory.create();
-    const proj = await projectFactory.create({ ownerUserId: owner.id });
+    const project = await projectFactory.create({ ownerUserId: owner.id });
 
-    expect(await authorizeCollab(owner.id, proj.id)).toEqual({ readOnly: false });
+    expect(await authorizeCollab(owner.id, project.id)).toEqual({ readOnly: false });
   });
 });
