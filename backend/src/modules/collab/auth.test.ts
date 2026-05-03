@@ -2,25 +2,25 @@ import { afterEach, describe, expect, test } from "bun:test";
 
 import { projectFactory, userFactory } from "../../../test/factories";
 import { cleanDb, expectThrows } from "../../../test/helpers";
-import { ForbiddenError } from "../../errors";
+import { NotFoundError } from "../../errors";
 import { memberService } from "../members/service";
 import { authorizeCollab } from "./authorization";
 
 afterEach(cleanDb);
 
 describe("authorizeCollab", () => {
-  test("throws ForbiddenError when user has no membership", async () => {
+  test("throws NotFoundError when user has no membership", async () => {
     const owner = await userFactory.create();
     const stranger = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
 
-    await expectThrows(() => authorizeCollab(stranger.id, project.id), ForbiddenError);
+    await expectThrows(() => authorizeCollab(stranger.id, project.id), NotFoundError);
   });
 
-  test("throws ForbiddenError for a non-existent project", async () => {
+  test("throws NotFoundError for a non-existent project", async () => {
     const user = await userFactory.create();
 
-    await expectThrows(() => authorizeCollab(user.id, crypto.randomUUID()), ForbiddenError);
+    await expectThrows(() => authorizeCollab(user.id, crypto.randomUUID()), NotFoundError);
   });
 
   test("returns readOnly true for viewer", async () => {
