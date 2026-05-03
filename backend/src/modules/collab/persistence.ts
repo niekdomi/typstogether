@@ -1,26 +1,29 @@
 import { Database } from "@hocuspocus/extension-database";
 import { eq } from "drizzle-orm";
 
-import { currentDb } from "../../transaction";
 import { collabDocument } from "../../db/app-schema";
+import { currentDb } from "../../transaction";
+
+export async function fetchDocument(projectId: string): Promise<Uint8Array | null> {
+  const [row] = await currentDb()
+    .select({ state: collabDocument.state })
+    .from(collabDocument)
+    .where(eq(collabDocument.projectId, projectId));
+
+  return row?.state ?? null;
+}
+
+export async function storeDocument(projectId: string, state: Uint8Array): Promise<void> {
+  await currentDb()
+    .insert(collabDocument)
+    .values({ projectId, state })
+    .onConflictDoUpdate({
+      target: collabDocument.projectId,
+      set: { state, updatedAt: new Date() },
+    });
+}
 
 export const persistence = new Database({
-  async fetch({ documentName }) {
-    const [row] = await currentDb()
-      .select({ state: collabDocument.state })
-      .from(collabDocument)
-      .where(eq(collabDocument.projectId, documentName));
-
-    return row?.state ?? null;
-  },
-
-  async store({ documentName, state }) {
-    await currentDb()
-      .insert(collabDocument)
-      .values({ projectId: documentName, state })
-      .onConflictDoUpdate({
-        target: collabDocument.projectId,
-        set: { state, updatedAt: new Date() },
-      });
-  },
+  fetch: ({ documentName }) => fetchDocument(documentName),
+  store: ({ documentName, state }) => storeDocument(documentName, state),
 });
