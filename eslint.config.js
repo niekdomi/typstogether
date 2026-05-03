@@ -34,6 +34,9 @@ export default defineConfig(
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    settings: {
+      "import-x/ignore": ["node_modules"],
+    },
     rules: {
       "@typescript-eslint/default-param-last": "error",
       "@typescript-eslint/naming-convention": [
