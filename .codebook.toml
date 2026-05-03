@@ -11,6 +11,7 @@ words = [
   "savepoints",
   "typebox",
   "typstogether",
+  "upserts",
 ]
 include_paths = [
   "**/*.md",
