@@ -10,7 +10,7 @@ words = [
   "ost",
   "savepoints",
   "typebox",
-  "typstogether"
+  "typstogether",
 ]
 include_paths = [
   "**/*.md",
