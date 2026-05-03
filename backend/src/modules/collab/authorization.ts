@@ -7,4 +7,3 @@ export async function authorizeCollab(
   const membership = await projectService.getMembership(userId, projectId);
   return { readOnly: membership.role === "viewer" };
 }
-
