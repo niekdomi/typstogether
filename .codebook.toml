@@ -10,6 +10,7 @@ words = [
   "ost",
   "savepoints",
   "typebox",
+  "upserts",
 ]
 include_paths = [
   "**/*.md",
