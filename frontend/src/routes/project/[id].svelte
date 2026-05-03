@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { routes } from "sv-router/generated";
+  import { route } from "sv-router/generated";
 
-  const id = $derived(routes.params.id);
+  const id = $derived(route.params.id);
 </script>
 
 <main>

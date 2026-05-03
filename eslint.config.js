@@ -79,6 +79,12 @@ export default defineConfig(
     },
   },
   {
+    files: ["**/routes/**/*.svelte"],
+    rules: {
+      "unicorn/filename-case": "off",
+    },
+  },
+  {
     files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
     languageOptions: {
       parserOptions: {

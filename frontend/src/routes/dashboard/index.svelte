@@ -1,10 +1,10 @@
 <script lang="ts">
   import { p } from "sv-router/generated";
 
-  type Project = {
+  interface Project {
     id: string;
     name: string;
-  };
+  }
 
   // TODO: Replace with API
   let projects = $state<Project[]>([
@@ -34,12 +34,16 @@
     {#each projects as project (project.id)}
       <li>
         <span>{project.name}</span>
-        <a href={p("/dashboard")}>Open</a>
-        <button onclick={() => deleteProject(project.id)}>Delete</button>
+        <a href={p("/project/[id]", { params: { id: project.id } })}>Open</a>
+        <button
+          onclick={() => {
+            deleteProject(project.id);
+          }}>Delete</button
+        >
       </li>
     {/each}
   </ul>
 
-  <input value={newProjectName} placeholder="Project name" />
+  <input bind:value={newProjectName} placeholder="Project name" />
   <button onclick={createProject}>New Project</button>
 </main>
