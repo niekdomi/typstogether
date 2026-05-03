@@ -1,12 +1,12 @@
 import { Database } from "@hocuspocus/extension-database";
 import { eq } from "drizzle-orm";
 
-import { db } from "../../db";
+import { currentDb } from "../../transaction";
 import { collabDocument } from "../../db/app-schema";
 
 export const persistence = new Database({
   async fetch({ documentName }) {
-    const [row] = await db
+    const [row] = await currentDb()
       .select({ state: collabDocument.state })
       .from(collabDocument)
       .where(eq(collabDocument.projectId, documentName));
@@ -15,7 +15,7 @@ export const persistence = new Database({
   },
 
   async store({ documentName, state }) {
-    await db
+    await currentDb()
       .insert(collabDocument)
       .values({ projectId: documentName, state })
       .onConflictDoUpdate({

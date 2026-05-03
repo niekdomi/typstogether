@@ -1,45 +1,26 @@
 import type { onAuthenticatePayload } from "@hocuspocus/server";
-import { and, eq, isNull, or } from "drizzle-orm";
 
-import { db } from "../../db";
-import { project, projectMember } from "../../db/app-schema";
+import { ForbiddenError, NotFoundError, UnauthorizedError } from "../../errors";
 import { auth } from "../auth/service";
+import { projectService } from "../projects/service";
 
-export interface CollabContext {
-  userId: string;
-}
-
-export async function onAuthenticate(data: onAuthenticatePayload): Promise<CollabContext> {
+export async function onAuthenticate(data: onAuthenticatePayload): Promise<void> {
   const session = await auth.api.getSession({ headers: data.requestHeaders });
 
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new UnauthorizedError();
   }
 
-  const [row] = await db
-    .select({ ownerUserId: project.ownerUserId, memberRole: projectMember.role })
-    .from(project)
-    .leftJoin(
-      projectMember,
-      and(eq(projectMember.projectId, project.id), eq(projectMember.userId, session.user.id))
-    )
-    .where(
-      and(
-        eq(project.id, data.documentName),
-        isNull(project.deletedAt),
-        or(eq(project.ownerUserId, session.user.id), eq(projectMember.userId, session.user.id))
-      )
-    )
-    .limit(1);
-
-  if (!row) {
-    throw new Error("Forbidden");
+  let membership;
+  try {
+    membership = await projectService.getMembership(session.user.id, data.documentName);
+  } catch (e) {
+    // getMembership throws NotFoundError for both missing projects and lack of access
+    if (e instanceof NotFoundError) throw new ForbiddenError();
+    throw e;
   }
 
-  const isOwner = row.ownerUserId === session.user.id;
-  if (!isOwner && row.memberRole === "viewer") {
+  if (membership.role === "viewer") {
     data.connectionConfig.readOnly = true;
   }
-
-  return { userId: session.user.id };
 }
