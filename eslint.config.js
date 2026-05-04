@@ -2,7 +2,6 @@ import { includeIgnoreFile } from "@eslint/compat";
 import js from "@eslint/js";
 import prettier from "eslint-config-prettier";
 import promise from "eslint-plugin-promise";
-import svelte from "eslint-plugin-svelte";
 import unicorn from "eslint-plugin-unicorn";
 import { defineConfig } from "eslint/config";
 import globals from "globals";
@@ -10,8 +9,6 @@ import path from "node:path";
 import ts from "typescript-eslint";
 
 const gitignorePath = path.resolve(import.meta.dirname, ".gitignore");
-const svelteTypeChecked =
-  svelte.configs["flat/recommended-type-checked"] ?? svelte.configs.recommended;
 
 export default defineConfig(
   { ignores: ["eslint.config.js"] },
@@ -19,11 +16,9 @@ export default defineConfig(
   js.configs.recommended,
   ...ts.configs.strictTypeChecked,
   ...ts.configs.stylisticTypeChecked,
-  ...svelteTypeChecked,
   unicorn.configs.recommended,
   promise.configs["flat/recommended"],
   prettier,
-  ...svelte.configs.prettier,
   {
     languageOptions: {
       globals: { ...globals.browser },
@@ -42,6 +37,7 @@ export default defineConfig(
       "@typescript-eslint/naming-convention": [
         "error",
         { selector: "default", format: ["camelCase"] },
+        { selector: "function", format: ["camelCase", "PascalCase"] },
         { selector: "import", format: ["camelCase", "PascalCase"] },
         { selector: "objectLiteralProperty", format: null },
         { selector: "parameter", format: ["camelCase"], leadingUnderscore: "allow" },
@@ -76,26 +72,9 @@ export default defineConfig(
     },
   },
   {
-    files: ["**/*.svelte"],
+    files: ["**/*.tsx"],
     rules: {
-      "unicorn/filename-case": ["error", { case: "pascalCase" }],
-    },
-  },
-  {
-    files: ["**/routes/**/*.svelte"],
-    rules: {
-      "unicorn/filename-case": "off",
-    },
-  },
-  {
-    files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
-    languageOptions: {
-      parserOptions: {
-        parser: ts.parser,
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-        extraFileExtensions: [".svelte"],
-      },
+      "unicorn/filename-case": ["error", { case: "pascalCase", ignore: ["^main\\."] }],
     },
   }
 );
