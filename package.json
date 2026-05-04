@@ -13,7 +13,6 @@
     "dev": "bun run --filter '*' dev",
     "format": "bun oxfmt",
     "lint": "bun oxfmt --list-different && bun oxlint",
-    "lint:github": "bun oxlint --format=github",
     "test": "bun run --filter '*' test"
   },
   "devDependencies": {
