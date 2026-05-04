@@ -19,9 +19,5 @@ export default function ProtectedRoute(props: RouteSectionProps) {
     }
   });
 
-  return (
-    <Show when={!session.loading && !session.error && session()?.user}>
-      {props.children}
-    </Show>
-  );
+  return <Show when={!session.loading && !session.error && session()?.user}>{props.children}</Show>;
 }
