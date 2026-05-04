@@ -1,13 +1,12 @@
 {
   "name": "@typstogether/frontend",
-  "private": true,
   "version": "0.1.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "preview": "vite preview",
-    "check": "tsc --noEmit"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@elysia/eden": "^1.4.10",
