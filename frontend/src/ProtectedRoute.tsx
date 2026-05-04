@@ -13,10 +13,15 @@ export default function ProtectedRoute(props: RouteSectionProps) {
   const [session] = createResource(fetchSession);
 
   createEffect(() => {
-    if (!session.loading && !session()?.user) {
+    if (session.loading) return;
+    if (session.error || !session()?.user) {
       navigate("/login", { replace: true });
     }
   });
 
-  return <Show when={session()?.user}>{props.children}</Show>;
+  return (
+    <Show when={!session.loading && !session.error && session()?.user}>
+      {props.children}
+    </Show>
+  );
 }

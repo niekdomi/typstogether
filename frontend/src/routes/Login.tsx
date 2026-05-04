@@ -24,13 +24,9 @@ export default function Login() {
   return (
     <main>
       <h1>Sign in to Typstogether</h1>
-      <For each={providers()}>
+      <For each={providers.latest ?? []}>
         {(p) => (
-          <button
-            onClick={() => {
-              void signIn(p.id);
-            }}
-          >
+          <button type="button" onClick={() => void signIn(p.id)}>
             Continue with {p.name}
           </button>
         )}
