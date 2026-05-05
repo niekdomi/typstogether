@@ -1,27 +1,16 @@
-import { cors } from "@elysiajs/cors";
-import { Elysia } from "elysia";
+import { SQL } from "bun";
+import { drizzle } from "drizzle-orm/bun-sql";
 
-import { HttpError } from "./errors";
-import { authRoutes } from "./modules/auth";
-import { startCollabServer } from "./modules/collab/server";
-import { inviteRoutes } from "./modules/invites";
-import { memberRoutes } from "./modules/members";
-import { projectRoutes } from "./modules/projects";
+import { setDb } from "./db";
+import * as schema from "./db/schema";
+import { databaseUrl } from "./env";
 
-const app = new Elysia()
-  .use(cors()) // TODO: Restrict to specific domain
-  .onError(({ error, status }) => {
-    if (error instanceof HttpError) return status(error.status, error.message);
-    return;
-  })
-  .use(authRoutes)
-  .use(projectRoutes)
-  .use(memberRoutes)
-  .use(inviteRoutes)
-  .listen(3000);
+if (!databaseUrl) throw new Error("DATABASE_URL required for production entry");
 
-export type App = typeof app;
+const client = new SQL(databaseUrl);
+setDb(drizzle({ client, schema }));
 
-console.log("Backend running on port", app.server?.port);
+const { startServer } = await import("./app");
+startServer();
 
-startCollabServer();
+export type { App } from "./app";
