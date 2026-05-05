@@ -4,13 +4,13 @@ import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
-import { setDb } from "../src/db";
+import { dbRegistry } from "../src/db";
 import * as schema from "../src/db/schema";
 
 const client = new PGlite();
 const db = drizzle({ client, schema });
 await migrate(db, { migrationsFolder: "./drizzle" });
-setDb(db);
+dbRegistry.set(db);
 
 afterAll(async () => {
   await client.close();

@@ -8,13 +8,17 @@ type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 export type Db = Database | Transaction;
 
-let _db: Database | undefined;
+class DbRegistry {
+  private _db?: Database;
 
-export function setDb(db: Database): void {
-  _db = db;
+  set(db: Database): void {
+    this._db = db;
+  }
+
+  get(): Database {
+    if (!this._db) throw new Error("db not initialized — call dbRegistry.set() first");
+    return this._db;
+  }
 }
 
-export function getDb(): Database {
-  if (!_db) throw new Error("db not initialized — call setDb() first");
-  return _db;
-}
+export const dbRegistry = new DbRegistry();
