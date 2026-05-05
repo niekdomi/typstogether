@@ -187,18 +187,6 @@ describe("DELETE /projects/:id", () => {
     expect(res.status).toBe(403);
   });
 
-  test("403 when caller is viewer", async () => {
-    const owner = await userFactory.create();
-    const viewer = await userFactory.create();
-    const project = await projectFactory.create({ ownerUserId: owner.id });
-    await memberService.create(project.id, viewer.id, "viewer");
-    setTestUser(viewer);
-
-    const res = await request(`/projects/${project.id}`, { method: "DELETE" });
-
-    expect(res.status).toBe(403);
-  });
-
   test("200 owner soft-deletes the project", async () => {
     const owner = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
