@@ -20,6 +20,8 @@ const app = new Elysia()
   .use(inviteRoutes)
   .listen(3000);
 
+export type App = typeof app;
+
 console.log("Backend running on port", app.server?.port);
 
 startCollabServer();

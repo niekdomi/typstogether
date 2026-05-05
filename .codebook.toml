@@ -10,11 +10,8 @@ words = [
   "ost",
   "savepoints",
   "typebox",
+  "typstogether",
   "upserts",
 ]
-include_paths = [
-  "**/*.md",
-  "**/*.svelte",
-  "**/*.ts",
-]
+include_paths = ["**/*.md", "**/*.svelte", "**/*.ts"]
 use_global = false
