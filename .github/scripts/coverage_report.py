@@ -50,21 +50,30 @@ def generate_report(input_path: str, output_path: str) -> None:
         else ("yellow" if af_lines_pct >= MIN_ACCEPTABLE_PCT else "critical")
     )
 
-    md = [
-        f"![Code Coverage](https://img.shields.io/badge/Code%20Coverage-{af_lines_pct:.0f}%25-{color}?style=flat)",
-        "",
+    table = [
         "| File | % Funcs | % Lines | Uncovered Lines | Status |",
         "|:---|---:|---:|:---|:---:|",
     ]
 
     for filename, funcs, lines, uncovered, lines_pct in sorted(rows):
         status = "✔" if lines_pct >= MIN_ACCEPTABLE_PCT else "❌"
-        md.append(f"| `{filename}` | {funcs}% | {lines}% | {uncovered} | {status} |")
+        table.append(f"| `{filename}` | {funcs}% | {lines}% | {uncovered} | {status} |")
 
     summary_status = "✔" if af_lines_pct >= MIN_ACCEPTABLE_PCT else "❌"
-    md.append(
+    table.append(
         f"| **All files** | **{af_funcs}%** | **{af_lines}%** | | {summary_status} |"
     )
+
+    md = [
+        f"![Code Coverage](https://img.shields.io/badge/Code%20Coverage-{af_lines_pct:.0f}%25-{color}?style=flat)",
+        "",
+        "<details>",
+        "<summary>Coverage details</summary>",
+        "",
+        *table,
+        "",
+        "</details>",
+    ]
 
     Path(output_path).write_text("\n".join(md) + "\n", encoding="utf-8")
 
