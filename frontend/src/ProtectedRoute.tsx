@@ -1,23 +1,19 @@
 import { type RouteSectionProps, useNavigate } from "@solidjs/router";
-import { Show, createEffect, createResource } from "solid-js";
+import { Show, createEffect } from "solid-js";
 
-import { baseUrl } from "./lib/api";
-
-async function fetchSession() {
-  const res = await fetch(`${baseUrl}/api/auth/get-session`, { credentials: "include" });
-  return res.ok ? ((await res.json()) as { user?: unknown }) : null;
-}
+import { authClient } from "./lib/auth";
 
 export default function ProtectedRoute(props: RouteSectionProps) {
   const navigate = useNavigate();
-  const [session] = createResource(fetchSession);
+  const session = authClient.useSession();
 
   createEffect(() => {
-    if (session.loading) return;
-    if (session.error || !session()?.user) {
+    const s = session();
+    if (s.isPending) return;
+    if (s.error || !s.data?.user) {
       navigate("/login", { replace: true });
     }
   });
 
-  return <Show when={!session.loading && !session.error && session()?.user}>{props.children}</Show>;
+  return <Show when={session().data?.user}>{props.children}</Show>;
 }

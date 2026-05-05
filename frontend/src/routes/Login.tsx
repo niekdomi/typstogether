@@ -1,6 +1,7 @@
 import { For, createResource } from "solid-js";
 
-import { api, baseUrl } from "../lib/api";
+import { api } from "../lib/api";
+import { authClient } from "../lib/auth";
 
 async function loadProviders() {
   const { data } = await api.auth.providers.get();
@@ -8,14 +9,11 @@ async function loadProviders() {
 }
 
 async function signIn(provider: string) {
-  const res = await fetch(`${baseUrl}/api/auth/sign-in/social`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ provider, callbackURL: location.origin + "/dashboard" }),
+  const { error } = await authClient.signIn.social({
+    provider,
+    callbackURL: location.origin + "/dashboard",
   });
-  const { url } = (await res.json()) as { url: string };
-  location.href = url;
+  if (error) console.error("Sign-in failed:", error);
 }
 
 export default function Login() {
