@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { inviteRoutes } from ".";
 import { buildTestApp, jsonInit, requestOn, setTestUser } from "../../../test/app";
 import { projectFactory, userFactory } from "../../../test/factories";
-import { cleanDb } from "../../../test/helpers";
+import { cleanDb, futureDate } from "../../../test/helpers";
 import { memberService } from "../members/service";
 import { inviteService } from "./service";
 
@@ -13,10 +13,6 @@ afterEach(async () => {
   setTestUser(null);
   await cleanDb();
 });
-
-function futureDate(): Date {
-  return new Date(Date.now() + 60 * 60 * 1000);
-}
 
 describe("GET /projects/:id/invites", () => {
   test("401 when unauthenticated", async () => {

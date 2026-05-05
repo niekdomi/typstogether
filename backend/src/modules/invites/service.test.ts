@@ -1,17 +1,13 @@
 import { afterEach, describe, expect, test } from "bun:test";
 
 import { projectFactory, userFactory } from "../../../test/factories";
-import { cleanDb, expectThrows } from "../../../test/helpers";
+import { cleanDb, expectThrows, futureDate } from "../../../test/helpers";
 import { ConflictError, GoneError, NotFoundError } from "../../errors";
 import { memberService } from "../members/service";
 import { projectService } from "../projects/service";
 import { inviteService } from "./service";
 
 afterEach(cleanDb);
-
-function futureDate(): Date {
-  return new Date(Date.now() + 60 * 60 * 1000);
-}
 
 describe("InviteService.list", () => {
   test("returns empty for a project with no invites", async () => {
