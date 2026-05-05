@@ -9,7 +9,8 @@ import { currentDb } from "../src/transaction";
 export const userFactory = Factory.define<User, never, Promise<User>>(({ onCreate, sequence }) => {
   onCreate(async (u) => {
     const [row] = await currentDb().insert(user).values(u).returning();
-    return row!;
+    if (!row) throw new Error("userFactory: insert failed");
+    return row;
   });
 
   return {
@@ -26,7 +27,8 @@ export const userFactory = Factory.define<User, never, Promise<User>>(({ onCreat
 export const projectFactory = Factory.define<Project, never, Promise<Project>>(({ onCreate }) => {
   onCreate(async (p) => {
     const [row] = await currentDb().insert(project).values(p).returning();
-    return row!;
+    if (!row) throw new Error("projectFactory: insert failed");
+    return row;
   });
 
   return {
