@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@elysia/eden": "^1.4.10",
     "@elysiajs/eden": "^1.4.9",
     "@hocuspocus/provider": "^4.0.0",
     "@solidjs/router": "^0.16.1",
