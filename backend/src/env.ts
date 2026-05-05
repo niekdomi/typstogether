@@ -3,6 +3,7 @@ export const collabPort = Number(process.env["COLLAB_PORT"] ?? 3001);
 
 export const authBaseUrl = process.env["BETTER_AUTH_URL"] ?? "http://localhost:3000";
 export const authSecret = process.env["BETTER_AUTH_SECRET"] ?? "development-secret-change-me";
+export const frontendUrl = process.env["FRONTEND_URL"] ?? "http://localhost:5173";
 
 export const githubOAuth = {
   clientId: process.env["GITHUB_CLIENT_ID"] ?? "",
