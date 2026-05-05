@@ -7,6 +7,10 @@ export async function cleanDb(): Promise<void> {
   await reset(db, schema);
 }
 
+export function futureDate(offsetMs = 60 * 60 * 1000): Date {
+  return new Date(Date.now() + offsetMs);
+}
+
 export async function expectThrows<E extends Error>(
   fn: () => Promise<unknown>,
   errorClass: new (...args: never[]) => E
