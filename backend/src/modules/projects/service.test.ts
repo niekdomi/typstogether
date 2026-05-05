@@ -128,10 +128,7 @@ describe("ProjectService.getMembership", () => {
     const stranger = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
 
-    await expectThrows(
-      () => projectService.getMembership(stranger.id, project.id),
-      NotFoundError
-    );
+    await expectThrows(() => projectService.getMembership(stranger.id, project.id), NotFoundError);
   });
 
   test("throws NotFoundError when the project is soft-deleted", async () => {

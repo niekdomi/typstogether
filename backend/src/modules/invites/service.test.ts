@@ -108,10 +108,7 @@ describe("InviteService.revoke", () => {
     const owner = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
 
-    await expectThrows(
-      () => inviteService.revoke(project.id, crypto.randomUUID()),
-      NotFoundError
-    );
+    await expectThrows(() => inviteService.revoke(project.id, crypto.randomUUID()), NotFoundError);
   });
 
   test("throws NotFoundError when the invite is already revoked", async () => {
