@@ -1,4 +1,4 @@
-import { For, createResource } from "solid-js";
+import { For, Show, createResource } from "solid-js";
 
 import { api } from "../lib/api";
 import { authClient } from "../lib/auth";
@@ -22,13 +22,15 @@ export default function Login() {
   return (
     <main>
       <h1>Sign in to Typstogether</h1>
-      <For each={providers.latest ?? []}>
-        {(p) => (
-          <button type="button" onClick={() => void signIn(p.id)}>
-            Continue with {p.name}
-          </button>
-        )}
-      </For>
+      <Show when={!providers.loading} fallback={<p>Loading providers…</p>}>
+        <For each={providers() ?? []}>
+          {(p) => (
+            <button type="button" onClick={() => void signIn(p.id)}>
+              Continue with {p.name}
+            </button>
+          )}
+        </For>
+      </Show>
     </main>
   );
 }
