@@ -1,5 +1,6 @@
 import { TbOutlineCheck, TbOutlineCopy, TbOutlineLink } from "solid-icons/tb";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
+import { toast } from "somoto";
 
 import { Button } from "../../components/ui/button";
 import {
@@ -11,7 +12,6 @@ import {
 } from "../../components/ui/dialog";
 import { api } from "../../lib/api";
 import { formatDate, formatRelative } from "../../lib/format";
-import { toast } from "../../lib/toast";
 
 import "./InviteDialog.css";
 

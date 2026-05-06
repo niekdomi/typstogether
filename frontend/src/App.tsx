@@ -1,6 +1,6 @@
 import { Navigate, Route, Router } from "@solidjs/router";
 
-import Toaster from "./components/Toaster";
+import { Toaster } from "./components/ui/sonner";
 import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "./routes/dashboard/Dashboard";
 import Login from "./routes/Login";

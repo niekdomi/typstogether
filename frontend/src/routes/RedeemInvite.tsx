@@ -1,8 +1,8 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import { onMount } from "solid-js";
+import { toast } from "somoto";
 
 import { api } from "../lib/api";
-import { toast } from "../lib/toast";
 
 export default function RedeemInvite() {
   const params = useParams<{ token: string }>();

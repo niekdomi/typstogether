@@ -1,11 +1,6 @@
 :root {
   --sans: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --good: oklch(0.58 0.11 165);
-}
-
-[data-theme="dark"] {
-  --good: oklch(0.72 0.1 165);
 }
 
 * {
@@ -149,71 +144,6 @@ a {
   color: color-mix(in srgb, var(--foreground) 75%, transparent);
   font-size: 14px;
   line-height: 1.5;
-}
-
-.toaster {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 200;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  pointer-events: none;
-}
-
-.toast {
-  pointer-events: auto;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px 14px;
-  background: var(--background);
-  border: 1px solid var(--border);
-  box-shadow: 0 8px 24px -12px rgb(0 0 0 / 25%);
-  font-size: 13px;
-  color: var(--foreground);
-  min-width: 220px;
-  max-width: 360px;
-  animation: toastIn 0.18s ease-out;
-}
-
-.toast-error {
-  border-color: var(--destructive);
-}
-
-.toast-success {
-  border-color: var(--good);
-}
-
-.toast-message {
-  flex: 1;
-  line-height: 1.4;
-}
-
-.toast-close {
-  color: var(--muted-foreground);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
-  transition: color 0.12s;
-}
-
-.toast-close:hover {
-  color: var(--foreground);
-}
-
-@keyframes toastIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 
 .modal-field input {

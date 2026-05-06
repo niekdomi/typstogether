@@ -1,12 +1,12 @@
 import { useNavigate } from "@solidjs/router";
 import { SiGithub } from "solid-icons/si";
 import { For, Match, Switch, createMemo, createResource, createSignal } from "solid-js";
+import { toast } from "somoto";
 
 import ConfirmDialog from "../../components/ConfirmDialog";
 import PromptDialog from "../../components/PromptDialog";
 import { api } from "../../lib/api";
 import { authClient } from "../../lib/auth";
-import { toast } from "../../lib/toast";
 import InviteDialog from "./InviteDialog";
 import NewProjectModal from "./NewProjectModal";
 import PageHeader from "./PageHeader";
