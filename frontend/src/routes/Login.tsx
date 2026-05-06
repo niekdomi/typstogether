@@ -1,6 +1,5 @@
 import { For, Show, createResource, createSignal } from "solid-js";
 
-import Icon from "../components/Icon";
 import Logomark from "../components/Logomark";
 import ProviderGlyph from "../components/ProviderGlyph";
 import { api } from "../lib/api";
@@ -43,9 +42,8 @@ export default function Login() {
 
       <section class="login-form-wrap">
         <div class="login-form">
-          <div class="smallcaps">$ sign-in</div>
           <h2 class="display login-form-title">Sign in.</h2>
-          <p class="login-form-sub">Pick a provider.</p>
+          <p class="login-form-sub">Pick a provider (OAuth only).</p>
 
           <Show
             when={!providers.loading}
@@ -72,11 +70,6 @@ export default function Login() {
               </For>
             </div>
           </Show>
-
-          <div class="login-note">
-            <Icon name="info" />
-            <span>OAuth only.</span>
-          </div>
         </div>
       </section>
     </div>
