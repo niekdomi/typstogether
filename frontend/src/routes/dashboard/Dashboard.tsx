@@ -7,6 +7,7 @@ import PromptDialog from "../../components/PromptDialog";
 import { api } from "../../lib/api";
 import { authClient } from "../../lib/auth";
 import { toast } from "../../lib/toast";
+import InviteDialog from "./InviteDialog";
 import NewProjectModal from "./NewProjectModal";
 import PageHeader from "./PageHeader";
 import ProjectCard from "./ProjectCard";
@@ -32,6 +33,7 @@ export default function Dashboard() {
   const [modalOpen, setModalOpen] = createSignal(false);
   const [renameTarget, setRenameTarget] = createSignal<{ id: string; name: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = createSignal<{ id: string; name: string } | null>(null);
+  const [shareTarget, setShareTarget] = createSignal<{ id: string; name: string } | null>(null);
 
   const all = () => projects() ?? [];
   const owned = () => all().filter((p) => p.role === "owner");
@@ -118,6 +120,7 @@ export default function Dashboard() {
                     onOpen={() => {
                       navigate(`/project/${m.project.id}`);
                     }}
+                    onShare={() => setShareTarget({ id: m.project.id, name: m.project.name })}
                     onRename={() => setRenameTarget({ id: m.project.id, name: m.project.name })}
                     onDelete={() => setDeleteTarget({ id: m.project.id, name: m.project.name })}
                   />
@@ -185,6 +188,12 @@ export default function Dashboard() {
         message={`Delete "${deleteTarget()?.name ?? ""}"? This cannot be undone.`}
         confirmLabel="Delete"
         danger
+      />
+      <InviteDialog
+        open={shareTarget() !== null}
+        onClose={() => setShareTarget(null)}
+        projectId={shareTarget()?.id ?? null}
+        projectName={shareTarget()?.name ?? ""}
       />
     </div>
   );

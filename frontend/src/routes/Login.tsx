@@ -13,16 +13,22 @@ async function loadProviders() {
   return data ?? [];
 }
 
+function readNextParam(): string {
+  const next = new URLSearchParams(location.search).get("next");
+  return next?.startsWith("/") ? next : "/dashboard";
+}
+
 export default function Login() {
   const session = authClient.useSession();
   const [providers] = createResource(loadProviders);
   const [submitting, setSubmitting] = createSignal<string | null>(null);
+  const safeNext = readNextParam();
 
   async function signIn(provider: string) {
     setSubmitting(provider);
     const { error } = await authClient.signIn.social({
       provider,
-      callbackURL: location.origin + "/dashboard",
+      callbackURL: location.origin + safeNext,
     });
     if (error) {
       console.error("Sign-in failed:", error);
@@ -78,7 +84,7 @@ export default function Login() {
         <p class="loading">Loading…</p>
       </Match>
       <Match when={session().data?.user}>
-        <Navigate href="/dashboard" />
+        <Navigate href={safeNext} />
       </Match>
     </Switch>
   );

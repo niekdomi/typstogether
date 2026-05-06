@@ -1,0 +1,148 @@
+@scope (.invite-dialog) {
+  .invite-sub {
+    margin: 0;
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+
+  .invite-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .invite-section + .invite-section {
+    padding-top: 16px;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  .invite-section > .smallcaps {
+    color: var(--ink-2);
+  }
+
+  .invite-section > button {
+    align-self: flex-end;
+  }
+
+  .invite-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .role-toggle {
+    display: flex;
+    flex: 1;
+    border: 1px solid var(--rule);
+  }
+
+  .role-toggle .role-cell + .role-cell {
+    border-left: 1px solid var(--rule);
+  }
+
+  .role-cell {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--paper);
+    color: var(--ink-2);
+    font-size: 14px;
+    cursor: pointer;
+    transition:
+      background 0.12s,
+      color 0.12s;
+  }
+
+  .role-cell:hover {
+    color: var(--ink);
+  }
+
+  .role-cell.active {
+    background: var(--paper-2);
+    color: var(--ink);
+  }
+
+  .invite-select {
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .invite-link-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 12px;
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    color: var(--ink-3);
+  }
+
+  .invite-link-input {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+  }
+
+  .invite-list,
+  .member-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .invite-item,
+  .member-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 13px;
+  }
+
+  .invite-item + .invite-item,
+  .member-item + .member-item {
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  .invite-meta {
+    flex: 1;
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+
+  .avatar-small {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .avatar-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .member-name {
+    flex: 1;
+    color: var(--ink);
+  }
+}

@@ -5,6 +5,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "./routes/dashboard/Dashboard";
 import Login from "./routes/Login";
 import Project from "./routes/Project";
+import RedeemInvite from "./routes/RedeemInvite";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/" component={() => <Navigate href="/dashboard" />} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/project/:id" component={Project} />
+          <Route path="/invite/:token" component={RedeemInvite} />
         </Route>
       </Router>
       <Toaster />
