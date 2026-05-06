@@ -1,10 +1,20 @@
-import { TbOutlineCheck, TbOutlineCopy, TbOutlineLink } from "solid-icons/tb";
+import {
+  TbOutlineCheck,
+  TbOutlineChevronRight,
+  TbOutlineCopy,
+  TbOutlineLink,
+} from "solid-icons/tb";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 import { toast } from "somoto";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "../../components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -19,11 +29,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
+import { Separator } from "../../components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
 import { api } from "../../lib/api";
 import { formatDate, formatRelative } from "../../lib/format";
-
-import "./InviteDialog.css";
 
 type InviteRole = "editor" | "viewer";
 type Expiry = "24h" | "7d" | "30d" | "never";
@@ -41,6 +50,13 @@ const EXPIRY_DAYS: Record<Exclude<Expiry, "never">, number> = {
   "24h": 1,
   "7d": 7,
   "30d": 30,
+};
+
+const EXPIRY_LABELS: Record<Expiry, string> = {
+  "24h": "24 hours",
+  "7d": "7 days",
+  "30d": "30 days",
+  never: "never",
 };
 
 function expiryToDate(expiry: Expiry): Date {
@@ -145,90 +161,113 @@ export default function InviteDialog(props: InviteDialogProps) {
         if (!o) close();
       }}
     >
-      <DialogContent>
-        <div class="invite-dialog flex flex-col gap-4">
-          <DialogHeader>
-            <DialogTitle>Share {props.projectName}</DialogTitle>
-          </DialogHeader>
-          <p class="invite-sub">Invites are issued only through generated links.</p>
+      <DialogContent class="flex flex-col gap-4">
+        <DialogHeader>
+          <DialogTitle>Share {props.projectName}</DialogTitle>
+        </DialogHeader>
 
-          <section class="invite-section">
-            <span class="text-sm font-medium">New link</span>
-            <div class="invite-row">
-              <ToggleGroup
-                variant="outline"
-                value={role()}
-                onChange={(v) => {
-                  if (v) setRole(v as InviteRole);
-                }}
-                class="flex-1"
-              >
-                <ToggleGroupItem value="editor">Editor</ToggleGroupItem>
-                <ToggleGroupItem value="viewer">Viewer</ToggleGroupItem>
-              </ToggleGroup>
-              <Select<Expiry>
-                value={expiry()}
-                onChange={(v) => {
-                  if (v) setExpiry(v);
-                }}
-                modal={false}
-                options={["24h", "7d", "30d", "never"]}
-                itemComponent={(p) => (
-                  <SelectItem item={p.item}>
-                    {
-                      { "24h": "24 hours", "7d": "7 days", "30d": "30 days", never: "never" }[
-                        p.item.rawValue
-                      ]
-                    }
-                  </SelectItem>
-                )}
-              >
-                <SelectTrigger>
-                  <SelectValue<Expiry>>
-                    {(state) =>
-                      ({
-                        "24h": "24 hours",
-                        "7d": "7 days",
-                        "30d": "30 days",
-                        never: "never",
-                      })[state.selectedOption()]
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent />
-              </Select>
-            </div>
-            <div class="invite-link-box">
-              <TbOutlineLink size={14} />
+        <Show when={(members() ?? []).length > 0}>
+          <ul class="flex flex-col gap-2">
+            <For each={members() ?? []}>
+              {(m) => (
+                <li class="flex items-center gap-3 text-sm">
+                  <Avatar class="size-7">
+                    <AvatarImage src={m.user.image ?? undefined} alt="" />
+                    <AvatarFallback class="text-[10px]">
+                      {memberInitial(m.user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span class="flex-1 text-foreground">{m.user.name}</span>
+                  <Badge variant="outline">{m.member.role}</Badge>
+                </li>
+              )}
+            </For>
+          </ul>
+        </Show>
+
+        <Separator />
+
+        <div class="flex flex-col gap-3">
+          <div class="text-sm font-medium">Invite via link</div>
+          <Show
+            when={generatedToken()}
+            fallback={
+              <div class="flex items-center gap-2">
+                <ToggleGroup
+                  variant="outline"
+                  value={role()}
+                  onChange={(v) => {
+                    if (v) setRole(v as InviteRole);
+                  }}
+                >
+                  <ToggleGroupItem value="editor">Editor</ToggleGroupItem>
+                  <ToggleGroupItem value="viewer">Viewer</ToggleGroupItem>
+                </ToggleGroup>
+                <Select<Expiry>
+                  value={expiry()}
+                  onChange={(v) => {
+                    if (v) setExpiry(v);
+                  }}
+                  modal={false}
+                  options={["24h", "7d", "30d", "never"]}
+                  itemComponent={(p) => (
+                    <SelectItem item={p.item}>{EXPIRY_LABELS[p.item.rawValue]}</SelectItem>
+                  )}
+                >
+                  <SelectTrigger>
+                    <SelectValue<Expiry>>
+                      {(state) => EXPIRY_LABELS[state.selectedOption()]}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent />
+                </Select>
+                <Button class="ml-auto" onClick={() => void createInvite()}>
+                  Generate
+                </Button>
+              </div>
+            }
+          >
+            <div class="flex items-center gap-2 border border-border bg-muted/40 rounded-md pl-3 pr-1 py-1">
+              <TbOutlineLink size={14} class="text-muted-foreground shrink-0" />
               <input
-                class="invite-link-input"
+                class="flex-1 min-w-0 bg-transparent border-0 outline-none font-mono text-xs text-foreground"
                 readonly
-                placeholder="No link yet"
                 value={linkUrl()}
               />
-              <Button
-                variant="outline"
-                disabled={!generatedToken()}
-                onClick={() => void copyLink()}
-              >
+              <Button variant="outline" size="sm" onClick={() => void copyLink()}>
                 <Show when={copied()} fallback={<TbOutlineCopy size={14} />}>
                   <TbOutlineCheck size={14} />
                 </Show>
                 {copied() ? "Copied" : "Copy"}
               </Button>
             </div>
-            <Button onClick={() => void createInvite()}>Generate link</Button>
-          </section>
+            <Button variant="ghost" size="sm" class="self-start" onClick={reset}>
+              Generate another link
+            </Button>
+          </Show>
+        </div>
 
-          <Show when={activeInvites().length > 0}>
-            <section class="invite-section">
-              <span class="text-sm font-medium">Active links</span>
-              <ul class="invite-list">
+        <Show when={activeInvites().length > 0}>
+          <Collapsible class="flex flex-col gap-2">
+            <CollapsibleTrigger
+              as={Button<"button">}
+              variant="ghost"
+              size="sm"
+              class="self-start gap-1.5 text-muted-foreground hover:text-foreground -ml-2 group"
+            >
+              <TbOutlineChevronRight
+                size={14}
+                class="transition-transform group-data-[expanded]:rotate-90"
+              />
+              {activeInvites().length} active invite{activeInvites().length === 1 ? "" : "s"}
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <ul class="flex flex-col gap-1.5 pl-1">
                 <For each={activeInvites()}>
                   {(inv) => (
-                    <li class="invite-item">
+                    <li class="flex items-center gap-3 text-xs">
                       <Badge variant="outline">{inv.role}</Badge>
-                      <span class="invite-meta mono">
+                      <span class="flex-1 font-mono text-muted-foreground">
                         {expiresLabel(inv.expiresAt)} · created {formatDate(inv.createdAt)}
                       </span>
                       <Button variant="ghost" size="sm" onClick={() => void revoke(inv.id)}>
@@ -238,37 +277,15 @@ export default function InviteDialog(props: InviteDialogProps) {
                   )}
                 </For>
               </ul>
-            </section>
-          </Show>
+            </CollapsibleContent>
+          </Collapsible>
+        </Show>
 
-          <Show when={(members() ?? []).length > 0}>
-            <section class="invite-section">
-              <span class="text-sm font-medium">People with access</span>
-              <ul class="member-list">
-                <For each={members() ?? []}>
-                  {(m) => (
-                    <li class="member-item">
-                      <Avatar class="size-6">
-                        <AvatarImage src={m.user.image ?? undefined} alt="" />
-                        <AvatarFallback class="text-[10px]">
-                          {memberInitial(m.user.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span class="member-name">{m.user.name}</span>
-                      <Badge variant="outline">{m.member.role}</Badge>
-                    </li>
-                  )}
-                </For>
-              </ul>
-            </section>
-          </Show>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={close}>
-              Done
-            </Button>
-          </DialogFooter>
-        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={close}>
+            Done
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
