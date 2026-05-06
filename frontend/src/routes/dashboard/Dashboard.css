@@ -113,12 +113,6 @@
     letter-spacing: 0.04em;
   }
 
-  .actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
   .tabs-row {
     display: flex;
     align-items: flex-end;

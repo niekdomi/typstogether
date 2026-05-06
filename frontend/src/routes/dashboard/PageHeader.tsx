@@ -53,19 +53,17 @@ export default function PageHeader(props: PageHeaderProps) {
         </div>
         <h1 class="display">Projects.</h1>
       </div>
-      <div class="actions">
-        <Show
-          when={props.creating}
-          fallback={
-            <button type="button" class="btn btn-primary" onClick={props.onStartCreate}>
-              <TbOutlinePlus size={14} />
-              New project
-            </button>
-          }
-        >
-          <NewProjectForm onCancel={props.onCancelCreate} onSubmit={props.onSubmitCreate} />
-        </Show>
-      </div>
+      <Show
+        when={props.creating}
+        fallback={
+          <button type="button" class="btn btn-primary" onClick={props.onStartCreate}>
+            <TbOutlinePlus size={14} />
+            New project
+          </button>
+        }
+      >
+        <NewProjectForm onCancel={props.onCancelCreate} onSubmit={props.onSubmitCreate} />
+      </Show>
     </div>
   );
 }

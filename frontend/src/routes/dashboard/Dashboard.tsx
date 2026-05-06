@@ -31,9 +31,7 @@ export default function Dashboard() {
   const shared = () => all().filter((p) => p.role !== "owner");
 
   const list = createMemo(() => {
-    const t = tab();
-    if (t === "templates" || t === "trash") return [];
-    const base = t === "owned" ? owned() : shared();
+    const base = tab() === "owned" ? owned() : shared();
     const q = query().toLowerCase().trim();
     const filtered = q ? base.filter((p) => p.project.name.toLowerCase().includes(q)) : base;
     const sorted = [...filtered];

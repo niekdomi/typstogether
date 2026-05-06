@@ -147,7 +147,7 @@ a {
     background-color 200ms ease,
     color 200ms ease,
     border-color 200ms ease,
-    fill 200ms ease !important;
+    fill 200ms ease;
 }
 
 @keyframes fadeIn {
