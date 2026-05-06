@@ -37,7 +37,7 @@
     width: 100%;
     max-width: 1240px;
     margin: 0 auto;
-    padding: 40px 32px 18px;
+    padding: 40px 32px 24px;
   }
 
   .page-header {
@@ -84,7 +84,7 @@
   }
 
   .footer {
-    margin-top: auto;
+    margin-top: 24px;
     padding-top: 24px;
     border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
     display: flex;
