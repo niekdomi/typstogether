@@ -7,6 +7,7 @@
   --ink-3: #6d7a7c;
   --rule: #d4d9d6;
   --rule-soft: #e6eae7;
+  --surface: #ffffff;
   --accent: oklch(0.62 0.085 200);
   --accent-soft: oklch(0.94 0.025 200);
   --danger: oklch(0.55 0.16 25);
@@ -25,6 +26,7 @@
   --ink-3: #758180;
   --rule: #25302e;
   --rule-soft: #1e2826;
+  --surface: oklch(0.27 0.005 200);
   --accent: oklch(0.78 0.1 200);
   --accent-soft: oklch(0.32 0.05 200);
   --danger: oklch(0.7 0.15 25);

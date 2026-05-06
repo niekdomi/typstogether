@@ -2,7 +2,7 @@ import { TbOutlineSearch } from "solid-icons/tb";
 
 import Logomark from "../../components/Logomark";
 
-interface TopbarProps {
+interface TopBarProps {
   query: string;
   onQuery: (value: string) => void;
   userName: string | undefined;
@@ -13,7 +13,7 @@ function initial(name: string | undefined): string {
   return (name ?? "?").trim().charAt(0).toUpperCase() || "?";
 }
 
-export default function Topbar(props: TopbarProps) {
+export default function TopBar(props: TopBarProps) {
   return (
     <header class="topbar">
       <div class="topbar-left">

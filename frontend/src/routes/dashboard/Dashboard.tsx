@@ -1,19 +1,19 @@
 import { useNavigate } from "@solidjs/router";
-import { For, Show, createMemo, createResource, createSignal } from "solid-js";
+import { For, Match, Switch, createMemo, createResource, createSignal } from "solid-js";
 
 import { api } from "../../lib/api";
 import { authClient } from "../../lib/auth";
 import PageHeader from "./PageHeader";
 import ProjectCard from "./ProjectCard";
 import TabsBar from "./TabsBar";
-import Topbar from "./Topbar";
+import TopBar from "./TopBar";
 import type { Membership, Sort, Tab } from "./types";
 
 import "./Dashboard.css";
 
 async function loadProjects(): Promise<Membership[]> {
   const { data } = await api.projects.get();
-  return (data ?? []) as Membership[];
+  return data ?? [];
 }
 
 export default function Dashboard() {
@@ -64,7 +64,7 @@ export default function Dashboard() {
 
   return (
     <div class="fade-in dashboard">
-      <Topbar
+      <TopBar
         query={query()}
         onQuery={setQuery}
         userName={session().data?.user.name}
@@ -86,28 +86,39 @@ export default function Dashboard() {
           ownedCount={owned().length}
           sharedCount={shared().length}
         />
-        <Show
-          when={list().length > 0}
+        <Switch
           fallback={
-            <div class="empty">
-              <p>No matching projects.</p>
+            <div class="grid">
+              <For each={list()}>
+                {(m) => (
+                  <ProjectCard
+                    project={m.project}
+                    role={m.role}
+                    onOpen={() => {
+                      navigate(`/project/${m.project.id}`);
+                    }}
+                  />
+                )}
+              </For>
             </div>
           }
         >
-          <div class="grid">
-            <For each={list()}>
-              {(m) => (
-                <ProjectCard
-                  project={m.project}
-                  role={m.role}
-                  onOpen={() => {
-                    navigate(`/project/${m.project.id}`);
-                  }}
-                />
-              )}
-            </For>
-          </div>
-        </Show>
+          <Match when={projects.loading}>
+            <div class="empty">
+              <p>Loading projects…</p>
+            </div>
+          </Match>
+          <Match when={projects.error !== undefined}>
+            <div class="empty">
+              <p>Could not load projects.</p>
+            </div>
+          </Match>
+          <Match when={list().length === 0}>
+            <div class="empty">
+              <p>No matching projects.</p>
+            </div>
+          </Match>
+        </Switch>
         <footer class="footer">
           <span class="mono">typstogether v0.1</span>
           <span class="mono">MIT · github.com/typstogether</span>

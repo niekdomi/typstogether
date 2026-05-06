@@ -230,7 +230,7 @@
 
   .proj-thumb-doc {
     flex: 1;
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--rule-soft);
     padding: 14px 16px;
     display: flex;
