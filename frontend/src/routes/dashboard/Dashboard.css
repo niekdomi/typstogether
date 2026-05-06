@@ -300,6 +300,19 @@
     font-size: 11px;
   }
 
+  .footer-link {
+    color: var(--ink-3);
+    border-bottom: 1px solid transparent;
+    transition:
+      color 0.12s,
+      border-color 0.12s;
+  }
+
+  .footer-link:hover {
+    color: var(--ink);
+    border-bottom-color: var(--ink-3);
+  }
+
   .new-inline {
     display: flex;
     gap: 6px;

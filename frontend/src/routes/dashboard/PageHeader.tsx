@@ -54,13 +54,6 @@ export default function PageHeader(props: PageHeaderProps) {
         <h1 class="display">Projects.</h1>
       </div>
       <div class="actions">
-        <button type="button" class="btn" disabled>
-          <span class="mono">git</span>
-          Clone repo
-        </button>
-        <button type="button" class="btn" disabled>
-          Import .typ
-        </button>
         <Show
           when={props.creating}
           fallback={

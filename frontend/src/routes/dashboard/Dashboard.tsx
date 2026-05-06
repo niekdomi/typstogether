@@ -121,7 +121,17 @@ export default function Dashboard() {
         </Switch>
         <footer class="footer">
           <span class="mono">typstogether v0.1</span>
-          <span class="mono">MIT · github.com/typstogether</span>
+          <span class="mono">
+            MIT ·{" "}
+            <a
+              class="footer-link"
+              href="https://github.com/niekdomi/typstogether"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              github.com/niekdomi/typstogether
+            </a>
+          </span>
         </footer>
       </main>
     </div>
