@@ -1,3 +1,5 @@
+import "./Logomark.css";
+
 interface LogomarkProps {
   size?: number;
 }

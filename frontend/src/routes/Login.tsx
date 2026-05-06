@@ -5,6 +5,8 @@ import ProviderGlyph from "../components/ProviderGlyph";
 import { api } from "../lib/api";
 import { authClient } from "../lib/auth";
 
+import "./Login.css";
+
 async function loadProviders() {
   const { data } = await api.auth.providers.get();
   return data ?? [];
@@ -27,42 +29,37 @@ export default function Login() {
   }
 
   return (
-    <div class="fade-in login-root">
-      <aside class="login-hero">
+    <div class="fade-in login">
+      <aside class="hero">
         <Logomark size={20} />
-        <div class="login-hero-copy">
+        <div class="hero-copy">
           <h1>
-            Typst, but <span class="login-hero-accent">together.</span>
+            Typst, but <span class="hero-accent">together.</span>
           </h1>
           <p>A collaborative editor for Typst documents.</p>
         </div>
       </aside>
 
-      <section class="login-form-wrap">
-        <div class="login-form">
-          <h2 class="display login-form-title">Sign in.</h2>
-          <p class="login-form-sub">Pick a provider (OAuth only).</p>
+      <section class="form-wrap">
+        <div class="form">
+          <h2 class="display form-title">Sign in.</h2>
+          <p class="form-sub">Pick a provider (OAuth only).</p>
 
-          <Show
-            when={!providers.loading}
-            fallback={<p class="login-loading">Loading providers…</p>}
-          >
-            <div class="login-provider-list">
+          <Show when={!providers.loading} fallback={<p class="loading">Loading providers…</p>}>
+            <div class="provider-list">
               <For each={providers() ?? []}>
                 {(p) => (
                   <button
                     type="button"
-                    class={
-                      p.id === "github" ? "btn btn-primary login-provider" : "btn login-provider"
-                    }
+                    class={`btn ${p.id === "github" ? "btn-primary " : ""}provider`}
                     onClick={() => void signIn(p.id)}
                     disabled={submitting() !== null}
                   >
                     <ProviderGlyph name={p.id} />
-                    <span class="login-provider-label">
+                    <span class="provider-label">
                       {submitting() === p.id ? "Authenticating…" : `Continue with ${p.name}`}
                     </span>
-                    <span class="mono login-provider-tag">oauth</span>
+                    <span class="mono provider-tag">oauth</span>
                   </button>
                 )}
               </For>
