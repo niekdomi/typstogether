@@ -7,11 +7,14 @@ words = [
   "elysia",
   "elysiajs",
   "hocuspocus",
+  "logomark",
   "ost",
   "savepoints",
+  "solidjs",
   "typebox",
   "typstogether",
   "upserts",
+  "ypst",
 ]
-include_paths = ["**/*.md", "**/*.svelte", "**/*.ts"]
+include_paths = ["**/*.md", "**/*.ts", "**/*.tsx"]
 use_global = false
