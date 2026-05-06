@@ -1,34 +1,34 @@
 :root {
-  --paper: #faf8f3;
-  --paper-2: #f3eee2;
-  --paper-3: #ece5d3;
-  --ink: #1c1a17;
-  --ink-2: #45403a;
-  --ink-3: #847d70;
-  --rule: #d9d2bf;
-  --rule-soft: #e8e3d6;
-  --accent: oklch(0.55 0.08 200);
-  --accent-soft: oklch(0.92 0.04 200);
-  --danger: oklch(0.5 0.14 25);
-  --good: oklch(0.5 0.1 145);
+  --paper: #f6f7f5;
+  --paper-2: #eef0ed;
+  --paper-3: #e3e6e2;
+  --ink: #0f1717;
+  --ink-2: #364043;
+  --ink-3: #6d7a7c;
+  --rule: #d4d9d6;
+  --rule-soft: #e6eae7;
+  --accent: oklch(0.62 0.085 200);
+  --accent-soft: oklch(0.94 0.025 200);
+  --danger: oklch(0.55 0.16 25);
+  --good: oklch(0.58 0.11 165);
 
   --sans: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 [data-theme="dark"] {
-  --paper: #15140f;
-  --paper-2: #1d1b16;
-  --paper-3: #25221b;
-  --ink: #e8e3d6;
-  --ink-2: #b8b0a0;
-  --ink-3: #807868;
-  --rule: #322e25;
-  --rule-soft: #28251e;
-  --accent: oklch(0.78 0.09 200);
-  --accent-soft: oklch(0.32 0.04 200);
-  --danger: oklch(0.7 0.14 25);
-  --good: oklch(0.72 0.1 145);
+  --paper: #0e1413;
+  --paper-2: #141b1a;
+  --paper-3: #1a2221;
+  --ink: #e6ebe8;
+  --ink-2: #aab3b1;
+  --ink-3: #758180;
+  --rule: #25302e;
+  --rule-soft: #1e2826;
+  --accent: oklch(0.78 0.1 200);
+  --accent-soft: oklch(0.32 0.05 200);
+  --danger: oklch(0.7 0.15 25);
+  --good: oklch(0.72 0.1 165);
 }
 
 * {
