@@ -6,6 +6,7 @@ import ConfirmDialog from "../../components/ConfirmDialog";
 import PromptDialog from "../../components/PromptDialog";
 import { api } from "../../lib/api";
 import { authClient } from "../../lib/auth";
+import { toast } from "../../lib/toast";
 import NewProjectModal from "./NewProjectModal";
 import PageHeader from "./PageHeader";
 import ProjectCard from "./ProjectCard";
@@ -60,6 +61,7 @@ export default function Dashboard() {
     const { error } = await api.projects({ id }).patch({ name: newName });
     if (error) {
       console.error("Failed to rename project:", error);
+      toast.error("Could not rename project.");
       return;
     }
     void refetch();
@@ -69,6 +71,7 @@ export default function Dashboard() {
     const { error } = await api.projects({ id }).delete();
     if (error) {
       console.error("Failed to delete project:", error);
+      toast.error("Could not delete project.");
       return;
     }
     void refetch();
@@ -78,6 +81,7 @@ export default function Dashboard() {
     const { error } = await api.projects.post({ name });
     if (error) {
       console.error("Failed to create project:", error);
+      toast.error("Could not create project.");
       return;
     }
     setModalOpen(false);
