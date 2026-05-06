@@ -1,0 +1,330 @@
+@scope (.dashboard) {
+  :scope {
+    min-height: 100vh;
+    background: var(--paper);
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .path-tag {
+    padding-left: 16px;
+    border-left: 1px solid var(--rule);
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--rule);
+    padding: 6px 12px;
+    width: 280px;
+    color: var(--ink-3);
+  }
+
+  .search input {
+    border: 0;
+    background: transparent;
+    font-family: var(--mono);
+    font-size: 12px;
+    flex: 1;
+    color: var(--ink);
+    outline: none;
+    padding: 0;
+  }
+
+  .search input::placeholder {
+    color: var(--ink-3);
+  }
+
+  .kbd {
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+
+  .user-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 10px 4px 4px;
+    color: var(--ink);
+    transition: background 0.12s;
+    font-size: 14px;
+  }
+
+  .user-btn:hover {
+    background: var(--paper-2);
+  }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  main {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    gap: 24px;
+  }
+
+  .page-header h1 {
+    font-size: 44px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 8px 0 0;
+  }
+
+  .detail {
+    font-size: 12px;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .tabs-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+
+  .tabs {
+    display: flex;
+  }
+
+  .tab {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 10px 4px;
+    color: var(--ink-3);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .tab + .tab {
+    margin-left: 18px;
+  }
+
+  .tab:hover:not(.inert) {
+    color: var(--ink-2);
+  }
+
+  .tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+  }
+
+  .tab.inert {
+    cursor: default;
+    opacity: 0.45;
+  }
+
+  .count {
+    margin-left: 6px;
+    color: var(--ink-3);
+  }
+
+  .sort {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  .sort select {
+    background: transparent;
+    border: 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink);
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 28px;
+    margin-top: 24px;
+  }
+
+  .proj-card {
+    display: block;
+    text-align: left;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    padding: 0;
+    cursor: pointer;
+    transition: border-color 0.12s;
+    position: relative;
+    width: 100%;
+    color: inherit;
+    font: inherit;
+  }
+
+  .proj-card:hover {
+    border-color: var(--ink);
+  }
+
+  .proj-thumb {
+    aspect-ratio: 1 / 1.3;
+    background: var(--paper-3);
+    border-bottom: 1px solid var(--rule);
+    padding: 18px;
+    display: flex;
+    position: relative;
+  }
+
+  .proj-thumb-doc {
+    flex: 1;
+    background: white;
+    border: 1px solid var(--rule-soft);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .proj-thumb-title {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--ink-2);
+    text-align: center;
+    line-height: 1.3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+  }
+
+  .role {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 2px 8px;
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    color: var(--ink-2);
+  }
+
+  .proj-meta {
+    padding: 14px 16px;
+  }
+
+  .proj-meta .smallcaps {
+    margin-bottom: 4px;
+  }
+
+  .proj-title {
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.25;
+    margin: 0 0 10px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .proj-foot {
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+
+  .empty {
+    padding: 60px 0;
+    text-align: center;
+    color: var(--ink-3);
+    font-style: italic;
+    margin-top: 24px;
+  }
+
+  .footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule-soft);
+    display: flex;
+    justify-content: space-between;
+    color: var(--ink-3);
+    font-size: 11px;
+  }
+
+  .new-inline {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .new-inline input {
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    padding: 8px 12px;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    min-width: 200px;
+  }
+
+  .new-inline input:focus {
+    border-color: var(--ink-3);
+  }
+}

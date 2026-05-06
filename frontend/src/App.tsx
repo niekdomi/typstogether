@@ -1,7 +1,7 @@
 import { Navigate, Route, Router } from "@solidjs/router";
 
 import ProtectedRoute from "./ProtectedRoute";
-import Dashboard from "./routes/Dashboard";
+import Dashboard from "./routes/dashboard/Dashboard";
 import Login from "./routes/Login";
 import Project from "./routes/Project";
 
