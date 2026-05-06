@@ -1,4 +1,12 @@
-import { For, Match, Switch, createMemo, createResource, createSignal } from "solid-js";
+import {
+  For,
+  Match,
+  Switch,
+  createEffect,
+  createMemo,
+  createResource,
+  createSignal,
+} from "solid-js";
 
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
@@ -38,6 +46,15 @@ export default function NewProjectModal(props: NewProjectModalProps) {
   const [search, setSearch] = createSignal("");
   const [category, setCategory] = createSignal<string>("all");
   const [templates] = createResource(loadTemplates);
+
+  createEffect(() => {
+    if (props.open) {
+      setName("");
+      setTemplate(BLANK_ID);
+      setSearch("");
+      setCategory("all");
+    }
+  });
 
   const categories = createMemo(() => {
     const all = templates() ?? [];

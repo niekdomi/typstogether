@@ -1,4 +1,4 @@
-import { createSignal } from "solid-js";
+import { createEffect, createSignal } from "solid-js";
 
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -16,6 +16,10 @@ interface PromptDialogProps {
 
 export default function PromptDialog(props: PromptDialogProps) {
   const [value, setValue] = createSignal(props.initialValue ?? "");
+
+  createEffect(() => {
+    if (props.open) setValue(props.initialValue ?? "");
+  });
 
   return (
     <Dialog
