@@ -59,59 +59,6 @@ a {
   font-family: var(--mono);
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border: 1px solid var(--border);
-  background: var(--background);
-  color: var(--foreground);
-  font-size: 15px;
-  transition:
-    background 0.12s,
-    border-color 0.12s;
-  white-space: nowrap;
-}
-
-.btn:hover {
-  background: var(--muted);
-  border-color: var(--muted-foreground);
-}
-
-.btn-primary {
-  background: var(--foreground);
-  color: var(--background);
-  border-color: var(--foreground);
-}
-
-.btn-primary:hover {
-  background: color-mix(in srgb, var(--foreground) 75%, transparent);
-  border-color: color-mix(in srgb, var(--foreground) 75%, transparent);
-}
-
-.btn-danger {
-  background: var(--destructive);
-  color: var(--background);
-  border-color: var(--destructive);
-}
-
-.btn-danger:hover {
-  background: color-mix(in oklch, var(--destructive) 80%, var(--foreground));
-  border-color: color-mix(in oklch, var(--destructive) 80%, var(--foreground));
-}
-
-.btn-ghost {
-  background: transparent;
-  border-color: transparent;
-  color: color-mix(in srgb, var(--foreground) 75%, transparent);
-}
-
-.btn-ghost:hover {
-  background: var(--muted);
-  color: var(--foreground);
-}
-
 .pill {
   display: inline-flex;
   align-items: center;
@@ -123,28 +70,6 @@ a {
   background: var(--background);
   border: 1px solid var(--border);
   color: color-mix(in srgb, var(--foreground) 75%, transparent);
-}
-
-.icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border);
-  background: var(--background);
-  color: color-mix(in srgb, var(--foreground) 75%, transparent);
-  cursor: pointer;
-  transition:
-    background 0.12s,
-    border-color 0.12s,
-    color 0.12s;
-}
-
-.icon-btn:hover {
-  background: var(--muted);
-  border-color: var(--muted-foreground);
-  color: var(--foreground);
 }
 
 .modal-backdrop {

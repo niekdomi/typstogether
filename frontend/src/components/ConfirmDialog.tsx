@@ -1,3 +1,4 @@
+import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 
 interface ConfirmDialogProps {
@@ -24,19 +25,18 @@ export default function ConfirmDialog(props: ConfirmDialogProps) {
         </DialogHeader>
         <p class="modal-message">{props.message}</p>
         <DialogFooter>
-          <button type="button" class="btn" onClick={props.onClose}>
+          <Button variant="outline" onClick={props.onClose}>
             Cancel
-          </button>
-          <button
-            type="button"
-            class={`btn ${props.danger ? "btn-danger" : "btn-primary"}`}
+          </Button>
+          <Button
+            variant={props.danger ? "destructive" : "default"}
             onClick={() => {
               props.onConfirm();
               props.onClose();
             }}
           >
             {props.confirmLabel ?? "Confirm"}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,5 +1,6 @@
 import { createSignal } from "solid-js";
 
+import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 
 interface PromptDialogProps {
@@ -46,12 +47,12 @@ export default function PromptDialog(props: PromptDialogProps) {
             />
           </label>
           <DialogFooter>
-            <button type="button" class="btn" onClick={props.onClose}>
+            <Button variant="outline" onClick={props.onClose}>
               Cancel
-            </button>
-            <button type="submit" class="btn btn-primary" disabled={!value().trim()}>
+            </Button>
+            <Button type="submit" disabled={!value().trim()}>
               {props.submitLabel ?? "Save"}
-            </button>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

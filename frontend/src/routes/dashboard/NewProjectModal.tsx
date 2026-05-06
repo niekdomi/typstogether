@@ -1,5 +1,6 @@
 import { For, Match, Switch, createMemo, createResource, createSignal } from "solid-js";
 
+import { Button } from "../../components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -157,12 +158,12 @@ export default function NewProjectModal(props: NewProjectModalProps) {
             </div>
           </div>
           <DialogFooter>
-            <button type="button" class="btn" onClick={props.onClose}>
+            <Button variant="outline" onClick={props.onClose}>
               Cancel
-            </button>
-            <button type="submit" class="btn btn-primary" disabled={!name().trim()}>
+            </Button>
+            <Button type="submit" disabled={!name().trim()}>
               Create
-            </button>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

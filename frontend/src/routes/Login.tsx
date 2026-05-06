@@ -3,6 +3,7 @@ import { For, Match, Show, Switch, createResource, createSignal } from "solid-js
 
 import Logomark from "../components/Logomark";
 import ProviderGlyph from "../components/ProviderGlyph";
+import { Button } from "../components/ui/button";
 import { api } from "../lib/api";
 import { authClient } from "../lib/auth";
 
@@ -59,18 +60,18 @@ export default function Login() {
                 <div class="provider-list">
                   <For each={providers() ?? []}>
                     {(p) => (
-                      <button
-                        type="button"
-                        class="btn provider"
+                      <Button
+                        variant="outline"
+                        class="justify-start gap-3.5 px-[18px] py-[14px] text-[15px] h-auto disabled:(opacity-70 cursor-not-allowed)"
                         onClick={() => void signIn(p.id)}
                         disabled={submitting() !== null}
                       >
                         <ProviderGlyph name={p.id} />
-                        <span class="provider-label">
+                        <span class="flex-1 text-left">
                           {submitting() === p.id ? "Authenticating…" : `Continue with ${p.name}`}
                         </span>
-                        <span class="mono provider-tag">oauth</span>
-                      </button>
+                        <span class="mono text-xs text-muted-foreground">oauth</span>
+                      </Button>
                     )}
                   </For>
                 </div>

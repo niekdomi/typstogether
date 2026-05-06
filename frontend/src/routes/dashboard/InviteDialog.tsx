@@ -1,6 +1,7 @@
 import { TbOutlineCheck, TbOutlineCopy, TbOutlineLink } from "solid-icons/tb";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 
+import { Button } from "../../components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -179,9 +180,8 @@ export default function InviteDialog(props: InviteDialogProps) {
                 placeholder="No link yet"
                 value={linkUrl()}
               />
-              <button
-                type="button"
-                class="btn"
+              <Button
+                variant="outline"
                 disabled={!generatedToken()}
                 onClick={() => void copyLink()}
               >
@@ -189,11 +189,9 @@ export default function InviteDialog(props: InviteDialogProps) {
                   <TbOutlineCheck size={14} />
                 </Show>
                 {copied() ? "Copied" : "Copy"}
-              </button>
+              </Button>
             </div>
-            <button type="button" class="btn btn-primary" onClick={() => void createInvite()}>
-              Generate link
-            </button>
+            <Button onClick={() => void createInvite()}>Generate link</Button>
           </section>
 
           <Show when={activeInvites().length > 0}>
@@ -207,13 +205,9 @@ export default function InviteDialog(props: InviteDialogProps) {
                       <span class="invite-meta mono">
                         {expiresLabel(inv.expiresAt)} · created {formatDate(inv.createdAt)}
                       </span>
-                      <button
-                        type="button"
-                        class="btn btn-ghost"
-                        onClick={() => void revoke(inv.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => void revoke(inv.id)}>
                         Revoke
-                      </button>
+                      </Button>
                     </li>
                   )}
                 </For>
@@ -243,9 +237,9 @@ export default function InviteDialog(props: InviteDialogProps) {
           </Show>
 
           <DialogFooter>
-            <button type="button" class="btn" onClick={close}>
+            <Button variant="outline" onClick={close}>
               Done
-            </button>
+            </Button>
           </DialogFooter>
         </div>
       </DialogContent>
