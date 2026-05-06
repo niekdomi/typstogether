@@ -223,6 +223,14 @@ export default function NewProjectModal(props: NewProjectModalProps) {
             </div>
           </div>
           <DialogFooter>
+            <a
+              href="https://typst.app/universe"
+              target="_blank"
+              rel="noreferrer noopener"
+              class="mr-auto self-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Browse Typst Universe ↗
+            </a>
             <Button variant="outline" onClick={props.onClose}>
               Cancel
             </Button>
