@@ -1,7 +1,7 @@
 import { TbOutlinePlus } from "solid-icons/tb";
 
 import { Button } from "../../components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { Tabs, TabsIndicator, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import type { Tab } from "./types";
 
 interface TabsBarProps {
@@ -28,6 +28,7 @@ export default function TabsBar(props: TabsBarProps) {
           <TabsTrigger value="shared">
             Shared with you <span class="ml-1.5 text-muted-foreground">{props.sharedCount}</span>
           </TabsTrigger>
+          <TabsIndicator />
         </TabsList>
       </Tabs>
       <Button onClick={props.onNewProject}>
