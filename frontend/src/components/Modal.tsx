@@ -1,4 +1,5 @@
 import { Show, createEffect, onCleanup, type JSX } from "solid-js";
+import { Portal } from "solid-js/web";
 
 interface ModalProps {
   open: boolean;
@@ -22,26 +23,28 @@ export default function Modal(props: ModalProps) {
 
   return (
     <Show when={props.open}>
-      <div
-        class="modal-backdrop"
-        onClick={props.onClose}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") props.onClose();
-        }}
-        role="presentation"
-      >
+      <Portal>
         <div
-          class={`modal${props.size === "wide" ? " modal-wide" : ""}`}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={props.labelledBy}
-          onClick={(e) => {
-            e.stopPropagation();
+          class="modal-backdrop"
+          onClick={props.onClose}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") props.onClose();
           }}
+          role="presentation"
         >
-          {props.children}
+          <div
+            class={`modal${props.size === "wide" ? " modal-wide" : ""}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={props.labelledBy}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            {props.children}
+          </div>
         </div>
-      </div>
+      </Portal>
     </Show>
   );
 }
