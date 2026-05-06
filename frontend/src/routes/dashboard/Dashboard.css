@@ -206,6 +206,78 @@
     border-color: var(--ink);
   }
 
+  .proj-card-wrap {
+    position: relative;
+  }
+
+  .proj-menu {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+  }
+
+  .kebab {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    color: var(--ink-2);
+    cursor: pointer;
+    transition:
+      background 0.12s,
+      border-color 0.12s,
+      color 0.12s;
+  }
+
+  .kebab:hover {
+    background: var(--paper-2);
+    border-color: var(--ink-3);
+    color: var(--ink);
+  }
+
+  .proj-menu-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    min-width: 140px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    box-shadow: 0 12px 32px -16px rgb(0 0 0 / 18%);
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+  }
+
+  .proj-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+    transition:
+      background 0.12s,
+      color 0.12s;
+  }
+
+  .proj-menu-item:hover {
+    background: var(--paper-2);
+  }
+
+  .proj-menu-item.danger {
+    color: var(--danger);
+  }
+
+  .proj-menu-item.danger:hover {
+    background: color-mix(in oklch, var(--danger) 8%, var(--paper));
+  }
+
   .proj-thumb {
     aspect-ratio: 1 / 1.3;
     background: var(--paper-3);

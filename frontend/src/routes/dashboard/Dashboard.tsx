@@ -52,6 +52,16 @@ export default function Dashboard() {
     navigate("/login");
   }
 
+  async function deleteProject(id: string, name: string) {
+    if (!globalThis.confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    const { error } = await api.projects({ id }).delete();
+    if (error) {
+      console.error("Failed to delete project:", error);
+      return;
+    }
+    void refetch();
+  }
+
   async function createProject(name: string) {
     const { error } = await api.projects.post({ name });
     if (error) {
@@ -91,6 +101,7 @@ export default function Dashboard() {
                     onOpen={() => {
                       navigate(`/project/${m.project.id}`);
                     }}
+                    onDelete={() => void deleteProject(m.project.id, m.project.name)}
                   />
                 )}
               </For>
