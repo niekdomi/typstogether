@@ -2,6 +2,8 @@
   :scope {
     min-height: 100vh;
     background: var(--background);
+    display: flex;
+    flex-direction: column;
   }
 
   .topbar {
@@ -29,9 +31,13 @@
   }
 
   main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
     max-width: 1240px;
     margin: 0 auto;
-    padding: 40px 32px 80px;
+    padding: 40px 32px 18px;
   }
 
   .page-header {
@@ -78,7 +84,7 @@
   }
 
   .footer {
-    margin-top: 80px;
+    margin-top: auto;
     padding-top: 24px;
     border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
     display: flex;
