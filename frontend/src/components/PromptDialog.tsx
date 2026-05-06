@@ -2,6 +2,7 @@ import { createSignal } from "solid-js";
 
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { TextField, TextFieldInput, TextFieldLabel } from "./ui/text-field";
 
 interface PromptDialogProps {
   open: boolean;
@@ -37,15 +38,10 @@ export default function PromptDialog(props: PromptDialogProps) {
           }}
           class="flex flex-col gap-4"
         >
-          <label class="modal-field">
-            <span class="smallcaps">{props.label}</span>
-            <input
-              autofocus
-              type="text"
-              value={value()}
-              onInput={(e) => setValue(e.currentTarget.value)}
-            />
-          </label>
+          <TextField value={value()} onChange={setValue}>
+            <TextFieldLabel class="smallcaps">{props.label}</TextFieldLabel>
+            <TextFieldInput autofocus type="text" />
+          </TextField>
           <DialogFooter>
             <Button variant="outline" onClick={props.onClose}>
               Cancel

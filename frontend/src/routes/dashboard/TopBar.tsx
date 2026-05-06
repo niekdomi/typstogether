@@ -3,6 +3,7 @@ import { Show } from "solid-js";
 
 import Logomark from "../../components/Logomark";
 import { Button } from "../../components/ui/button";
+import { TextField, TextFieldInput } from "../../components/ui/text-field";
 import { theme, toggleTheme } from "../../lib/theme";
 
 interface TopBarProps {
@@ -24,21 +25,20 @@ export default function TopBar(props: TopBarProps) {
         <Logomark size={20} />
       </div>
       <div class="topbar-right">
-        <label class="search">
-          <TbOutlineSearch size={13} />
-          <input
-            type="text"
-            placeholder="Find a project…"
-            value={props.query}
-            onInput={(e) => {
-              props.onQuery(e.currentTarget.value);
-            }}
+        <TextField
+          value={props.query}
+          onChange={props.onQuery}
+          class="relative block w-[280px] gap-0"
+        >
+          <TbOutlineSearch
+            size={14}
+            class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-1"
           />
-          <span class="mono kbd">⌘K</span>
-        </label>
+          <TextFieldInput type="text" placeholder="Find a project…" class="pl-9 w-full" />
+        </TextField>
         <Button
           variant="outline"
-          size="icon-sm"
+          size="icon"
           onClick={toggleTheme}
           title={theme() === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         >

@@ -28,36 +28,6 @@
     gap: 18px;
   }
 
-  .search {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid var(--border);
-    padding: 6px 12px;
-    width: 280px;
-    color: var(--muted-foreground);
-  }
-
-  .search input {
-    border: 0;
-    background: transparent;
-    font-family: var(--mono);
-    font-size: 12px;
-    flex: 1;
-    color: var(--foreground);
-    outline: none;
-    padding: 0;
-  }
-
-  .search input::placeholder {
-    color: var(--muted-foreground);
-  }
-
-  .kbd {
-    font-size: 10px;
-    color: var(--muted-foreground);
-  }
-
   .avatar {
     width: 28px;
     height: 28px;

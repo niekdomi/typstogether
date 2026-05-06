@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
+import { TextField, TextFieldInput, TextFieldLabel } from "../../components/ui/text-field";
 import { api } from "../../lib/api";
 
 interface NewProjectModalProps {
@@ -71,16 +72,10 @@ export default function NewProjectModal(props: NewProjectModalProps) {
           }}
           class="flex flex-col gap-4"
         >
-          <label class="modal-field">
-            <span class="smallcaps">Name</span>
-            <input
-              autofocus
-              type="text"
-              placeholder="My document"
-              value={name()}
-              onInput={(e) => setName(e.currentTarget.value)}
-            />
-          </label>
+          <TextField value={name()} onChange={setName}>
+            <TextFieldLabel class="smallcaps">Name</TextFieldLabel>
+            <TextFieldInput autofocus type="text" placeholder="My document" />
+          </TextField>
           <div class="flex flex-col gap-2.5">
             <span class="smallcaps">Template</span>
             <div class="flex flex-wrap gap-1.5">
@@ -104,13 +99,13 @@ export default function NewProjectModal(props: NewProjectModalProps) {
               </For>
             </div>
             <hr class="border-0 border-t border-border/60 my-1 w-full" />
-            <input
-              type="text"
-              class="border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-muted-foreground transition-colors duration-150"
-              placeholder="Search templates…"
-              value={search()}
-              onInput={(e) => setSearch(e.currentTarget.value)}
-            />
+            <TextField value={search()} onChange={setSearch}>
+              <TextFieldInput
+                type="text"
+                placeholder="Search templates…"
+                class="font-mono text-xs"
+              />
+            </TextField>
             <div class="grid gap-2 max-h-80 overflow-y-auto p-0.5 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
               <button
                 type="button"
