@@ -1,7 +1,7 @@
 @scope (.invite-dialog) {
   .invite-sub {
     margin: 0;
-    color: var(--ink-3);
+    color: var(--muted-foreground);
     font-size: 13px;
   }
 
@@ -13,11 +13,11 @@
 
   .invite-section + .invite-section {
     padding-top: 16px;
-    border-top: 1px solid var(--rule-soft);
+    border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   }
 
   .invite-section > .smallcaps {
-    color: var(--ink-2);
+    color: color-mix(in srgb, var(--foreground) 75%, transparent);
   }
 
   .invite-section > button {
@@ -33,18 +33,18 @@
   .role-toggle {
     display: flex;
     flex: 1;
-    border: 1px solid var(--rule);
+    border: 1px solid var(--border);
   }
 
   .role-toggle .role-cell + .role-cell {
-    border-left: 1px solid var(--rule);
+    border-left: 1px solid var(--border);
   }
 
   .role-cell {
     flex: 1;
     padding: 8px 12px;
-    background: var(--paper);
-    color: var(--ink-2);
+    background: var(--background);
+    color: color-mix(in srgb, var(--foreground) 75%, transparent);
     font-size: 14px;
     cursor: pointer;
     transition:
@@ -53,18 +53,18 @@
   }
 
   .role-cell:hover {
-    color: var(--ink);
+    color: var(--foreground);
   }
 
   .role-cell.active {
-    background: var(--paper-2);
-    color: var(--ink);
+    background: var(--muted);
+    color: var(--foreground);
   }
 
   .invite-select {
-    border: 1px solid var(--rule);
-    background: var(--paper);
-    color: var(--ink);
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--foreground);
     padding: 8px 12px;
     font-size: 13px;
     cursor: pointer;
@@ -75,16 +75,16 @@
     align-items: center;
     gap: 8px;
     padding: 6px 6px 6px 12px;
-    border: 1px solid var(--rule);
-    background: var(--paper-2);
-    color: var(--ink-3);
+    border: 1px solid var(--border);
+    background: var(--muted);
+    color: var(--muted-foreground);
   }
 
   .invite-link-input {
     flex: 1;
     border: 0;
     background: transparent;
-    color: var(--ink);
+    color: var(--foreground);
     font-family: var(--mono);
     font-size: 12px;
     outline: none;
@@ -110,21 +110,21 @@
 
   .invite-item + .invite-item,
   .member-item + .member-item {
-    border-top: 1px solid var(--rule-soft);
+    border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   }
 
   .invite-meta {
     flex: 1;
     font-size: 11px;
-    color: var(--ink-3);
+    color: var(--muted-foreground);
   }
 
   .avatar-small {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--foreground);
+    color: var(--background);
     font-family: var(--mono);
     font-size: 10px;
     font-weight: 600;
@@ -143,6 +143,6 @@
 
   .member-name {
     flex: 1;
-    color: var(--ink);
+    color: var(--foreground);
   }
 }

@@ -1,7 +1,13 @@
-import { TbOutlineCheck, TbOutlineCopy, TbOutlineLink, TbOutlineX } from "solid-icons/tb";
+import { TbOutlineCheck, TbOutlineCopy, TbOutlineLink } from "solid-icons/tb";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 
-import Modal from "../../components/Modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import { api } from "../../lib/api";
 import { formatDate, formatRelative } from "../../lib/format";
 import { toast } from "../../lib/toast";
@@ -122,17 +128,17 @@ export default function InviteDialog(props: InviteDialogProps) {
   }
 
   return (
-    <Modal open={props.open} onClose={close} labelledBy="invite-title">
-      <div class="invite-dialog">
-        <header class="modal-header">
-          <h2 id="invite-title" class="display modal-title">
-            Share {props.projectName}
-          </h2>
-          <button type="button" class="modal-close" onClick={close} aria-label="Close">
-            <TbOutlineX size={16} />
-          </button>
-        </header>
-        <div class="modal-body">
+    <Dialog
+      open={props.open}
+      onOpenChange={(o) => {
+        if (!o) close();
+      }}
+    >
+      <DialogContent>
+        <div class="invite-dialog flex flex-col gap-4">
+          <DialogHeader>
+            <DialogTitle>Share {props.projectName}</DialogTitle>
+          </DialogHeader>
           <p class="invite-sub">Invites are issued only through generated links.</p>
 
           <section class="invite-section">
@@ -236,13 +242,13 @@ export default function InviteDialog(props: InviteDialogProps) {
             </section>
           </Show>
 
-          <footer class="modal-footer">
+          <DialogFooter>
             <button type="button" class="btn" onClick={close}>
               Done
             </button>
-          </footer>
+          </DialogFooter>
         </div>
-      </div>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 }

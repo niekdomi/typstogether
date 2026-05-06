@@ -1,6 +1,4 @@
-import { TbOutlineX } from "solid-icons/tb";
-
-import Modal from "./Modal";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -14,18 +12,18 @@ interface ConfirmDialogProps {
 
 export default function ConfirmDialog(props: ConfirmDialogProps) {
   return (
-    <Modal open={props.open} onClose={props.onClose} labelledBy="confirm-title">
-      <header class="modal-header">
-        <h2 id="confirm-title" class="display modal-title">
-          {props.title}
-        </h2>
-        <button type="button" class="modal-close" onClick={props.onClose} aria-label="Close">
-          <TbOutlineX size={16} />
-        </button>
-      </header>
-      <div class="modal-body">
+    <Dialog
+      open={props.open}
+      onOpenChange={(o) => {
+        if (!o) props.onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{props.title}</DialogTitle>
+        </DialogHeader>
         <p class="modal-message">{props.message}</p>
-        <footer class="modal-footer">
+        <DialogFooter>
           <button type="button" class="btn" onClick={props.onClose}>
             Cancel
           </button>
@@ -39,8 +37,8 @@ export default function ConfirmDialog(props: ConfirmDialogProps) {
           >
             {props.confirmLabel ?? "Confirm"}
           </button>
-        </footer>
-      </div>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

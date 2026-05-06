@@ -30,7 +30,12 @@
     "!**/.env.example",
     "**/vite.config.js.timestamp-*",
     "**/vite.config.ts.timestamp-*",
-    "frontend/.router/"
+    "frontend/.router/",
+    "frontend/uno-presets/",
+    "frontend/src/components/ui/",
+    "frontend/src/lib/cva.ts",
+    "frontend/src/lib/call-handler.ts",
+    "frontend/src/lib/combine-style.ts"
   ],
   "rules": {
     "constructor-super": "error",

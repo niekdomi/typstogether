@@ -1,7 +1,12 @@
-import { TbOutlineX } from "solid-icons/tb";
 import { For, Match, Switch, createMemo, createResource, createSignal } from "solid-js";
 
-import Modal from "../../components/Modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import { api } from "../../lib/api";
 
 interface NewProjectModalProps {
@@ -47,110 +52,120 @@ export default function NewProjectModal(props: NewProjectModalProps) {
   });
 
   return (
-    <Modal open={props.open} onClose={props.onClose} labelledBy="new-project-title" size="wide">
-      <header class="modal-header">
-        <h2 id="new-project-title" class="display modal-title">
-          New project
-        </h2>
-        <button type="button" class="modal-close" onClick={props.onClose} aria-label="Close">
-          <TbOutlineX size={16} />
-        </button>
-      </header>
-      <form
-        class="modal-body"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const trimmed = name().trim();
-          if (trimmed) props.onSubmit(trimmed);
-        }}
-      >
-        <label class="modal-field">
-          <span class="smallcaps">Name</span>
-          <input
-            autofocus
-            type="text"
-            placeholder="My document"
-            value={name()}
-            onInput={(e) => setName(e.currentTarget.value)}
-          />
-        </label>
-        <div class="template-section">
-          <span class="smallcaps">Template</span>
-          <div class="template-chips">
-            <button
-              type="button"
-              class={`chip${category() === "all" ? " active" : ""}`}
-              onClick={() => setCategory("all")}
-            >
-              all
-            </button>
-            <For each={categories()}>
-              {(c) => (
-                <button
-                  type="button"
-                  class={`chip${category() === c ? " active" : ""}`}
-                  onClick={() => setCategory(c)}
-                >
-                  {c}
-                </button>
-              )}
-            </For>
+    <Dialog
+      open={props.open}
+      onOpenChange={(o) => {
+        if (!o) props.onClose();
+      }}
+    >
+      <DialogContent class="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>New project</DialogTitle>
+        </DialogHeader>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const trimmed = name().trim();
+            if (trimmed) props.onSubmit(trimmed);
+          }}
+          class="flex flex-col gap-4"
+        >
+          <label class="modal-field">
+            <span class="smallcaps">Name</span>
+            <input
+              autofocus
+              type="text"
+              placeholder="My document"
+              value={name()}
+              onInput={(e) => setName(e.currentTarget.value)}
+            />
+          </label>
+          <div class="flex flex-col gap-2.5">
+            <span class="smallcaps">Template</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                class={`chip ${category() === "all" ? "chip-active" : ""}`}
+                onClick={() => setCategory("all")}
+              >
+                all
+              </button>
+              <For each={categories()}>
+                {(c) => (
+                  <button
+                    type="button"
+                    class={`chip ${category() === c ? "chip-active" : ""}`}
+                    onClick={() => setCategory(c)}
+                  >
+                    {c}
+                  </button>
+                )}
+              </For>
+            </div>
+            <hr class="border-0 border-t border-border/60 my-1 w-full" />
+            <input
+              type="text"
+              class="border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-muted-foreground transition-colors duration-150"
+              placeholder="Search templates…"
+              value={search()}
+              onInput={(e) => setSearch(e.currentTarget.value)}
+            />
+            <div class="grid gap-2 max-h-80 overflow-y-auto p-0.5 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+              <button
+                type="button"
+                class={`card-tile ${template() === BLANK_ID ? "card-tile-active" : ""}`}
+                onClick={() => setTemplate(BLANK_ID)}
+              >
+                <div class="font-sans text-sm font-medium text-foreground">Blank</div>
+                <div class="font-mono text-[11px] text-foreground/75 leading-[1.4]">
+                  Empty document.
+                </div>
+              </button>
+              <Switch
+                fallback={
+                  <For each={filtered()}>
+                    {(t) => (
+                      <button
+                        type="button"
+                        class={`card-tile ${template() === t.id ? "card-tile-active" : ""}`}
+                        onClick={() => setTemplate(t.id)}
+                      >
+                        <div class="font-sans text-sm font-medium text-foreground">{t.id}</div>
+                        <div class="font-mono text-[11px] text-foreground/75 leading-[1.4]">
+                          {t.description || "No description."}
+                        </div>
+                        <div class="font-mono text-[10px] text-muted-foreground mt-auto">
+                          v{t.version}
+                          {t.categories.length > 0 ? ` · ${t.categories.join(", ")}` : ""}
+                        </div>
+                      </button>
+                    )}
+                  </For>
+                }
+              >
+                <Match when={templates.loading}>
+                  <div class="font-mono col-span-full p-6 text-center text-foreground/75 text-xs">
+                    Loading templates…
+                  </div>
+                </Match>
+                <Match when={templates.error !== undefined}>
+                  <div class="font-mono col-span-full p-6 text-center text-foreground/75 text-xs">
+                    Could not load templates.
+                  </div>
+                </Match>
+              </Switch>
+            </div>
           </div>
-          <hr class="template-divider" />
-          <input
-            type="text"
-            class="template-search"
-            placeholder="Search templates…"
-            value={search()}
-            onInput={(e) => setSearch(e.currentTarget.value)}
-          />
-          <div class="template-grid">
-            <button
-              type="button"
-              class={`template-card${template() === BLANK_ID ? " active" : ""}`}
-              onClick={() => setTemplate(BLANK_ID)}
-            >
-              <div class="template-name">Blank</div>
-              <div class="template-desc">Empty document.</div>
+          <DialogFooter>
+            <button type="button" class="btn" onClick={props.onClose}>
+              Cancel
             </button>
-            <Switch
-              fallback={
-                <For each={filtered()}>
-                  {(t) => (
-                    <button
-                      type="button"
-                      class={`template-card${template() === t.id ? " active" : ""}`}
-                      onClick={() => setTemplate(t.id)}
-                    >
-                      <div class="template-name">{t.id}</div>
-                      <div class="template-desc">{t.description || "No description."}</div>
-                      <div class="template-meta mono">
-                        v{t.version}
-                        {t.categories.length > 0 ? ` · ${t.categories.join(", ")}` : ""}
-                      </div>
-                    </button>
-                  )}
-                </For>
-              }
-            >
-              <Match when={templates.loading}>
-                <div class="template-loading mono">Loading templates…</div>
-              </Match>
-              <Match when={templates.error !== undefined}>
-                <div class="template-loading mono">Could not load templates.</div>
-              </Match>
-            </Switch>
-          </div>
-        </div>
-        <footer class="modal-footer">
-          <button type="button" class="btn" onClick={props.onClose}>
-            Cancel
-          </button>
-          <button type="submit" class="btn btn-primary" disabled={!name().trim()}>
-            Create
-          </button>
-        </footer>
-      </form>
-    </Modal>
+            <button type="submit" class="btn btn-primary" disabled={!name().trim()}>
+              Create
+            </button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
