@@ -154,6 +154,63 @@ describe("GET /projects/:id", () => {
   });
 });
 
+describe("PATCH /projects/:id", () => {
+  test("401 when unauthenticated", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+
+    const res = await request(`/projects/${project.id}`, jsonInit("PATCH", { name: "Renamed" }));
+
+    expect(res.status).toBe(401);
+  });
+
+  test("404 when caller is not a member", async () => {
+    const owner = await userFactory.create();
+    const stranger = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    setTestUser(stranger);
+
+    const res = await request(`/projects/${project.id}`, jsonInit("PATCH", { name: "Renamed" }));
+
+    expect(res.status).toBe(404);
+  });
+
+  test("403 when caller is editor", async () => {
+    const owner = await userFactory.create();
+    const editor = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    await memberService.create(project.id, editor.id, "editor");
+    setTestUser(editor);
+
+    const res = await request(`/projects/${project.id}`, jsonInit("PATCH", { name: "Renamed" }));
+
+    expect(res.status).toBe(403);
+  });
+
+  test("200 owner renames the project", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id, name: "Original" });
+    setTestUser(owner);
+
+    const res = await request(`/projects/${project.id}`, jsonInit("PATCH", { name: "Renamed" }));
+    const body = (await res.json()) as { id: string; name: string };
+
+    expect(res.status).toBe(200);
+    expect(body.id).toBe(project.id);
+    expect(body.name).toBe("Renamed");
+  });
+
+  test("422 on empty name", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    setTestUser(owner);
+
+    const res = await request(`/projects/${project.id}`, jsonInit("PATCH", { name: "" }));
+
+    expect(res.status).toBe(422);
+  });
+});
+
 describe("DELETE /projects/:id", () => {
   test("401 when unauthenticated", async () => {
     const owner = await userFactory.create();

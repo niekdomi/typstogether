@@ -152,6 +152,36 @@ describe("ProjectService.create", () => {
   });
 });
 
+describe("ProjectService.update", () => {
+  test("renames the project", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({
+      ownerUserId: owner.id,
+      name: "Original",
+    });
+
+    const result = await projectService.update(project.id, { name: "Renamed" });
+
+    expect(result.id).toBe(project.id);
+    expect(result.name).toBe("Renamed");
+  });
+
+  test("throws NotFoundError when the project does not exist", async () => {
+    await expectThrows(
+      () => projectService.update(crypto.randomUUID(), { name: "X" }),
+      NotFoundError
+    );
+  });
+
+  test("throws NotFoundError when the project is soft-deleted", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    await projectService.remove(project.id);
+
+    await expectThrows(() => projectService.update(project.id, { name: "X" }), NotFoundError);
+  });
+});
+
 describe("ProjectService.remove", () => {
   test("soft-deletes the project by setting deletedAt", async () => {
     const owner = await userFactory.create();

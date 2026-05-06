@@ -31,7 +31,7 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
-class TemplateService {
+export class TemplateService {
   #cached: Template[] | null = null;
   #fetchedAt = 0;
 
