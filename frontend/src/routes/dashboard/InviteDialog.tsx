@@ -153,7 +153,7 @@ export default function InviteDialog(props: InviteDialogProps) {
           <p class="invite-sub">Invites are issued only through generated links.</p>
 
           <section class="invite-section">
-            <span class="smallcaps">New link</span>
+            <span class="text-sm font-medium">New link</span>
             <div class="invite-row">
               <ToggleGroup
                 variant="outline"
@@ -222,7 +222,7 @@ export default function InviteDialog(props: InviteDialogProps) {
 
           <Show when={activeInvites().length > 0}>
             <section class="invite-section">
-              <span class="smallcaps">Active links</span>
+              <span class="text-sm font-medium">Active links</span>
               <ul class="invite-list">
                 <For each={activeInvites()}>
                   {(inv) => (
@@ -243,7 +243,7 @@ export default function InviteDialog(props: InviteDialogProps) {
 
           <Show when={(members() ?? []).length > 0}>
             <section class="invite-section">
-              <span class="smallcaps">People with access</span>
+              <span class="text-sm font-medium">People with access</span>
               <ul class="member-list">
                 <For each={members() ?? []}>
                   {(m) => (

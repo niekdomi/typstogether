@@ -16,10 +16,6 @@
     border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   }
 
-  .invite-section > .smallcaps {
-    color: color-mix(in srgb, var(--foreground) 75%, transparent);
-  }
-
   .invite-section > button {
     align-self: flex-end;
   }

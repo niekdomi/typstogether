@@ -2,6 +2,7 @@ import { For, Match, Switch, createMemo, createResource, createSignal } from "so
 
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +13,9 @@ import {
 import { Separator } from "../../components/ui/separator";
 import { Skeleton } from "../../components/ui/skeleton";
 import { TextField, TextFieldInput, TextFieldLabel } from "../../components/ui/text-field";
+import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
 import { api } from "../../lib/api";
+import { cx } from "../../lib/cva";
 
 interface NewProjectModalProps {
   open: boolean;
@@ -76,31 +79,32 @@ export default function NewProjectModal(props: NewProjectModalProps) {
           class="flex flex-col gap-4"
         >
           <TextField value={name()} onChange={setName}>
-            <TextFieldLabel class="smallcaps">Name</TextFieldLabel>
+            <TextFieldLabel>Name</TextFieldLabel>
             <TextFieldInput autofocus type="text" placeholder="My document" />
           </TextField>
           <div class="flex flex-col gap-2.5">
-            <span class="smallcaps">Template</span>
-            <div class="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                class={`chip ${category() === "all" ? "chip-active" : ""}`}
-                onClick={() => setCategory("all")}
-              >
+            <span class="text-sm font-medium">Template</span>
+            <ToggleGroup
+              variant="outline"
+              value={category()}
+              onChange={(v) => setCategory(v ?? "all")}
+              class="flex flex-wrap gap-1.5 w-full"
+            >
+              <ToggleGroupItem value="all" size="sm" class="rounded-md! border-l! flex-none px-2.5">
                 all
-              </button>
+              </ToggleGroupItem>
               <For each={categories()}>
                 {(c) => (
-                  <button
-                    type="button"
-                    class={`chip ${category() === c ? "chip-active" : ""}`}
-                    onClick={() => setCategory(c)}
+                  <ToggleGroupItem
+                    value={c}
+                    size="sm"
+                    class="rounded-md! border-l! flex-none px-2.5"
                   >
                     {c}
-                  </button>
+                  </ToggleGroupItem>
                 )}
               </For>
-            </div>
+            </ToggleGroup>
             <Separator class="my-1" />
             <TextField value={search()} onChange={setSearch}>
               <TextFieldInput
@@ -110,24 +114,44 @@ export default function NewProjectModal(props: NewProjectModalProps) {
               />
             </TextField>
             <div class="grid gap-2 max-h-80 overflow-y-auto p-0.5 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
-              <button
-                type="button"
-                class={`card-tile ${template() === BLANK_ID ? "card-tile-active" : ""}`}
+              <Card
+                role="button"
+                tabIndex={0}
+                class={cx(
+                  "px-3.5 py-3 gap-1 cursor-pointer transition-colors hover:border-foreground",
+                  template() === BLANK_ID && "border-foreground bg-muted"
+                )}
                 onClick={() => setTemplate(BLANK_ID)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setTemplate(BLANK_ID);
+                  }
+                }}
               >
                 <div class="font-sans text-sm font-medium text-foreground">Blank</div>
                 <div class="font-mono text-[11px] text-foreground/75 leading-[1.4]">
                   Empty document.
                 </div>
-              </button>
+              </Card>
               <Switch
                 fallback={
                   <For each={filtered()}>
                     {(t) => (
-                      <button
-                        type="button"
-                        class={`card-tile ${template() === t.id ? "card-tile-active" : ""}`}
+                      <Card
+                        role="button"
+                        tabIndex={0}
+                        class={cx(
+                          "px-3.5 py-3 gap-1 cursor-pointer transition-colors hover:border-foreground",
+                          template() === t.id && "border-foreground bg-muted"
+                        )}
                         onClick={() => setTemplate(t.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setTemplate(t.id);
+                          }
+                        }}
                       >
                         <div class="font-sans text-sm font-medium text-foreground">{t.id}</div>
                         <div class="font-mono text-[11px] text-foreground/75 leading-[1.4]">
@@ -137,7 +161,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
                           v{t.version}
                           {t.categories.length > 0 ? ` · ${t.categories.join(", ")}` : ""}
                         </div>
-                      </button>
+                      </Card>
                     )}
                   </For>
                 }

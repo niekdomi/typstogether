@@ -39,7 +39,7 @@ export default function PromptDialog(props: PromptDialogProps) {
           class="flex flex-col gap-4"
         >
           <TextField value={value()} onChange={setValue}>
-            <TextFieldLabel class="smallcaps">{props.label}</TextFieldLabel>
+            <TextFieldLabel>{props.label}</TextFieldLabel>
             <TextFieldInput autofocus type="text" />
           </TextField>
           <DialogFooter>

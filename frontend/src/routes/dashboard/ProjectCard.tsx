@@ -47,7 +47,7 @@ export default function ProjectCard(props: ProjectCardProps) {
       </div>
       <div class="px-5 py-4 flex items-start gap-3">
         <div class="flex-1 min-w-0 flex flex-col gap-1.5">
-          <div class="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+          <div class="text-xs text-muted-foreground">
             {isShared() ? "shared" : `created ${formatDate(props.project.createdAt)}`}
           </div>
           <div class="font-medium text-[15px] leading-tight truncate text-foreground">
