@@ -198,74 +198,6 @@
     position: relative;
   }
 
-  .proj-menu {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 1;
-  }
-
-  .kebab {
-    width: 28px;
-    height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--background);
-    border: 1px solid var(--border);
-    color: color-mix(in srgb, var(--foreground) 75%, transparent);
-    cursor: pointer;
-    transition:
-      background 0.12s,
-      border-color 0.12s,
-      color 0.12s;
-  }
-
-  .kebab:hover {
-    background: var(--muted);
-    border-color: var(--muted-foreground);
-    color: var(--foreground);
-  }
-
-  .proj-menu-list {
-    position: absolute;
-    top: calc(100% + 4px);
-    right: 0;
-    min-width: 140px;
-    background: var(--background);
-    border: 1px solid var(--border);
-    box-shadow: 0 12px 32px -16px rgb(0 0 0 / 18%);
-    display: flex;
-    flex-direction: column;
-    padding: 4px;
-  }
-
-  .proj-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    text-align: left;
-    font-size: 13px;
-    color: var(--foreground);
-    cursor: pointer;
-    transition:
-      background 0.12s,
-      color 0.12s;
-  }
-
-  .proj-menu-item:hover {
-    background: var(--muted);
-  }
-
-  .proj-menu-item.danger {
-    color: var(--destructive);
-  }
-
-  .proj-menu-item.danger:hover {
-    background: color-mix(in oklch, var(--destructive) 8%, var(--background));
-  }
-
   .proj-thumb {
     aspect-ratio: 1 / 1.3;
     background: var(--primary);
@@ -334,6 +266,7 @@
   .proj-foot {
     font-size: 11px;
     color: var(--muted-foreground);
+    padding-right: 36px;
   }
 
   .empty {
