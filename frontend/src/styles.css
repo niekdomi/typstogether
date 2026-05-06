@@ -1,3 +1,20 @@
+/*
+ * Token semantics — keep usage consistent.
+ *
+ * Ink (text/iconography):
+ *   --ink     primary — body text, headings, active state, primary borders
+ *   --ink-2   secondary — descriptions, supporting copy, hover-state text
+ *   --ink-3   tertiary — metadata only (counts, timestamps, hints, placeholders)
+ *
+ * Rule (borders/dividers):
+ *   --rule       default borders (cards, inputs, buttons at rest)
+ *   --rule-soft  weak dividers
+ *
+ * Border interaction states:
+ *   1-state (hover only):           rest=rule, hover=ink   — e.g. proj-card
+ *   3-state (rest/hover/selected):  rest=rule, hover=ink-3, active=ink
+ */
+
 :root {
   --paper: #f6f7f5;
   --paper-2: #eef0ed;
@@ -22,8 +39,8 @@
   --paper-2: #141b1a;
   --paper-3: #1a2221;
   --ink: #e6ebe8;
-  --ink-2: #aab3b1;
-  --ink-3: #758180;
+  --ink-2: #b2bab8;
+  --ink-3: #808b8a;
   --rule: #25302e;
   --rule-soft: #1e2826;
   --surface: oklch(0.27 0.005 200);
