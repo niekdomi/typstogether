@@ -79,28 +79,6 @@
     color: var(--muted-foreground);
   }
 
-  .avatar-small {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--foreground);
-    color: var(--background);
-    font-family: var(--mono);
-    font-size: 10px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-
-  .avatar-small img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
   .member-name {
     flex: 1;
     color: var(--foreground);

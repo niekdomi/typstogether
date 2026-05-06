@@ -1,5 +1,13 @@
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -13,32 +21,30 @@ interface ConfirmDialogProps {
 
 export default function ConfirmDialog(props: ConfirmDialogProps) {
   return (
-    <Dialog
+    <AlertDialog
       open={props.open}
       onOpenChange={(o) => {
         if (!o) props.onClose();
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{props.title}</DialogTitle>
-        </DialogHeader>
-        <p class="modal-message">{props.message}</p>
-        <DialogFooter>
-          <Button variant="outline" onClick={props.onClose}>
-            Cancel
-          </Button>
-          <Button
-            variant={props.danger ? "destructive" : "default"}
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{props.title}</AlertDialogTitle>
+          <AlertDialogDescription>{props.message}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={props.onClose}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            class={props.danger ? "bg-destructive text-white hover:bg-destructive/90" : ""}
             onClick={() => {
               props.onConfirm();
               props.onClose();
             }}
           >
             {props.confirmLabel ?? "Confirm"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

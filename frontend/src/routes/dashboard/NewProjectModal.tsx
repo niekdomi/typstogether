@@ -1,5 +1,6 @@
 import { For, Match, Switch, createMemo, createResource, createSignal } from "solid-js";
 
+import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
 import {
   Dialog,
@@ -8,6 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
+import { Separator } from "../../components/ui/separator";
+import { Skeleton } from "../../components/ui/skeleton";
 import { TextField, TextFieldInput, TextFieldLabel } from "../../components/ui/text-field";
 import { api } from "../../lib/api";
 
@@ -98,7 +101,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
                 )}
               </For>
             </div>
-            <hr class="border-0 border-t border-border/60 my-1 w-full" />
+            <Separator class="my-1" />
             <TextField value={search()} onChange={setSearch}>
               <TextFieldInput
                 type="text"
@@ -140,14 +143,12 @@ export default function NewProjectModal(props: NewProjectModalProps) {
                 }
               >
                 <Match when={templates.loading}>
-                  <div class="font-mono col-span-full p-6 text-center text-foreground/75 text-xs">
-                    Loading templates…
-                  </div>
+                  <For each={Array.from({ length: 6 })}>{() => <Skeleton class="h-[76px]" />}</For>
                 </Match>
                 <Match when={templates.error !== undefined}>
-                  <div class="font-mono col-span-full p-6 text-center text-foreground/75 text-xs">
-                    Could not load templates.
-                  </div>
+                  <Alert variant="destructive" class="col-span-full">
+                    <AlertDescription>Could not load templates.</AlertDescription>
+                  </Alert>
                 </Match>
               </Switch>
             </div>

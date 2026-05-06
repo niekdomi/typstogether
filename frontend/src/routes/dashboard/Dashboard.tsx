@@ -5,6 +5,8 @@ import { toast } from "somoto";
 
 import ConfirmDialog from "../../components/ConfirmDialog";
 import PromptDialog from "../../components/PromptDialog";
+import { Alert, AlertDescription } from "../../components/ui/alert";
+import { Skeleton } from "../../components/ui/skeleton";
 import { api } from "../../lib/api";
 import { authClient } from "../../lib/auth";
 import InviteDialog from "./InviteDialog";
@@ -124,14 +126,16 @@ export default function Dashboard() {
           }
         >
           <Match when={projects.loading}>
-            <div class="empty">
-              <p>Loading projects…</p>
+            <div class="grid">
+              <For each={Array.from({ length: 8 })}>
+                {() => <Skeleton class="aspect-[1/1.4] rounded-xl" />}
+              </For>
             </div>
           </Match>
           <Match when={projects.error !== undefined}>
-            <div class="empty">
-              <p>Could not load projects.</p>
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>Could not load projects.</AlertDescription>
+            </Alert>
           </Match>
           <Match when={list().length === 0}>
             <div class="empty">

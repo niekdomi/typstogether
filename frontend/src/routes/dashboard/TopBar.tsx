@@ -2,8 +2,10 @@ import { TbOutlineMoon, TbOutlineSearch, TbOutlineSun } from "solid-icons/tb";
 import { Show } from "solid-js";
 
 import Logomark from "../../components/Logomark";
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { Button } from "../../components/ui/button";
 import { TextField, TextFieldInput } from "../../components/ui/text-field";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import { theme, toggleTheme } from "../../lib/theme";
 
 interface TopBarProps {
@@ -36,29 +38,31 @@ export default function TopBar(props: TopBarProps) {
           />
           <TextFieldInput type="text" placeholder="Find a project…" class="pl-9 w-full" />
         </TextField>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleTheme}
-          title={theme() === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-        >
-          <Show when={theme() === "dark"} fallback={<TbOutlineMoon size={14} />}>
-            <TbOutlineSun size={14} />
-          </Show>
-        </Button>
-        <Button
-          variant="ghost"
-          class="gap-2.5 pl-1 pr-2.5 py-1 h-auto text-sm hover:bg-muted"
-          onClick={props.onSignOut}
-          title="Sign out"
-        >
-          <span class="avatar">
-            <Show when={props.userImage} fallback={initial(props.userName)}>
-              {(src) => <img src={src()} alt="" />}
+        <Tooltip openDelay={150}>
+          <TooltipTrigger as={Button<"button">} variant="outline" size="icon" onClick={toggleTheme}>
+            <Show when={theme() === "dark"} fallback={<TbOutlineMoon size={14} />}>
+              <TbOutlineSun size={14} />
             </Show>
-          </span>
-          <span>{props.userName ?? "Sign out"}</span>
-        </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {theme() === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip openDelay={150}>
+          <TooltipTrigger
+            as={Button<"button">}
+            variant="ghost"
+            class="gap-2.5 pl-1 pr-2.5 py-1 h-auto text-sm hover:bg-muted"
+            onClick={props.onSignOut}
+          >
+            <Avatar class="size-7">
+              <AvatarImage src={props.userImage ?? undefined} alt="" />
+              <AvatarFallback>{initial(props.userName)}</AvatarFallback>
+            </Avatar>
+            <span>{props.userName ?? "Sign out"}</span>
+          </TooltipTrigger>
+          <TooltipContent>Sign out</TooltipContent>
+        </Tooltip>
       </div>
     </header>
   );

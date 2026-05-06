@@ -2,6 +2,7 @@ import { TbOutlineCheck, TbOutlineCopy, TbOutlineLink } from "solid-icons/tb";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 import { toast } from "somoto";
 
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import {
@@ -247,13 +248,14 @@ export default function InviteDialog(props: InviteDialogProps) {
                 <For each={members() ?? []}>
                   {(m) => (
                     <li class="member-item">
-                      <span class="avatar-small">
-                        <Show when={m.user.image} fallback={memberInitial(m.user.name)}>
-                          {(src) => <img src={src()} alt="" />}
-                        </Show>
-                      </span>
+                      <Avatar class="size-6">
+                        <AvatarImage src={m.user.image ?? undefined} alt="" />
+                        <AvatarFallback class="text-[10px]">
+                          {memberInitial(m.user.name)}
+                        </AvatarFallback>
+                      </Avatar>
                       <span class="member-name">{m.user.name}</span>
-                      <span class="pill">{m.member.role}</span>
+                      <Badge variant="outline">{m.member.role}</Badge>
                     </li>
                   )}
                 </For>
