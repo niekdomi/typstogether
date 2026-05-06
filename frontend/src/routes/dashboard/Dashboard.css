@@ -85,7 +85,7 @@
   }
 
   .footer {
-    margin-top: 24px;
+    margin-top: auto;
     padding-top: 24px;
     border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
     display: flex;
