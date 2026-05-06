@@ -57,6 +57,9 @@ export class TemplateService {
         description: e.description ?? "",
         authors: e.authors ?? [],
         categories: e.categories ?? [],
+        thumbnailUrl: e.template?.thumbnail
+          ? `https://packages.typst.org/preview/thumbnails/${e.name}-${e.version}-small.webp`
+          : null,
       }));
       this.#cached = templates;
       this.#fetchedAt = Date.now();

@@ -68,6 +68,7 @@ describe("TemplateService.list", () => {
       description: "",
       authors: [],
       categories: [],
+      thumbnailUrl: null,
     });
   });
 

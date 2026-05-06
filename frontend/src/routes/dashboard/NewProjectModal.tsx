@@ -1,6 +1,7 @@
 import {
   For,
   Match,
+  Show,
   Switch,
   createEffect,
   createMemo,
@@ -130,12 +131,12 @@ export default function NewProjectModal(props: NewProjectModalProps) {
                 class="font-mono text-xs"
               />
             </TextField>
-            <div class="grid gap-2 max-h-80 overflow-y-auto p-0.5 grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+            <div class="grid gap-2 max-h-96 overflow-y-auto p-0.5 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
               <Card
                 role="button"
                 tabIndex={0}
                 class={cx(
-                  "px-3.5 py-3 gap-1 cursor-pointer transition-colors hover:border-foreground",
+                  "h-[240px] py-0 gap-0 overflow-hidden cursor-pointer transition-colors hover:border-foreground",
                   template() === BLANK_ID && "border-foreground bg-muted"
                 )}
                 onClick={() => setTemplate(BLANK_ID)}
@@ -146,9 +147,14 @@ export default function NewProjectModal(props: NewProjectModalProps) {
                   }
                 }}
               >
-                <div class="font-sans text-sm font-medium text-foreground">Blank</div>
-                <div class="font-mono text-[11px] text-foreground/75 leading-[1.4]">
-                  Empty document.
+                <div class="h-40 bg-muted/40 border-b border-border flex items-center justify-center text-muted-foreground/50 text-[11px] font-mono">
+                  blank
+                </div>
+                <div class="flex-1 min-h-0 px-3 py-2.5 flex flex-col gap-0.5 overflow-hidden">
+                  <div class="font-sans text-sm font-medium text-foreground truncate">Blank</div>
+                  <div class="font-mono text-[10px] text-muted-foreground leading-snug">
+                    Empty document
+                  </div>
                 </div>
               </Card>
               <Switch
@@ -159,7 +165,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
                         role="button"
                         tabIndex={0}
                         class={cx(
-                          "px-3.5 py-3 gap-1 cursor-pointer transition-colors hover:border-foreground",
+                          "h-[240px] py-0 gap-0 overflow-hidden cursor-pointer transition-colors hover:border-foreground",
                           template() === t.id && "border-foreground bg-muted"
                         )}
                         onClick={() => setTemplate(t.id)}
@@ -170,13 +176,33 @@ export default function NewProjectModal(props: NewProjectModalProps) {
                           }
                         }}
                       >
-                        <div class="font-sans text-sm font-medium text-foreground">{t.id}</div>
-                        <div class="font-mono text-[11px] text-foreground/75 leading-[1.4]">
-                          {t.description || "No description."}
+                        <div class="h-40 shrink-0 bg-muted/40 border-b border-border overflow-hidden">
+                          <Show
+                            when={t.thumbnailUrl !== null}
+                            fallback={
+                              <div class="size-full flex items-center justify-center text-muted-foreground/50 text-[11px] font-mono">
+                                no preview
+                              </div>
+                            }
+                          >
+                            <img
+                              src={t.thumbnailUrl ?? ""}
+                              alt=""
+                              loading="lazy"
+                              class="size-full object-cover object-top"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                          </Show>
                         </div>
-                        <div class="font-mono text-[10px] text-muted-foreground mt-auto">
-                          v{t.version}
-                          {t.categories.length > 0 ? ` · ${t.categories.join(", ")}` : ""}
+                        <div class="flex-1 min-h-0 px-3 py-2.5 flex flex-col gap-0.5 overflow-hidden">
+                          <div class="font-sans text-sm font-medium text-foreground truncate">
+                            {t.id}
+                          </div>
+                          <div class="font-mono text-[10px] text-muted-foreground leading-snug line-clamp-2">
+                            {t.description || "No description."}
+                          </div>
                         </div>
                       </Card>
                     )}
@@ -184,7 +210,9 @@ export default function NewProjectModal(props: NewProjectModalProps) {
                 }
               >
                 <Match when={templates.loading}>
-                  <For each={Array.from({ length: 6 })}>{() => <Skeleton class="h-[76px]" />}</For>
+                  <For each={Array.from({ length: 8 })}>
+                    {() => <Skeleton class="h-[240px] rounded-xl" />}
+                  </For>
                 </Match>
                 <Match when={templates.error !== undefined}>
                   <Alert variant="destructive" class="col-span-full">
