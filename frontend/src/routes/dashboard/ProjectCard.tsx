@@ -3,6 +3,7 @@ import { Show } from "solid-js";
 
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,54 +26,76 @@ export default function ProjectCard(props: ProjectCardProps) {
   const isShared = () => props.role !== "owner";
 
   return (
-    <div class="proj-card-wrap">
-      <button type="button" class="proj-card" onClick={props.onOpen}>
-        <div class="proj-thumb">
-          <div class="proj-thumb-doc">
-            <span class="proj-thumb-title">{props.project.name}</span>
-          </div>
-          <Show when={isShared()}>
-            <Badge variant="outline" class="absolute top-2.5 right-2.5">
-              {props.role}
-            </Badge>
-          </Show>
+    <Card
+      role="button"
+      tabIndex={0}
+      class="cursor-pointer overflow-hidden gap-0 py-0 transition-colors hover:border-foreground"
+      onClick={props.onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          props.onOpen();
+        }
+      }}
+    >
+      <div class="aspect-[1/1.1] bg-muted border-b border-border p-5 flex">
+        <div class="flex-1 flex items-center justify-center bg-card border border-border/60 px-4 py-3 overflow-hidden">
+          <span class="text-center text-[13px] leading-snug text-foreground/75 line-clamp-4">
+            {props.project.name}
+          </span>
         </div>
-        <div class="proj-meta">
-          <div class="smallcaps">
+      </div>
+      <div class="px-5 py-4 flex items-start gap-3">
+        <div class="flex-1 min-w-0 flex flex-col gap-1.5">
+          <div class="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
             {isShared() ? "shared" : `created ${formatDate(props.project.createdAt)}`}
           </div>
-          <div class="proj-title">{props.project.name}</div>
-          <div class="mono proj-foot">edited {formatRelative(props.project.updatedAt)}</div>
+          <div class="font-medium text-[15px] leading-tight truncate text-foreground">
+            {props.project.name}
+          </div>
+          <div class="font-mono text-[11px] text-muted-foreground">
+            last edited {formatRelative(props.project.updatedAt)}
+          </div>
         </div>
-      </button>
-      <Show when={!isShared()}>
-        <div class="absolute bottom-2.5 right-2.5 z-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              as={Button<"button">}
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Project actions"
-            >
-              <TbOutlineDots size={14} />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent class="min-w-36">
-              <DropdownMenuItem onSelect={props.onShare}>
-                <TbOutlineShare size={14} />
-                Share
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={props.onRename}>
-                <TbOutlinePencil size={14} />
-                Rename
-              </DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" onSelect={props.onDelete}>
-                <TbOutlineTrash size={14} />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div
+          class="flex-shrink-0 -mr-2"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          <Show
+            when={isShared()}
+            fallback={
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  as={Button<"button">}
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Project actions"
+                >
+                  <TbOutlineDots size={14} />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent class="min-w-36">
+                  <DropdownMenuItem onSelect={props.onShare}>
+                    <TbOutlineShare size={14} />
+                    Share
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={props.onRename}>
+                    <TbOutlinePencil size={14} />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem variant="destructive" onSelect={props.onDelete}>
+                    <TbOutlineTrash size={14} />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            }
+          >
+            <Badge variant="outline">{props.role}</Badge>
+          </Show>
         </div>
-      </Show>
-    </div>
+      </div>
+    </Card>
   );
 }
