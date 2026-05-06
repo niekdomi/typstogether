@@ -220,6 +220,10 @@ a {
   gap: 8px;
 }
 
+.modal-field > .smallcaps {
+  color: var(--ink-2);
+}
+
 .modal-field input {
   border: 1px solid var(--rule);
   background: var(--paper);

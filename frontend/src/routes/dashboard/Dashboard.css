@@ -384,6 +384,10 @@
     gap: 10px;
   }
 
+  .template-section > .smallcaps {
+    color: var(--ink-2);
+  }
+
   .template-chips {
     display: flex;
     flex-wrap: wrap;
