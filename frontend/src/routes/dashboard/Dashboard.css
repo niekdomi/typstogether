@@ -145,18 +145,13 @@
     margin-left: 18px;
   }
 
-  .tab:hover:not(.inert) {
+  .tab:hover {
     color: var(--ink-2);
   }
 
   .tab.active {
     color: var(--ink);
     border-bottom-color: var(--ink);
-  }
-
-  .tab.inert {
-    cursor: default;
-    opacity: 0.45;
   }
 
   .count {
