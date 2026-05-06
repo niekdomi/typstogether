@@ -5,8 +5,6 @@ import ProviderGlyph from "../components/ProviderGlyph";
 import { api } from "../lib/api";
 import { authClient } from "../lib/auth";
 
-type ProviderId = "github" | "gitlab" | "google";
-
 async function loadProviders() {
   const { data } = await api.auth.providers.get();
   return data ?? [];
@@ -60,7 +58,7 @@ export default function Login() {
                     onClick={() => void signIn(p.id)}
                     disabled={submitting() !== null}
                   >
-                    <ProviderGlyph name={p.id as ProviderId} />
+                    <ProviderGlyph name={p.id} />
                     <span class="login-provider-label">
                       {submitting() === p.id ? "Authenticating…" : `Continue with ${p.name}`}
                     </span>

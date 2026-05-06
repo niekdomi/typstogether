@@ -14,3 +14,4 @@ const { startServer } = await import("./app");
 startServer();
 
 export type { App } from "./app";
+export type { ProviderId } from "./modules/auth/model";

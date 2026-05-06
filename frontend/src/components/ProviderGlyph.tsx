@@ -1,10 +1,9 @@
+import type { ProviderId } from "@typstogether/backend";
 import { SiGithub, SiGitlab, SiGoogle } from "solid-icons/si";
 import { Match, Switch } from "solid-js";
 
-type ProviderName = "github" | "gitlab" | "google";
-
 interface ProviderGlyphProps {
-  name: ProviderName;
+  name: ProviderId;
   size?: number;
 }
 
