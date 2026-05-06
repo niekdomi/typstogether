@@ -136,20 +136,22 @@ export const DropdownMenuContent = <T extends ValidComponent = "div">(
   const context = usePopperContext();
 
   return (
-    <DropdownMenuPrimitive.Content
-      data-slot="dropdown-menu-content"
-      class={cx(
-        "bg-popover text-popover-foreground origin-(--kb-menu-content-transform-origin) z-50 min-w-8rem overflow-y-auto overflow-x-hidden rounded-md border p-1 shadow-md outline-none",
-        "data-[expanded]:(animate-in fade-in zoom-in-95)",
-        "data-[closed]:(animate-out fade-out zoom-out-95)",
-        context.currentPlacement().includes("top") && "slide-in-from-bottom-2",
-        context.currentPlacement().includes("bottom") && "slide-in-from-top-2",
-        context.currentPlacement().includes("left") && "slide-in-from-right-2",
-        context.currentPlacement().includes("right") && "slide-in-from-left-2",
-        props.class
-      )}
-      {...rest}
-    />
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Content
+        data-slot="dropdown-menu-content"
+        class={cx(
+          "bg-popover text-popover-foreground origin-(--kb-menu-content-transform-origin) z-50 min-w-8rem overflow-y-auto overflow-x-hidden rounded-md border p-1 shadow-md outline-none",
+          "data-[expanded]:(animate-in fade-in zoom-in-95)",
+          "data-[closed]:(animate-out fade-out zoom-out-95)",
+          context.currentPlacement().includes("top") && "slide-in-from-bottom-2",
+          context.currentPlacement().includes("bottom") && "slide-in-from-top-2",
+          context.currentPlacement().includes("left") && "slide-in-from-right-2",
+          context.currentPlacement().includes("right") && "slide-in-from-left-2",
+          props.class
+        )}
+        {...rest}
+      />
+    </DropdownMenuPrimitive.Portal>
   );
 };
 

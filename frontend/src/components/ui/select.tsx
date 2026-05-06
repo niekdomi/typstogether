@@ -89,22 +89,24 @@ export const SelectContent = <T extends ValidComponent = "div">(props: SelectCon
   const context = usePopperContext();
 
   return (
-    <SelectPrimitive.Content
-      data-slot="select-content"
-      class={cx(
-        "bg-popover text-popover-foreground origin-(--kb-select-content-transform-origin) relative z-50 min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border shadow-md",
-        "data-[expanded]:(animate-in fade-in-0 zoom-in-95)",
-        "data-[closed]:(animate-out fade-out-0 zoom-out-95)",
-        context.currentPlacement().includes("top") && "slide-in-from-bottom-2",
-        context.currentPlacement().includes("bottom") && "slide-in-from-top-2",
-        context.currentPlacement().includes("left") && "slide-in-from-right-2",
-        context.currentPlacement().includes("right") && "slide-in-from-left-2",
-        props.class
-      )}
-      {...rest}
-    >
-      <SelectPrimitive.Listbox class="p-1 outline-none" />
-    </SelectPrimitive.Content>
+    <SelectPrimitive.Portal>
+      <SelectPrimitive.Content
+        data-slot="select-content"
+        class={cx(
+          "bg-popover text-popover-foreground origin-(--kb-select-content-transform-origin) relative z-50 min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border shadow-md",
+          "data-[expanded]:(animate-in fade-in-0 zoom-in-95)",
+          "data-[closed]:(animate-out fade-out-0 zoom-out-95)",
+          context.currentPlacement().includes("top") && "slide-in-from-bottom-2",
+          context.currentPlacement().includes("bottom") && "slide-in-from-top-2",
+          context.currentPlacement().includes("left") && "slide-in-from-right-2",
+          context.currentPlacement().includes("right") && "slide-in-from-left-2",
+          props.class
+        )}
+        {...rest}
+      >
+        <SelectPrimitive.Listbox class="p-1 outline-none" />
+      </SelectPrimitive.Content>
+    </SelectPrimitive.Portal>
   );
 };
 
