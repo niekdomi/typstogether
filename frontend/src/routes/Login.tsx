@@ -51,7 +51,7 @@ export default function Login() {
                 {(p) => (
                   <button
                     type="button"
-                    class={`btn ${p.id === "github" ? "btn-primary " : ""}provider`}
+                    class="btn provider"
                     onClick={() => void signIn(p.id)}
                     disabled={submitting() !== null}
                   >
