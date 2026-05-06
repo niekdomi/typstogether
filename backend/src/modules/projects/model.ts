@@ -4,6 +4,7 @@ import { t } from "elysia";
 import { project } from "../../db/app-schema";
 
 export const createProjectModel = t.Object({ name: t.String({ minLength: 1 }) });
+export const updateProjectModel = t.Object({ name: t.String({ minLength: 1 }) });
 export const byIdProjectModel = t.Object({ id: t.String() });
 
 export const projectModel = createSelectSchema(project);
@@ -21,8 +22,10 @@ export const projectMembershipModel = t.Object({
 
 export const projectModels = {
   "project.create": createProjectModel,
+  "project.update": updateProjectModel,
   "project.byId": byIdProjectModel,
 };
 
 export type CreateProjectInput = typeof createProjectModel.static;
+export type UpdateProjectInput = typeof updateProjectModel.static;
 export type ByIdProjectParams = typeof byIdProjectModel.static;

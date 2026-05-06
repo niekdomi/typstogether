@@ -52,6 +52,19 @@ export default function Dashboard() {
     navigate("/login");
   }
 
+  async function renameProject(id: string, currentName: string) {
+    const next = globalThis.prompt("New project name", currentName);
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (!trimmed || trimmed === currentName) return;
+    const { error } = await api.projects({ id }).patch({ name: trimmed });
+    if (error) {
+      console.error("Failed to rename project:", error);
+      return;
+    }
+    void refetch();
+  }
+
   async function deleteProject(id: string, name: string) {
     if (!globalThis.confirm(`Delete "${name}"? This cannot be undone.`)) return;
     const { error } = await api.projects({ id }).delete();
@@ -101,6 +114,7 @@ export default function Dashboard() {
                     onOpen={() => {
                       navigate(`/project/${m.project.id}`);
                     }}
+                    onRename={() => void renameProject(m.project.id, m.project.name)}
                     onDelete={() => void deleteProject(m.project.id, m.project.name)}
                   />
                 )}

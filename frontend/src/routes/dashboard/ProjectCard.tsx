@@ -1,4 +1,4 @@
-import { TbOutlineDots, TbOutlineTrash } from "solid-icons/tb";
+import { TbOutlineDots, TbOutlinePencil, TbOutlineTrash } from "solid-icons/tb";
 import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 
 import { formatDate, formatRelative } from "../../lib/format";
@@ -8,6 +8,7 @@ interface ProjectCardProps {
   project: ProjectRow;
   role: Role;
   onOpen: () => void;
+  onRename: () => void;
   onDelete: () => void;
 }
 
@@ -64,6 +65,19 @@ export default function ProjectCard(props: ProjectCardProps) {
           </button>
           <Show when={menuOpen()}>
             <div class="proj-menu-list" role="menu">
+              <button
+                type="button"
+                class="proj-menu-item"
+                role="menuitem"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen(false);
+                  props.onRename();
+                }}
+              >
+                <TbOutlinePencil size={14} />
+                Rename
+              </button>
               <button
                 type="button"
                 class="proj-menu-item danger"
