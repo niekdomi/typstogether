@@ -1,8 +1,10 @@
 import { useNavigate } from "@solidjs/router";
+import { SiGithub } from "solid-icons/si";
 import { For, Match, Switch, createMemo, createResource, createSignal } from "solid-js";
 
 import { api } from "../../lib/api";
 import { authClient } from "../../lib/auth";
+import NewProjectModal from "./NewProjectModal";
 import PageHeader from "./PageHeader";
 import ProjectCard from "./ProjectCard";
 import TabsBar from "./TabsBar";
@@ -24,7 +26,7 @@ export default function Dashboard() {
   const [tab, setTab] = createSignal<Tab>("owned");
   const [query, setQuery] = createSignal("");
   const [sort, setSort] = createSignal<Sort>("modified");
-  const [creating, setCreating] = createSignal(false);
+  const [modalOpen, setModalOpen] = createSignal(false);
 
   const all = () => projects() ?? [];
   const owned = () => all().filter((p) => p.role === "owner");
@@ -56,7 +58,7 @@ export default function Dashboard() {
       console.error("Failed to create project:", error);
       return;
     }
-    setCreating(false);
+    setModalOpen(false);
     void refetch();
   }
 
@@ -69,13 +71,7 @@ export default function Dashboard() {
         onSignOut={() => void signOut()}
       />
       <main>
-        <PageHeader
-          totalCount={all().length}
-          creating={creating()}
-          onStartCreate={() => setCreating(true)}
-          onCancelCreate={() => setCreating(false)}
-          onSubmitCreate={(name) => void createProject(name)}
-        />
+        <PageHeader totalCount={all().length} onNewProject={() => setModalOpen(true)} />
         <TabsBar
           tab={tab()}
           onTab={setTab}
@@ -118,20 +114,25 @@ export default function Dashboard() {
           </Match>
         </Switch>
         <footer class="footer">
-          <span class="mono">typstogether v0.1</span>
-          <span class="mono">
-            MIT ·{" "}
+          <span class="mono footer-rhs">
+            MIT ·
             <a
               class="footer-link"
               href="https://github.com/niekdomi/typstogether"
               target="_blank"
               rel="noreferrer noopener"
+              aria-label="GitHub repository"
             >
-              github.com/niekdomi/typstogether
+              <SiGithub size={13} />
             </a>
           </span>
         </footer>
       </main>
+      <NewProjectModal
+        open={modalOpen()}
+        onClose={() => setModalOpen(false)}
+        onSubmit={(name) => void createProject(name)}
+      />
     </div>
   );
 }

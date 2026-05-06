@@ -31,7 +31,6 @@ export default function TabsBar(props: TabsBarProps) {
         >
           Shared with you <span class="count">{props.sharedCount}</span>
         </button>
-        <span class="tab inert">Templates</span>
         <span class="tab inert">Trash</span>
       </div>
       <div class="sort">
