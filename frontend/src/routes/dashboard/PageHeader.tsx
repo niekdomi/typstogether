@@ -48,7 +48,9 @@ export default function PageHeader(props: PageHeaderProps) {
   return (
     <div class="page-header">
       <div>
-        <div class="mono detail">~/projects · {props.totalCount} repos</div>
+        <div class="mono detail">
+          {props.totalCount} {props.totalCount === 1 ? "project" : "projects"}
+        </div>
         <h1 class="display">Projects.</h1>
       </div>
       <div class="actions">

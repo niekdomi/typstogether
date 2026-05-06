@@ -1,6 +1,8 @@
-import { TbOutlineSearch } from "solid-icons/tb";
+import { TbOutlineMoon, TbOutlineSearch, TbOutlineSun } from "solid-icons/tb";
+import { Show } from "solid-js";
 
 import Logomark from "../../components/Logomark";
+import { theme, toggleTheme } from "../../lib/theme";
 
 interface TopBarProps {
   query: string;
@@ -18,7 +20,6 @@ export default function TopBar(props: TopBarProps) {
     <header class="topbar">
       <div class="topbar-left">
         <Logomark size={20} />
-        <span class="mono path-tag">~/projects</span>
       </div>
       <div class="topbar-right">
         <label class="search">
@@ -33,6 +34,16 @@ export default function TopBar(props: TopBarProps) {
           />
           <span class="mono kbd">⌘K</span>
         </label>
+        <button
+          type="button"
+          class="icon-btn"
+          onClick={toggleTheme}
+          title={theme() === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          <Show when={theme() === "dark"} fallback={<TbOutlineMoon size={14} />}>
+            <TbOutlineSun size={14} />
+          </Show>
+        </button>
         <button type="button" class="user-btn" onClick={props.onSignOut} title="Sign out">
           <span class="avatar">{initial(props.userName)}</span>
           <span>{props.userName ?? "Sign out"}</span>
