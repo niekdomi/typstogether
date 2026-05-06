@@ -46,7 +46,7 @@ export default function Login() {
 
           <section class="form-wrap">
             <div class="form">
-              <h2 class="display form-title">Sign in.</h2>
+              <h2 class="display form-title">Sign in</h2>
               <p class="form-sub">Pick a provider (OAuth only).</p>
 
               <Show when={!providers.loading} fallback={<p class="loading">Loading providers…</p>}>
