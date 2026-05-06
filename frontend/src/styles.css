@@ -139,6 +139,17 @@ a {
   color: var(--ink);
 }
 
+.theme-fade,
+.theme-fade *,
+.theme-fade *::before,
+.theme-fade *::after {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease,
+    fill 200ms ease !important;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

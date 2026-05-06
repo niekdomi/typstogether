@@ -14,14 +14,24 @@ function applyTheme(t: Theme): void {
   document.documentElement.dataset["theme"] = t;
 }
 
+const FADE_MS = 200;
+
 const [theme, setThemeSignal] = createSignal<Theme>(detectInitial());
 applyTheme(theme());
 
-globalThis.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-  if (localStorage.getItem(STORAGE_KEY)) return;
-  const next: Theme = e.matches ? "dark" : "light";
+function setThemeWithFade(next: Theme): void {
+  const root = document.documentElement;
+  root.classList.add("theme-fade");
   applyTheme(next);
   setThemeSignal(next);
+  setTimeout(() => {
+    root.classList.remove("theme-fade");
+  }, FADE_MS);
+}
+
+globalThis.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+  if (localStorage.getItem(STORAGE_KEY)) return;
+  setThemeWithFade(e.matches ? "dark" : "light");
 });
 
 export { theme };
@@ -29,6 +39,5 @@ export { theme };
 export function toggleTheme(): void {
   const next: Theme = theme() === "dark" ? "light" : "dark";
   localStorage.setItem(STORAGE_KEY, next);
-  applyTheme(next);
-  setThemeSignal(next);
+  setThemeWithFade(next);
 }
