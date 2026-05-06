@@ -75,12 +75,8 @@ export default function Login() {
 
           <div class="login-note">
             <Icon name="info" />
-            <span>OAuth only. More providers coming.</span>
+            <span>OAuth only.</span>
           </div>
-
-          <p class="login-terms">
-            By continuing you agree to the <a href="#">terms</a> &middot; <a href="#">privacy</a>
-          </p>
         </div>
       </section>
     </div>
