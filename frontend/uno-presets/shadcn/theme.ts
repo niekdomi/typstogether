@@ -39,6 +39,7 @@ export const theme: Theme = {
       foreground: "var(--muted-foreground)",
     },
     destructive: "var(--destructive)",
+    brand: "var(--brand)",
     border: "var(--border)",
     input: "var(--input)",
     ring: "var(--ring)",

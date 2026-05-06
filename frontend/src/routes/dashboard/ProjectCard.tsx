@@ -1,6 +1,7 @@
 import { TbOutlineDots, TbOutlinePencil, TbOutlineShare, TbOutlineTrash } from "solid-icons/tb";
 import { Show } from "solid-js";
 
+import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import {
   DropdownMenu,
@@ -31,7 +32,9 @@ export default function ProjectCard(props: ProjectCardProps) {
             <span class="proj-thumb-title">{props.project.name}</span>
           </div>
           <Show when={isShared()}>
-            <span class="role">{props.role}</span>
+            <Badge variant="outline" class="absolute top-2.5 right-2.5">
+              {props.role}
+            </Badge>
           </Show>
         </div>
         <div class="proj-meta">

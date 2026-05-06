@@ -2,6 +2,7 @@ import { TbOutlineCheck, TbOutlineCopy, TbOutlineLink } from "solid-icons/tb";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 import { toast } from "somoto";
 
+import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import {
   Dialog,
@@ -10,6 +11,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
 import { api } from "../../lib/api";
 import { formatDate, formatRelative } from "../../lib/format";
 
@@ -145,32 +154,48 @@ export default function InviteDialog(props: InviteDialogProps) {
           <section class="invite-section">
             <span class="smallcaps">New link</span>
             <div class="invite-row">
-              <div class="role-toggle">
-                <button
-                  type="button"
-                  class={`role-cell${role() === "editor" ? " active" : ""}`}
-                  onClick={() => setRole("editor")}
-                >
-                  Editor
-                </button>
-                <button
-                  type="button"
-                  class={`role-cell${role() === "viewer" ? " active" : ""}`}
-                  onClick={() => setRole("viewer")}
-                >
-                  Viewer
-                </button>
-              </div>
-              <select
-                class="invite-select"
-                value={expiry()}
-                onChange={(e) => setExpiry(e.currentTarget.value as Expiry)}
+              <ToggleGroup
+                variant="outline"
+                value={role()}
+                onChange={(v) => {
+                  if (v) setRole(v as InviteRole);
+                }}
+                class="flex-1"
               >
-                <option value="24h">24 hours</option>
-                <option value="7d">7 days</option>
-                <option value="30d">30 days</option>
-                <option value="never">never</option>
-              </select>
+                <ToggleGroupItem value="editor">Editor</ToggleGroupItem>
+                <ToggleGroupItem value="viewer">Viewer</ToggleGroupItem>
+              </ToggleGroup>
+              <Select<Expiry>
+                value={expiry()}
+                onChange={(v) => {
+                  if (v) setExpiry(v);
+                }}
+                modal={false}
+                options={["24h", "7d", "30d", "never"]}
+                itemComponent={(p) => (
+                  <SelectItem item={p.item}>
+                    {
+                      { "24h": "24 hours", "7d": "7 days", "30d": "30 days", never: "never" }[
+                        p.item.rawValue
+                      ]
+                    }
+                  </SelectItem>
+                )}
+              >
+                <SelectTrigger>
+                  <SelectValue<Expiry>>
+                    {(state) =>
+                      ({
+                        "24h": "24 hours",
+                        "7d": "7 days",
+                        "30d": "30 days",
+                        never: "never",
+                      })[state.selectedOption()]
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent />
+              </Select>
             </div>
             <div class="invite-link-box">
               <TbOutlineLink size={14} />
@@ -201,7 +226,7 @@ export default function InviteDialog(props: InviteDialogProps) {
                 <For each={activeInvites()}>
                   {(inv) => (
                     <li class="invite-item">
-                      <span class="pill">{inv.role}</span>
+                      <Badge variant="outline">{inv.role}</Badge>
                       <span class="invite-meta mono">
                         {expiresLabel(inv.expiresAt)} · created {formatDate(inv.createdAt)}
                       </span>

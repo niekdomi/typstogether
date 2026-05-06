@@ -32,7 +32,7 @@
 
   .hero-accent {
     font-style: italic;
-    color: var(--primary);
+    color: var(--brand);
   }
 
   .hero-copy p {

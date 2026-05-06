@@ -13,7 +13,7 @@ import PageHeader from "./PageHeader";
 import ProjectCard from "./ProjectCard";
 import TabsBar from "./TabsBar";
 import TopBar from "./TopBar";
-import type { Membership, Sort, Tab } from "./types";
+import type { Membership, Tab } from "./types";
 
 import "./Dashboard.css";
 
@@ -29,7 +29,6 @@ export default function Dashboard() {
 
   const [tab, setTab] = createSignal<Tab>("owned");
   const [query, setQuery] = createSignal("");
-  const [sort, setSort] = createSignal<Sort>("modified");
   const [modalOpen, setModalOpen] = createSignal(false);
   const [renameTarget, setRenameTarget] = createSignal<{ id: string; name: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = createSignal<{ id: string; name: string } | null>(null);
@@ -44,13 +43,9 @@ export default function Dashboard() {
     const q = query().toLowerCase().trim();
     const filtered = q ? base.filter((p) => p.project.name.toLowerCase().includes(q)) : base;
     const sorted = [...filtered];
-    if (sort() === "title") {
-      sorted.sort((a, b) => a.project.name.localeCompare(b.project.name));
-    } else {
-      sorted.sort(
-        (a, b) => new Date(b.project.updatedAt).getTime() - new Date(a.project.updatedAt).getTime()
-      );
-    }
+    sorted.sort(
+      (a, b) => new Date(b.project.updatedAt).getTime() - new Date(a.project.updatedAt).getTime()
+    );
     return sorted;
   });
 
@@ -100,14 +95,13 @@ export default function Dashboard() {
         onSignOut={() => void signOut()}
       />
       <main>
-        <PageHeader totalCount={all().length} onNewProject={() => setModalOpen(true)} />
+        <PageHeader totalCount={all().length} />
         <TabsBar
           tab={tab()}
           onTab={setTab}
-          sort={sort()}
-          onSort={setSort}
           ownedCount={owned().length}
           sharedCount={shared().length}
+          onNewProject={() => setModalOpen(true)}
         />
         <Switch
           fallback={

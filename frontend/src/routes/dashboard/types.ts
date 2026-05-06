@@ -6,4 +6,3 @@ export type ProjectRow = Membership["project"];
 export type Role = Membership["role"];
 
 export type Tab = "owned" | "shared";
-export type Sort = "modified" | "title";

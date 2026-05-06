@@ -1,49 +1,39 @@
-import type { Sort, Tab } from "./types";
+import { TbOutlinePlus } from "solid-icons/tb";
+
+import { Button } from "../../components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import type { Tab } from "./types";
 
 interface TabsBarProps {
   tab: Tab;
   onTab: (tab: Tab) => void;
-  sort: Sort;
-  onSort: (sort: Sort) => void;
   ownedCount: number;
   sharedCount: number;
+  onNewProject: () => void;
 }
 
 export default function TabsBar(props: TabsBarProps) {
   return (
     <div class="tabs-row">
-      <div class="tabs">
-        <button
-          type="button"
-          class={`tab${props.tab === "owned" ? " active" : ""}`}
-          onClick={() => {
-            props.onTab("owned");
-          }}
-        >
-          Yours <span class="count">{props.ownedCount}</span>
-        </button>
-        <button
-          type="button"
-          class={`tab${props.tab === "shared" ? " active" : ""}`}
-          onClick={() => {
-            props.onTab("shared");
-          }}
-        >
-          Shared with you <span class="count">{props.sharedCount}</span>
-        </button>
-      </div>
-      <div class="sort">
-        <span class="smallcaps">sort by</span>
-        <select
-          value={props.sort}
-          onChange={(e) => {
-            props.onSort(e.currentTarget.value as Sort);
-          }}
-        >
-          <option value="modified">last edited</option>
-          <option value="title">title</option>
-        </select>
-      </div>
+      <Tabs
+        value={props.tab}
+        onChange={(v) => {
+          props.onTab(v as Tab);
+        }}
+      >
+        <TabsList>
+          <TabsTrigger value="owned">
+            Yours <span class="ml-1.5 text-muted-foreground">{props.ownedCount}</span>
+          </TabsTrigger>
+          <TabsTrigger value="shared">
+            Shared with you <span class="ml-1.5 text-muted-foreground">{props.sharedCount}</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <Button onClick={props.onNewProject}>
+        <TbOutlinePlus size={14} />
+        New project
+      </Button>
     </div>
   );
 }

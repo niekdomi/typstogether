@@ -30,46 +30,6 @@
     align-items: stretch;
   }
 
-  .role-toggle {
-    display: flex;
-    flex: 1;
-    border: 1px solid var(--border);
-  }
-
-  .role-toggle .role-cell + .role-cell {
-    border-left: 1px solid var(--border);
-  }
-
-  .role-cell {
-    flex: 1;
-    padding: 8px 12px;
-    background: var(--background);
-    color: color-mix(in srgb, var(--foreground) 75%, transparent);
-    font-size: 14px;
-    cursor: pointer;
-    transition:
-      background 0.12s,
-      color 0.12s;
-  }
-
-  .role-cell:hover {
-    color: var(--foreground);
-  }
-
-  .role-cell.active {
-    background: var(--muted);
-    color: var(--foreground);
-  }
-
-  .invite-select {
-    border: 1px solid var(--border);
-    background: var(--background);
-    color: var(--foreground);
-    padding: 8px 12px;
-    font-size: 13px;
-    cursor: pointer;
-  }
-
   .invite-link-box {
     display: flex;
     align-items: center;
