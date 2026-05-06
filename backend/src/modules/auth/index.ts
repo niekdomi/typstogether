@@ -1,14 +1,13 @@
 import { Elysia, t } from "elysia";
 
 import { githubOAuth, gitlabOAuth, googleOAuth } from "../../env";
+import { providerModel } from "./model";
 import { auth } from "./service";
 
-const providerModel = t.Object({ id: t.String(), name: t.String() });
-
 const providers = [
-  { id: "github", name: "GitHub", oauth: githubOAuth },
-  { id: "gitlab", name: "GitLab", oauth: gitlabOAuth },
-  { id: "google", name: "Google", oauth: googleOAuth },
+  { id: "github" as const, name: "GitHub", oauth: githubOAuth },
+  { id: "gitlab" as const, name: "GitLab", oauth: gitlabOAuth },
+  { id: "google" as const, name: "Google", oauth: googleOAuth },
 ]
   .filter(({ oauth }) => oauth.clientId !== "")
   .map(({ id, name }) => ({ id, name }));

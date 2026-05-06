@@ -1,0 +1,131 @@
+:root {
+  --paper: #f6f7f5;
+  --paper-2: #eef0ed;
+  --paper-3: #e3e6e2;
+  --ink: #0f1717;
+  --ink-2: #364043;
+  --ink-3: #6d7a7c;
+  --rule: #d4d9d6;
+  --rule-soft: #e6eae7;
+  --accent: oklch(0.62 0.085 200);
+  --accent-soft: oklch(0.94 0.025 200);
+  --danger: oklch(0.55 0.16 25);
+  --good: oklch(0.58 0.11 165);
+
+  --sans: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+[data-theme="dark"] {
+  --paper: #0e1413;
+  --paper-2: #141b1a;
+  --paper-3: #1a2221;
+  --ink: #e6ebe8;
+  --ink-2: #aab3b1;
+  --ink-3: #758180;
+  --rule: #25302e;
+  --rule-soft: #1e2826;
+  --accent: oklch(0.78 0.1 200);
+  --accent-soft: oklch(0.32 0.05 200);
+  --danger: oklch(0.7 0.15 25);
+  --good: oklch(0.72 0.1 165);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.smallcaps {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+
+.display {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--paper-2);
+  border-color: var(--ink-3);
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.btn-primary:hover {
+  background: var(--ink-2);
+  border-color: var(--ink-2);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.18s ease-out;
+}

@@ -1,10 +1,10 @@
 import { reset } from "drizzle-seed";
 
-import { db } from "../src/db";
+import { dbRegistry } from "../src/db";
 import * as schema from "../src/db/schema";
 
 export async function cleanDb(): Promise<void> {
-  await reset(db, schema);
+  await reset(dbRegistry.get(), schema);
 }
 
 export function futureDate(offsetMs = 60 * 60 * 1000): Date {

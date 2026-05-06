@@ -1,0 +1,19 @@
+@scope (.logomark) {
+  :scope {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0;
+    font-family: var(--sans);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .t1 {
+    font-style: italic;
+  }
+
+  .dot {
+    color: var(--accent);
+    margin: 0 0.05em;
+  }
+}
