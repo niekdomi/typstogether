@@ -8,6 +8,7 @@ interface TopBarProps {
   query: string;
   onQuery: (value: string) => void;
   userName: string | undefined;
+  userImage: string | null | undefined;
   onSignOut: () => void;
 }
 
@@ -45,7 +46,11 @@ export default function TopBar(props: TopBarProps) {
           </Show>
         </button>
         <button type="button" class="user-btn" onClick={props.onSignOut} title="Sign out">
-          <span class="avatar">{initial(props.userName)}</span>
+          <span class="avatar">
+            <Show when={props.userImage} fallback={initial(props.userName)}>
+              {(src) => <img src={src()} alt="" />}
+            </Show>
+          </span>
           <span>{props.userName ?? "Sign out"}</span>
         </button>
       </div>

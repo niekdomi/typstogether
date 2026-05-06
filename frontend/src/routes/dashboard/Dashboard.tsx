@@ -91,6 +91,7 @@ export default function Dashboard() {
         query={query()}
         onQuery={setQuery}
         userName={session().data?.user.name}
+        userImage={session().data?.user.image}
         onSignOut={() => void signOut()}
       />
       <main>
