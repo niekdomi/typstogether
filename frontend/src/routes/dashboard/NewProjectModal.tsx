@@ -47,7 +47,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
   });
 
   return (
-    <Modal open={props.open} onClose={props.onClose} labelledBy="new-project-title">
+    <Modal open={props.open} onClose={props.onClose} labelledBy="new-project-title" size="wide">
       <header class="modal-header">
         <h2 id="new-project-title" class="display modal-title">
           New project

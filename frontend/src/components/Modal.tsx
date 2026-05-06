@@ -5,6 +5,7 @@ interface ModalProps {
   onClose: () => void;
   children: JSX.Element;
   labelledBy?: string;
+  size?: "default" | "wide";
 }
 
 export default function Modal(props: ModalProps) {
@@ -30,7 +31,7 @@ export default function Modal(props: ModalProps) {
         role="presentation"
       >
         <div
-          class="modal"
+          class={`modal${props.size === "wide" ? " modal-wide" : ""}`}
           role="dialog"
           aria-modal="true"
           aria-labelledby={props.labelledBy}

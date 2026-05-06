@@ -2,6 +2,8 @@ import { useNavigate } from "@solidjs/router";
 import { SiGithub } from "solid-icons/si";
 import { For, Match, Switch, createMemo, createResource, createSignal } from "solid-js";
 
+import ConfirmDialog from "../../components/ConfirmDialog";
+import PromptDialog from "../../components/PromptDialog";
 import { api } from "../../lib/api";
 import { authClient } from "../../lib/auth";
 import NewProjectModal from "./NewProjectModal";
@@ -27,6 +29,8 @@ export default function Dashboard() {
   const [query, setQuery] = createSignal("");
   const [sort, setSort] = createSignal<Sort>("modified");
   const [modalOpen, setModalOpen] = createSignal(false);
+  const [renameTarget, setRenameTarget] = createSignal<{ id: string; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = createSignal<{ id: string; name: string } | null>(null);
 
   const all = () => projects() ?? [];
   const owned = () => all().filter((p) => p.role === "owner");
@@ -52,12 +56,8 @@ export default function Dashboard() {
     navigate("/login");
   }
 
-  async function renameProject(id: string, currentName: string) {
-    const next = globalThis.prompt("New project name", currentName);
-    if (next === null) return;
-    const trimmed = next.trim();
-    if (!trimmed || trimmed === currentName) return;
-    const { error } = await api.projects({ id }).patch({ name: trimmed });
+  async function renameProject(id: string, newName: string) {
+    const { error } = await api.projects({ id }).patch({ name: newName });
     if (error) {
       console.error("Failed to rename project:", error);
       return;
@@ -65,8 +65,7 @@ export default function Dashboard() {
     void refetch();
   }
 
-  async function deleteProject(id: string, name: string) {
-    if (!globalThis.confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  async function deleteProject(id: string) {
     const { error } = await api.projects({ id }).delete();
     if (error) {
       console.error("Failed to delete project:", error);
@@ -115,8 +114,8 @@ export default function Dashboard() {
                     onOpen={() => {
                       navigate(`/project/${m.project.id}`);
                     }}
-                    onRename={() => void renameProject(m.project.id, m.project.name)}
-                    onDelete={() => void deleteProject(m.project.id, m.project.name)}
+                    onRename={() => setRenameTarget({ id: m.project.id, name: m.project.name })}
+                    onDelete={() => setDeleteTarget({ id: m.project.id, name: m.project.name })}
                   />
                 )}
               </For>
@@ -158,6 +157,30 @@ export default function Dashboard() {
         open={modalOpen()}
         onClose={() => setModalOpen(false)}
         onSubmit={(name) => void createProject(name)}
+      />
+      <PromptDialog
+        open={renameTarget() !== null}
+        onClose={() => setRenameTarget(null)}
+        onSubmit={(newName) => {
+          const target = renameTarget();
+          if (target && newName !== target.name) void renameProject(target.id, newName);
+        }}
+        title="Rename project"
+        label="Name"
+        initialValue={renameTarget()?.name ?? ""}
+        submitLabel="Rename"
+      />
+      <ConfirmDialog
+        open={deleteTarget() !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          const target = deleteTarget();
+          if (target) void deleteProject(target.id);
+        }}
+        title="Delete project"
+        message={`Delete "${deleteTarget()?.name ?? ""}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        danger
       />
     </div>
   );
