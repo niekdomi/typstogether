@@ -32,7 +32,7 @@ import {
 import { Separator } from "../../components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
 import { api } from "../../lib/api";
-import { formatDate, formatRelative } from "../../lib/format";
+import { formatDate, formatRelative, userInitial } from "../../lib/format";
 
 type InviteRole = "editor" | "viewer";
 type Expiry = "24h" | "7d" | "30d" | "never";
@@ -161,9 +161,7 @@ export default function InviteDialog(props: InviteDialogProps) {
                 <li class="flex items-center gap-3 text-sm">
                   <Avatar class="size-7">
                     <AvatarImage src={m.user.image ?? undefined} alt="" />
-                    <AvatarFallback class="text-[10px]">
-                      {m.user.name.trim().charAt(0).toUpperCase()}
-                    </AvatarFallback>
+                    <AvatarFallback class="text-[10px]">{userInitial(m.user.name)}</AvatarFallback>
                   </Avatar>
                   <span class="flex-1 text-foreground">{m.user.name}</span>
                   <Badge variant="outline">{m.member.role}</Badge>

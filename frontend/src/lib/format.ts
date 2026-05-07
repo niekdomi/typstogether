@@ -22,3 +22,7 @@ export function formatDate(value: Date | string): string {
   const d = typeof value === "string" ? new Date(value) : value;
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
+
+export function userInitial(name: string | undefined): string {
+  return (name ?? "").trim().charAt(0).toUpperCase() || "?";
+}

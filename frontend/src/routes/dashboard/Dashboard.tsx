@@ -1,30 +1,23 @@
 import { useNavigate } from "@solidjs/router";
 import { SiGithub } from "solid-icons/si";
-import { For, Match, Switch, createMemo, createResource, createSignal } from "solid-js";
-import { toast } from "somoto";
+import { For, Match, Switch, createMemo, createSignal } from "solid-js";
 
 import ConfirmDialog from "../../components/ConfirmDialog";
 import PromptDialog from "../../components/PromptDialog";
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Skeleton } from "../../components/ui/skeleton";
-import { api } from "../../lib/api";
 import { authClient } from "../../lib/auth";
+import { useProjects } from "../../lib/use-projects";
 import InviteDialog from "./InviteDialog";
 import NewProjectModal from "./NewProjectModal";
 import ProjectCard from "./ProjectCard";
-import TabsBar from "./TabsBar";
+import TabsBar, { type Tab } from "./TabsBar";
 import TopBar from "./TopBar";
-import type { Membership, Tab } from "./types";
-
-async function loadProjects(): Promise<Membership[]> {
-  const { data } = await api.projects.get();
-  return data ?? [];
-}
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const session = authClient.useSession();
-  const [projects, { refetch }] = createResource(loadProjects);
+  const { projects, rename, remove, create } = useProjects();
 
   const [tab, setTab] = createSignal<Tab>("owned");
   const [query, setQuery] = createSignal("");
@@ -49,34 +42,6 @@ export default function Dashboard() {
   async function signOut() {
     await authClient.signOut();
     navigate("/login");
-  }
-
-  async function renameProject(id: string, newName: string) {
-    const { error } = await api.projects({ id }).patch({ name: newName });
-    if (error) {
-      toast.error("Could not rename project.");
-      return;
-    }
-    void refetch();
-  }
-
-  async function deleteProject(id: string) {
-    const { error } = await api.projects({ id }).delete();
-    if (error) {
-      toast.error("Could not delete project.");
-      return;
-    }
-    void refetch();
-  }
-
-  async function createProject(name: string) {
-    const { error } = await api.projects.post({ name });
-    if (error) {
-      toast.error("Could not create project.");
-      return;
-    }
-    setModalOpen(false);
-    void refetch();
   }
 
   return (
@@ -150,14 +115,14 @@ export default function Dashboard() {
       <NewProjectModal
         open={modalOpen()}
         onClose={() => setModalOpen(false)}
-        onSubmit={(name) => void createProject(name)}
+        onSubmit={(name) => void create(name, () => setModalOpen(false))}
       />
       <PromptDialog
         open={renameTarget() !== null}
         onClose={() => setRenameTarget(null)}
         onSubmit={(newName) => {
           const target = renameTarget();
-          if (target && newName !== target.name) void renameProject(target.id, newName);
+          if (target && newName !== target.name) void rename(target.id, newName);
         }}
         title="Rename project"
         label="Name"
@@ -169,7 +134,7 @@ export default function Dashboard() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => {
           const target = deleteTarget();
-          if (target) void deleteProject(target.id);
+          if (target) void remove(target.id);
         }}
         title="Delete project"
         message={`Delete "${deleteTarget()?.name ?? ""}"? This cannot be undone.`}

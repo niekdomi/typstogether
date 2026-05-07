@@ -20,6 +20,7 @@ import {
 } from "../../components/ui/dropdown-menu";
 import { TextField, TextFieldInput } from "../../components/ui/text-field";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
+import { userInitial } from "../../lib/format";
 import { theme, toggleTheme } from "../../lib/theme";
 
 interface TopBarProps {
@@ -29,10 +30,6 @@ interface TopBarProps {
   userEmail: string | undefined;
   userImage: string | null | undefined;
   onSignOut: () => void;
-}
-
-function initial(name: string | undefined): string {
-  return (name ?? "?").trim().charAt(0).toUpperCase() || "?";
 }
 
 export default function TopBar(props: TopBarProps) {
@@ -71,7 +68,7 @@ export default function TopBar(props: TopBarProps) {
           >
             <Avatar class="size-8">
               <AvatarImage src={props.userImage ?? undefined} alt="" />
-              <AvatarFallback>{initial(props.userName)}</AvatarFallback>
+              <AvatarFallback>{userInitial(props.userName)}</AvatarFallback>
             </Avatar>
             <TbOutlineChevronDown
               size={12}
@@ -82,7 +79,7 @@ export default function TopBar(props: TopBarProps) {
             <div class="flex items-center gap-3 px-2 py-2">
               <Avatar class="size-9">
                 <AvatarImage src={props.userImage ?? undefined} alt="" />
-                <AvatarFallback>{initial(props.userName)}</AvatarFallback>
+                <AvatarFallback>{userInitial(props.userName)}</AvatarFallback>
               </Avatar>
               <div class="flex min-w-0 flex-col">
                 <span class="truncate text-sm font-medium">{props.userName ?? "—"}</span>

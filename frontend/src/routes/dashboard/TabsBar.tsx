@@ -2,7 +2,8 @@ import { TbOutlinePlus } from "solid-icons/tb";
 
 import { Button } from "../../components/ui/button";
 import { Tabs, TabsIndicator, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import type { Tab } from "./types";
+
+export type Tab = "owned" | "shared";
 
 interface TabsBarProps {
   tab: Tab;

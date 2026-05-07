@@ -42,6 +42,62 @@ async function loadTemplates(): Promise<Template[]> {
   return data ?? [];
 }
 
+interface TemplateCardProps {
+  selected: boolean;
+  onSelect: () => void;
+  thumbnailUrl: string | null;
+  fallbackLabel: string;
+  name: string;
+  description: string;
+}
+
+function TemplateCard(props: TemplateCardProps) {
+  return (
+    <Card
+      role="button"
+      tabIndex={0}
+      class={cx(
+        "h-[240px] py-0 gap-0 overflow-hidden cursor-pointer transition-colors hover:border-foreground",
+        props.selected && "border-foreground bg-muted"
+      )}
+      onClick={props.onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          props.onSelect();
+        }
+      }}
+    >
+      <div class="h-40 shrink-0 bg-muted/40 border-b border-border overflow-hidden">
+        <Show
+          when={props.thumbnailUrl}
+          fallback={
+            <div class="size-full flex items-center justify-center text-muted-foreground/50 text-[11px] font-mono">
+              {props.fallbackLabel}
+            </div>
+          }
+        >
+          <img
+            src={props.thumbnailUrl ?? ""}
+            alt=""
+            loading="lazy"
+            class="size-full object-cover object-top"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        </Show>
+      </div>
+      <div class="flex-1 min-h-0 px-3 py-2.5 flex flex-col gap-0.5 overflow-hidden">
+        <div class="font-sans text-sm font-medium text-foreground truncate">{props.name}</div>
+        <div class="font-mono text-[10px] text-muted-foreground leading-snug line-clamp-2">
+          {props.description}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export default function NewProjectModal(props: NewProjectModalProps) {
   const [name, setName] = createSignal("");
   const [template, setTemplate] = createSignal(BLANK_ID);
@@ -133,79 +189,26 @@ export default function NewProjectModal(props: NewProjectModalProps) {
               />
             </TextField>
             <div class="grid gap-2 max-h-96 overflow-y-auto p-0.5 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
-              <Card
-                role="button"
-                tabIndex={0}
-                class={cx(
-                  "h-[240px] py-0 gap-0 overflow-hidden cursor-pointer transition-colors hover:border-foreground",
-                  template() === BLANK_ID && "border-foreground bg-muted"
-                )}
-                onClick={() => setTemplate(BLANK_ID)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setTemplate(BLANK_ID);
-                  }
-                }}
-              >
-                <div class="h-40 bg-muted/40 border-b border-border flex items-center justify-center text-muted-foreground/50 text-[11px] font-mono">
-                  blank
-                </div>
-                <div class="flex-1 min-h-0 px-3 py-2.5 flex flex-col gap-0.5 overflow-hidden">
-                  <div class="font-sans text-sm font-medium text-foreground truncate">Blank</div>
-                  <div class="font-mono text-[10px] text-muted-foreground leading-snug">
-                    Empty document
-                  </div>
-                </div>
-              </Card>
+              <TemplateCard
+                selected={template() === BLANK_ID}
+                onSelect={() => setTemplate(BLANK_ID)}
+                thumbnailUrl={null}
+                fallbackLabel="blank"
+                name="Blank"
+                description="Empty document"
+              />
               <Switch
                 fallback={
                   <For each={filtered()}>
                     {(t) => (
-                      <Card
-                        role="button"
-                        tabIndex={0}
-                        class={cx(
-                          "h-[240px] py-0 gap-0 overflow-hidden cursor-pointer transition-colors hover:border-foreground",
-                          template() === t.id && "border-foreground bg-muted"
-                        )}
-                        onClick={() => setTemplate(t.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setTemplate(t.id);
-                          }
-                        }}
-                      >
-                        <div class="h-40 shrink-0 bg-muted/40 border-b border-border overflow-hidden">
-                          <Show
-                            when={t.thumbnailUrl !== null}
-                            fallback={
-                              <div class="size-full flex items-center justify-center text-muted-foreground/50 text-[11px] font-mono">
-                                no preview
-                              </div>
-                            }
-                          >
-                            <img
-                              src={t.thumbnailUrl ?? ""}
-                              alt=""
-                              loading="lazy"
-                              class="size-full object-cover object-top"
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                              }}
-                            />
-                          </Show>
-                        </div>
-                        <div class="flex-1 min-h-0 px-3 py-2.5 flex flex-col gap-0.5 overflow-hidden">
-                          <div class="font-sans text-sm font-medium text-foreground truncate">
-                            {t.id}
-                          </div>
-                          <div class="font-mono text-[10px] text-muted-foreground leading-snug line-clamp-2">
-                            {t.description || "No description."}
-                          </div>
-                        </div>
-                      </Card>
+                      <TemplateCard
+                        selected={template() === t.id}
+                        onSelect={() => setTemplate(t.id)}
+                        thumbnailUrl={t.thumbnailUrl}
+                        fallbackLabel="no preview"
+                        name={t.id}
+                        description={t.description || "No description."}
+                      />
                     )}
                   </For>
                 }
