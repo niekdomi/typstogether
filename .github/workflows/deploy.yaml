@@ -1,0 +1,19 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - architecture
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    name: Deploy
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Build and deploy
+        run: docker compose up --build -d
