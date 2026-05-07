@@ -37,11 +37,9 @@ function initial(name: string | undefined): string {
 
 export default function TopBar(props: TopBarProps) {
   return (
-    <header class="topbar">
-      <div class="topbar-left">
-        <Logomark size={20} />
-      </div>
-      <div class="topbar-right">
+    <header class="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-8 py-[18px]">
+      <Logomark size={20} />
+      <div class="flex items-center gap-[18px]">
         <TextField
           value={props.query}
           onChange={props.onQuery}
@@ -49,7 +47,7 @@ export default function TopBar(props: TopBarProps) {
         >
           <TbOutlineSearch
             size={14}
-            class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-1"
+            class="pointer-events-none absolute left-3 top-1/2 z-[1] -translate-y-1/2 text-muted-foreground"
           />
           <TextFieldInput type="text" placeholder="Find a project…" class="pl-9 w-full" />
         </TextField>
@@ -86,10 +84,10 @@ export default function TopBar(props: TopBarProps) {
                 <AvatarImage src={props.userImage ?? undefined} alt="" />
                 <AvatarFallback>{initial(props.userName)}</AvatarFallback>
               </Avatar>
-              <div class="flex flex-col min-w-0">
-                <span class="text-sm font-medium truncate">{props.userName ?? "—"}</span>
+              <div class="flex min-w-0 flex-col">
+                <span class="truncate text-sm font-medium">{props.userName ?? "—"}</span>
                 <Show when={props.userEmail}>
-                  <span class="text-xs text-muted-foreground truncate">{props.userEmail}</span>
+                  <span class="truncate text-xs text-muted-foreground">{props.userEmail}</span>
                 </Show>
               </div>
             </div>

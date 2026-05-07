@@ -65,9 +65,8 @@ function expiryToDate(expiry: Expiry): Date {
 }
 
 function expiresLabel(expiresAt: Date | string): string {
-  const d = typeof expiresAt === "string" ? new Date(expiresAt) : expiresAt;
-  if (d.getFullYear() > 9000) return "no expiry";
-  return `expires ${formatRelative(d)}`;
+  const d = new Date(expiresAt);
+  return d.getFullYear() > 9000 ? "no expiry" : `expires ${formatRelative(d)}`;
 }
 
 async function loadInvites(projectId: string) {
@@ -78,10 +77,6 @@ async function loadInvites(projectId: string) {
 async function loadMembers(projectId: string) {
   const { data } = await api.projects({ id: projectId }).members.get();
   return data ?? [];
-}
-
-function memberInitial(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "?";
 }
 
 export default function InviteDialog(props: InviteDialogProps) {
@@ -97,8 +92,7 @@ export default function InviteDialog(props: InviteDialogProps) {
 
   const linkUrl = () => {
     const token = generatedToken();
-    if (!token) return "";
-    return `${location.origin}/invite/${token}`;
+    return token ? `${location.origin}/invite/${token}` : "";
   };
 
   const activeInvites = createMemo(() => {
@@ -123,10 +117,8 @@ export default function InviteDialog(props: InviteDialogProps) {
   }
 
   async function copyLink() {
-    const url = linkUrl();
-    if (!url) return;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(linkUrl());
       setCopied(true);
       setTimeout(() => setCopied(false), 1400);
     } catch {
@@ -144,13 +136,9 @@ export default function InviteDialog(props: InviteDialogProps) {
     void refetchInvites();
   }
 
-  function reset() {
+  function close() {
     setGeneratedToken(null);
     setCopied(false);
-  }
-
-  function close() {
-    reset();
     props.onClose();
   }
 
@@ -174,7 +162,7 @@ export default function InviteDialog(props: InviteDialogProps) {
                   <Avatar class="size-7">
                     <AvatarImage src={m.user.image ?? undefined} alt="" />
                     <AvatarFallback class="text-[10px]">
-                      {memberInitial(m.user.name)}
+                      {m.user.name.trim().charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <span class="flex-1 text-foreground">{m.user.name}</span>
@@ -227,10 +215,10 @@ export default function InviteDialog(props: InviteDialogProps) {
               </div>
             }
           >
-            <div class="flex items-center gap-2 border border-border bg-muted/40 rounded-md pl-3 pr-1 py-1">
-              <TbOutlineLink size={14} class="text-muted-foreground shrink-0" />
+            <div class="flex items-center gap-2 rounded-md border border-border bg-muted/40 py-1 pl-3 pr-1">
+              <TbOutlineLink size={14} class="shrink-0 text-muted-foreground" />
               <input
-                class="flex-1 min-w-0 bg-transparent border-0 outline-none font-mono text-xs text-foreground"
+                class="min-w-0 flex-1 border-0 bg-transparent font-mono text-xs text-foreground outline-none"
                 readonly
                 value={linkUrl()}
               />
@@ -241,7 +229,12 @@ export default function InviteDialog(props: InviteDialogProps) {
                 {copied() ? "Copied" : "Copy"}
               </Button>
             </div>
-            <Button variant="ghost" size="sm" class="self-start" onClick={reset}>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="self-start"
+              onClick={() => setGeneratedToken(null)}
+            >
               Generate another link
             </Button>
           </Show>
@@ -253,13 +246,14 @@ export default function InviteDialog(props: InviteDialogProps) {
               as={Button<"button">}
               variant="ghost"
               size="sm"
-              class="self-start gap-1.5 text-muted-foreground hover:text-foreground -ml-2 group"
+              class="group -ml-2 self-start gap-1.5 text-muted-foreground hover:text-foreground"
             >
               <TbOutlineChevronRight
                 size={14}
                 class="transition-transform group-data-[expanded]:rotate-90"
               />
-              {activeInvites().length} active invite{activeInvites().length === 1 ? "" : "s"}
+              {activeInvites().length} active invite
+              {activeInvites().length === 1 ? "" : "s"}
             </CollapsibleTrigger>
             <CollapsibleContent>
               <ul class="flex flex-col gap-1.5 pl-1">

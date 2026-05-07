@@ -23,6 +23,7 @@ import { Separator } from "../../components/ui/separator";
 import { Skeleton } from "../../components/ui/skeleton";
 import { TextField, TextFieldInput, TextFieldLabel } from "../../components/ui/text-field";
 import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import { api } from "../../lib/api";
 import { cx } from "../../lib/cva";
 
@@ -234,9 +235,18 @@ export default function NewProjectModal(props: NewProjectModalProps) {
             <Button variant="outline" onClick={props.onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!name().trim()}>
-              Create
-            </Button>
+            <Tooltip openDelay={100} disabled={!!name().trim()}>
+              <TooltipTrigger as="div" tabIndex={-1}>
+                <Button
+                  type="submit"
+                  disabled={!name().trim()}
+                  class={name().trim() ? undefined : "pointer-events-none"}
+                >
+                  Create
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>A project name is required</TooltipContent>
+            </Tooltip>
           </DialogFooter>
         </form>
       </DialogContent>

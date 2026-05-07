@@ -11,13 +11,10 @@ import { api } from "../../lib/api";
 import { authClient } from "../../lib/auth";
 import InviteDialog from "./InviteDialog";
 import NewProjectModal from "./NewProjectModal";
-import PageHeader from "./PageHeader";
 import ProjectCard from "./ProjectCard";
 import TabsBar from "./TabsBar";
 import TopBar from "./TopBar";
 import type { Membership, Tab } from "./types";
-
-import "./Dashboard.css";
 
 async function loadProjects(): Promise<Membership[]> {
   const { data } = await api.projects.get();
@@ -44,11 +41,9 @@ export default function Dashboard() {
     const base = tab() === "owned" ? owned() : shared();
     const q = query().toLowerCase().trim();
     const filtered = q ? base.filter((p) => p.project.name.toLowerCase().includes(q)) : base;
-    const sorted = [...filtered];
-    sorted.sort(
+    return filtered.toSorted(
       (a, b) => new Date(b.project.updatedAt).getTime() - new Date(a.project.updatedAt).getTime()
     );
-    return sorted;
   });
 
   async function signOut() {
@@ -59,7 +54,6 @@ export default function Dashboard() {
   async function renameProject(id: string, newName: string) {
     const { error } = await api.projects({ id }).patch({ name: newName });
     if (error) {
-      console.error("Failed to rename project:", error);
       toast.error("Could not rename project.");
       return;
     }
@@ -69,7 +63,6 @@ export default function Dashboard() {
   async function deleteProject(id: string) {
     const { error } = await api.projects({ id }).delete();
     if (error) {
-      console.error("Failed to delete project:", error);
       toast.error("Could not delete project.");
       return;
     }
@@ -79,7 +72,6 @@ export default function Dashboard() {
   async function createProject(name: string) {
     const { error } = await api.projects.post({ name });
     if (error) {
-      console.error("Failed to create project:", error);
       toast.error("Could not create project.");
       return;
     }
@@ -88,7 +80,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div class="fade-in dashboard">
+    <div class="flex min-h-screen flex-col bg-background">
       <TopBar
         query={query()}
         onQuery={setQuery}
@@ -97,8 +89,8 @@ export default function Dashboard() {
         userImage={session().data?.user.image}
         onSignOut={() => void signOut()}
       />
-      <main>
-        <PageHeader totalCount={all().length} />
+      <main class="mx-auto flex w-full max-w-[1240px] flex-1 flex-col px-8 py-10">
+        <h1 class="mb-8 mt-2 text-[44px] font-medium tracking-[-0.02em]">Projects</h1>
         <TabsBar
           tab={tab()}
           onTab={setTab}
@@ -108,7 +100,7 @@ export default function Dashboard() {
         />
         <Switch
           fallback={
-            <div class="grid">
+            <div class="my-6 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-7">
               <For each={list()}>
                 {(m) => (
                   <ProjectCard
@@ -127,38 +119,34 @@ export default function Dashboard() {
           }
         >
           <Match when={projects.loading}>
-            <div class="grid">
+            <div class="my-6 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-7">
               <For each={Array.from({ length: 8 })}>
                 {() => <Skeleton class="aspect-[1/1.4] rounded-xl" />}
               </For>
             </div>
           </Match>
           <Match when={projects.error !== undefined}>
-            <Alert variant="destructive">
+            <Alert variant="destructive" class="mt-6">
               <AlertDescription>Could not load projects.</AlertDescription>
             </Alert>
           </Match>
           <Match when={list().length === 0}>
-            <div class="empty">
-              <p>No matching projects.</p>
-            </div>
+            <p class="mt-6 py-16 text-center italic text-muted-foreground">No matching projects.</p>
           </Match>
         </Switch>
-        <footer class="footer">
-          <span class="mono footer-rhs">
-            MIT ·
-            <a
-              class="footer-link"
-              href="https://github.com/niekdomi/typstogether"
-              target="_blank"
-              rel="noreferrer noopener"
-              aria-label="GitHub repository"
-            >
-              <SiGithub size={13} />
-            </a>
-          </span>
+        <footer class="mt-auto flex justify-end border-t border-border/60 pt-6">
+          <a
+            href="https://github.com/niekdomi/typstogether"
+            target="_blank"
+            rel="noreferrer noopener"
+            class="inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <SiGithub size={20} />
+            GitHub
+          </a>
         </footer>
       </main>
+
       <NewProjectModal
         open={modalOpen()}
         onClose={() => setModalOpen(false)}

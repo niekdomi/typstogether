@@ -14,7 +14,7 @@ interface TabsBarProps {
 
 export default function TabsBar(props: TabsBarProps) {
   return (
-    <div class="tabs-row">
+    <div class="flex items-center justify-between border-b border-border/60 pb-6">
       <Tabs
         value={props.tab}
         onChange={(v) => {
