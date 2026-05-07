@@ -58,7 +58,7 @@ export default function ProjectCard(props: ProjectCardProps) {
           </div>
         </div>
         <div
-          class="flex-shrink-0 -mr-2"
+          class="shrink-0 -mr-2"
           onClick={(e) => {
             e.stopPropagation();
           }}

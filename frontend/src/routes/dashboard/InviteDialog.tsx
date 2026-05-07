@@ -248,7 +248,7 @@ export default function InviteDialog(props: InviteDialogProps) {
             >
               <TbOutlineChevronRight
                 size={14}
-                class="transition-transform group-data-[expanded]:rotate-90"
+                class="transition-transform group-data-expanded:rotate-90"
               />
               {activeInvites().length} active invite
               {activeInvites().length === 1 ? "" : "s"}

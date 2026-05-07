@@ -44,7 +44,7 @@ export default function TopBar(props: TopBarProps) {
         >
           <TbOutlineSearch
             size={14}
-            class="pointer-events-none absolute left-3 top-1/2 z-[1] -translate-y-1/2 text-muted-foreground"
+            class="pointer-events-none absolute left-3 top-1/2 z-1 -translate-y-1/2 text-muted-foreground"
           />
           <TextFieldInput type="text" placeholder="Find a project…" class="pl-9 w-full" />
         </TextField>
