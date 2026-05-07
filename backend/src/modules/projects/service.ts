@@ -3,7 +3,7 @@ import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
 import { type Project, project, projectMember } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import { currentDb } from "../../transaction";
-import type { CreateProjectInput } from "./model";
+import type { CreateProjectInput, UpdateProjectInput } from "./model";
 
 export type ProjectRole = "owner" | "editor" | "viewer";
 
@@ -73,6 +73,17 @@ export class ProjectService {
 
     if (!created) throw new Error("Failed to create project");
     return created;
+  }
+
+  async update(id: string, input: UpdateProjectInput): Promise<Project> {
+    const [updated] = await currentDb()
+      .update(project)
+      .set({ name: input.name })
+      .where(and(eq(project.id, id), isNull(project.deletedAt)))
+      .returning();
+
+    if (!updated) throw new NotFoundError("Project not found");
+    return updated;
   }
 
   async remove(id: string): Promise<Project> {

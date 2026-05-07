@@ -7,6 +7,7 @@ import { startCollabServer } from "./modules/collab/server";
 import { inviteRoutes } from "./modules/invites";
 import { memberRoutes } from "./modules/members";
 import { projectRoutes } from "./modules/projects";
+import { templateRoutes } from "./modules/templates";
 
 export function buildApp() {
   return new Elysia()
@@ -18,7 +19,8 @@ export function buildApp() {
     .use(authRoutes)
     .use(projectRoutes)
     .use(memberRoutes)
-    .use(inviteRoutes);
+    .use(inviteRoutes)
+    .use(templateRoutes);
 }
 
 export function startServer(port = 3000) {
