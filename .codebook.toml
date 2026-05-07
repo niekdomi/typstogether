@@ -4,14 +4,20 @@ words = [
   "bytea",
   "collab",
   "crossws",
+  "cva",
   "elysia",
   "elysiajs",
   "hocuspocus",
+  "minmax",
   "ost",
   "savepoints",
+  "solidjs",
+  "somoto",
   "typebox",
+  "typs",
   "typstogether",
   "upserts",
 ]
-include_paths = ["**/*.md", "**/*.svelte", "**/*.ts"]
+include_paths = ["**/*.md", "**/*.ts", "**/*.tsx"]
+ignore_paths = ["**/components/ui/**"]
 use_global = false

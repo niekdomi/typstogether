@@ -24,6 +24,12 @@ export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/proj
     response: projectMembershipModel,
   })
 
+  .patch("/:id", ({ project, body }) => projectService.update(project.id, body), {
+    body: "project.update",
+    projectOwner: true,
+    response: projectModel,
+  })
+
   .delete("/:id", ({ project }) => projectService.remove(project.id), {
     projectOwner: true,
     response: projectModel,
