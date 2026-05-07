@@ -9,7 +9,7 @@ RUN bun install --frozen-lockfile
 COPY tsconfig.json ./
 COPY backend/ ./backend/
 
-RUN cd backend && run build src/index.ts src/migrate.ts --target=bun --outdir=dist
+RUN cd backend && bun build src/index.ts src/migrate.ts --target=bun --outdir=dist
 
 FROM oven/bun:1.3.13-alpine
 WORKDIR /app

@@ -45,7 +45,6 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         VITE_API_URL: ${FRONTEND_URL}
-        VITE_COOLAB_URL: ${COOLAB_URL:-}
     environment:
       DOMAIN: ${DOMAIN}
     ports:
