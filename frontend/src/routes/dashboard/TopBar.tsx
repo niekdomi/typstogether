@@ -37,11 +37,7 @@ export default function TopBar(props: TopBarProps) {
     <header class="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-8 py-4.5">
       <Logo size={20} />
       <div class="flex items-center gap-4.5">
-        <TextField
-          value={props.query}
-          onChange={props.onQuery}
-          class="relative block w-70 gap-0"
-        >
+        <TextField value={props.query} onChange={props.onQuery} class="relative block w-70 gap-0">
           <TbOutlineSearch
             size={14}
             class="pointer-events-none absolute left-3 top-1/2 z-1 -translate-y-1/2 text-muted-foreground"
