@@ -1,5 +1,4 @@
 export const databaseUrl = process.env["DATABASE_URL"] ?? "";
-export const collabPort = Number(process.env["COLLAB_PORT"] ?? 3001);
 
 export const authBaseUrl = process.env["BETTER_AUTH_URL"] ?? "http://localhost:3000";
 export const authSecret = process.env["BETTER_AUTH_SECRET"] ?? "development-secret-change-me";

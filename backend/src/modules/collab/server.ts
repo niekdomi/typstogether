@@ -2,7 +2,6 @@ import { Logger } from "@hocuspocus/extension-logger";
 import { Hocuspocus } from "@hocuspocus/server";
 import crossws from "crossws/adapters/bun";
 
-import { collabPort } from "../../env";
 import { onAuthenticate } from "./auth";
 import { persistence } from "./persistence";
 
@@ -14,7 +13,7 @@ const hocuspocus = new Hocuspocus({
 
 const connections = new Map<string, ReturnType<typeof hocuspocus.handleConnection>>();
 
-const ws = crossws({
+export const collabWs = crossws({
   hooks: {
     open(peer) {
       const wsLike = {
@@ -44,18 +43,3 @@ const ws = crossws({
     },
   },
 });
-
-export function startCollabServer() {
-  Bun.serve({
-    port: collabPort,
-    websocket: ws.websocket,
-    fetch(request, server) {
-      if (request.headers.get("upgrade") === "websocket") {
-        return ws.handleUpgrade(request, server);
-      }
-      return new Response("OK");
-    },
-  });
-
-  console.log("Collab server running on port:", collabPort);
-}

@@ -3,7 +3,7 @@ import { Elysia } from "elysia";
 
 import { HttpError } from "./errors";
 import { authRoutes } from "./modules/auth";
-import { startCollabServer } from "./modules/collab/server";
+import { collabWs } from "./modules/collab/server";
 import { inviteRoutes } from "./modules/invites";
 import { memberRoutes } from "./modules/members";
 import { projectRoutes } from "./modules/projects";
@@ -24,9 +24,18 @@ export function buildApp() {
 }
 
 export function startServer(port = 3000) {
-  const app = buildApp().listen(port);
-  console.log("Backend running on port", app.server?.port);
-  startCollabServer();
+  const app = buildApp();
+  const server = Bun.serve({
+    port,
+    websocket: collabWs.websocket,
+    fetch(request, srv) {
+      if (request.headers.get("upgrade") === "websocket") {
+        return collabWs.handleUpgrade(request, srv);
+      }
+      return app.handle(request);
+    },
+  });
+  console.log("Backend running on port", server.port);
   return app;
 }
 
