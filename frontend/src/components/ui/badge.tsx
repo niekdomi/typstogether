@@ -8,9 +8,9 @@ import { cva } from "../../lib/cva";
 export const badgeVariants = cva({
   base: [
     "inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 gap-1 transition-[color,box-shadow] overflow-hidden",
-    "aria-[invalid]:(ring-destructive/20 dark:ring-destructive/40 border-destructive)",
-    "[&>svg]:(size-3 pointer-events-none)",
-    "focus-visible:(border-ring ring-ring/50 ring-[3px])",
+    "aria-[invalid]:ring-destructive/20 dark:aria-[invalid]:ring-destructive/40 aria-[invalid]:border-destructive",
+    "[&>svg]:size-3 [&>svg]:pointer-events-none",
+    "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
   ],
   variants: {
     variant: {
@@ -18,8 +18,8 @@ export const badgeVariants = cva({
       secondary:
         "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
       destructive:
-        "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 dark:bg-destructive/60 focus-visible:(ring-destructive/20 dark:ring-destructive/40)",
-      outline: "text-foreground [a&]:hover:(bg-accent text-accent-foreground)",
+        "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 dark:bg-destructive/60 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
+      outline: "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
     },
   },
   defaultVariants: {

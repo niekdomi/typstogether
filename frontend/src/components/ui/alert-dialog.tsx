@@ -37,8 +37,8 @@ export const AlertDialogOverlay = <T extends ValidComponent = "div">(
       data-slot="alert-dialog-overlay"
       class={cx(
         "fixed inset-0 z-50 bg-black/50",
-        "data-[expanded]:(animate-in fade-in-0)",
-        "data-[closed]:(animate-out fade-out-0)",
+        "data-[expanded]:animate-in data-[expanded]:fade-in-0",
+        "data-[closed]:animate-out data-[closed]:fade-out-0",
         props.class
       )}
       {...rest}
@@ -62,8 +62,8 @@ export const AlertDialogContent = <T extends ValidComponent = "div">(
         data-slot="alert-dialog-content"
         class={cx(
           "bg-background fixed left-[50%] top-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] -translate-1/2 gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
-          "data-[expanded]:(animate-in fade-in-0 zoom-in-95)",
-          "data-[closed]:(animate-out fade-out-0 zoom-out-95)",
+          "data-[expanded]:animate-in data-[expanded]:fade-in-0 data-[expanded]:zoom-in-95",
+          "data-[closed]:animate-out data-[closed]:fade-out-0 data-[closed]:zoom-out-95",
           props.class
         )}
         {...rest}

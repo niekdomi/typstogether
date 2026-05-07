@@ -62,7 +62,7 @@ export default function Login() {
                     {(p) => (
                       <Button
                         variant="outline"
-                        class="justify-start gap-3.5 px-[18px] py-[14px] text-[15px] h-auto disabled:(opacity-70 cursor-not-allowed)"
+                        class="justify-start gap-3.5 px-[18px] py-[14px] text-[15px] h-auto disabled:opacity-70 disabled:cursor-not-allowed"
                         onClick={() => void signIn(p.id)}
                         disabled={submitting() !== null}
                       >

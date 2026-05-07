@@ -51,14 +51,14 @@ export const DialogContent = <T extends ValidComponent = "div">(props: DialogCon
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay
         data-slot="dialog-overlay"
-        class="data-[expanded]:(animate-in fade-in-0) data-[closed]:(animate-out fade-out-0) fixed inset-0 z-50 bg-black/50"
+        class="data-[expanded]:animate-in data-[expanded]:fade-in-0 data-[closed]:animate-out data-[closed]:fade-out-0 fixed inset-0 z-50 bg-black/50"
       />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         class={cx(
           "bg-background fixed left-1/2 top-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
-          "data-[expanded]:(animate-in fade-in-0 zoom-in-95)",
-          "data-[closed]:(animate-out fade-out-0 zoom-out-95)",
+          "data-[expanded]:animate-in data-[expanded]:fade-in-0 data-[expanded]:zoom-in-95",
+          "data-[closed]:animate-out data-[closed]:fade-out-0 data-[closed]:zoom-out-95",
           props.class
         )}
         {...rest}
@@ -67,7 +67,7 @@ export const DialogContent = <T extends ValidComponent = "div">(props: DialogCon
         <Show when={props.showCloseButton}>
           <DialogPrimitive.CloseButton
             aria-label="Close"
-            class="rounded-xs absolute right-4 top-4 opacity-70 transition-[opacity,box-shadow] duration-200 hover:opacity-100 [&_svg:not([class*=size-])]:size-4 [&_svg]:(pointer-events-none shrink-0) focus-visible:(outline-none ring-2 ring-ring)"
+            class="rounded-xs absolute right-4 top-4 opacity-70 transition-[opacity,box-shadow] duration-200 hover:opacity-100 [&_svg:not([class*=size-])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path
@@ -108,7 +108,7 @@ export const DialogFooter = (props: DialogFooterProps) => {
   return (
     <div
       data-slot="dialog-footer"
-      class={cx("flex flex-col-reverse gap-2 sm:(flex-row justify-end)", props.class)}
+      class={cx("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", props.class)}
       {...rest}
     />
   );

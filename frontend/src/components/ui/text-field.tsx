@@ -34,11 +34,11 @@ export const TextFieldInput = <T extends ValidComponent = "input">(
       data-slot="text-field-input"
       class={cx(
         "placeholder:text-muted-foreground dark:bg-input/30 border-input shadow-xs flex h-9 rounded-md border bg-transparent px-3 py-1 text-base outline-none transition-[color,box-shadow] md:text-sm",
-        "focus-visible:(border-ring ring-ring/50 ring-[3px])",
-        "aria-[invalid]:(ring-destructive/20 dark:ring-destructive/40 border-destructive)",
-        "file:(text-foreground inline-flex h-7 border-0 bg-transparent text-sm font-medium)",
-        "selection:(bg-primary text-primary-foreground)",
-        "disabled:(pointer-events-none cursor-not-allowed opacity-50)",
+        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+        "aria-[invalid]:ring-destructive/20 dark:aria-[invalid]:ring-destructive/40 aria-[invalid]:border-destructive",
+        "file:text-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium",
+        "selection:bg-primary selection:text-primary-foreground",
+        "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         props.class
       )}
       {...rest}
@@ -60,10 +60,10 @@ export const TextFieldTextArea = <T extends ValidComponent = "textarea">(
       data-slot="text-field-textarea"
       class={cx(
         "placeholder:text-muted-foreground dark:bg-input/30 border-input shadow-xs flex min-h-16 rounded-md border bg-transparent px-3 py-1 text-base outline-none transition-[color,box-shadow] md:text-sm",
-        "focus-visible:(border-ring ring-ring/50 ring-[3px])",
-        "aria-[invalid]:(ring-destructive/20 dark:ring-destructive/40 border-destructive)",
-        "selection:(bg-primary text-primary-foreground)",
-        "disabled:(pointer-events-none cursor-not-allowed opacity-50)",
+        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+        "aria-[invalid]:ring-destructive/20 dark:aria-[invalid]:ring-destructive/40 aria-[invalid]:border-destructive",
+        "selection:bg-primary selection:text-primary-foreground",
+        "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         props.class
       )}
       {...rest}
@@ -85,7 +85,7 @@ export const TextFieldLabel = <T extends ValidComponent = "label">(
       data-slot="text-field-label"
       class={cx(
         "select-none text-sm font-medium",
-        "data-[disabled]:(pointer-events-none cursor-not-allowed opacity-50)",
+        "data-[disabled]:pointer-events-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
         "data-[invalid]:text-destructive",
         props.class
       )}

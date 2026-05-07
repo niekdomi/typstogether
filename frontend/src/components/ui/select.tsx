@@ -50,11 +50,11 @@ export const SelectTrigger = <T extends ValidComponent = "button">(
       data-size={props.size}
       class={cx(
         "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*=text-])]:text-muted-foreground dark:bg-input/30 dark:hover:bg-input/50 shadow-xs flex w-fit items-center justify-between gap-2 whitespace-nowrap rounded-md border bg-transparent px-3 py-2 text-sm outline-none transition-[color,box-shadow] data-[size=default]:h-9 data-[size=sm]:h-8 [&_svg:not([class*=size-])]:size-4",
-        "focus-visible:(border-ring ring-ring/50 ring-[3px])",
-        "data-[invalid]:(ring-destructive/20 dark:ring-destructive/40 border-destructive)",
-        "disabled:(cursor-not-allowed opacity-50)",
-        "*:data-[slot=select-value]:(line-clamp-1 flex items-center gap-2)",
-        "[&_svg]:(pointer-events-none shrink-0)",
+        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+        "data-[invalid]:ring-destructive/20 dark:data-[invalid]:ring-destructive/40 data-[invalid]:border-destructive",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0",
         props.class
       )}
       {...rest}
@@ -94,8 +94,8 @@ export const SelectContent = <T extends ValidComponent = "div">(props: SelectCon
         data-slot="select-content"
         class={cx(
           "bg-popover text-popover-foreground origin-(--kb-select-content-transform-origin) relative z-50 min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border shadow-md",
-          "data-[expanded]:(animate-in fade-in-0 zoom-in-95)",
-          "data-[closed]:(animate-out fade-out-0 zoom-out-95)",
+          "data-[expanded]:animate-in data-[expanded]:fade-in-0 data-[expanded]:zoom-in-95",
+          "data-[closed]:animate-out data-[closed]:fade-out-0 data-[closed]:zoom-out-95",
           context.currentPlacement().includes("top") && "slide-in-from-bottom-2",
           context.currentPlacement().includes("bottom") && "slide-in-from-top-2",
           context.currentPlacement().includes("left") && "slide-in-from-right-2",
@@ -122,10 +122,10 @@ export const SelectItem = <T extends ValidComponent = "li">(props: SelectItemPro
       data-slot="select-item"
       class={cx(
         "[&_svg:not([class*=text-])]:text-muted-foreground outline-hidden relative flex w-full cursor-default select-none items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-sm [&_svg:not([class*=size-])]:size-4",
-        "focus:(bg-accent text-accent-foreground)",
-        "*:[span]:last:(flex items-center gap-2)",
-        "data-[disabled]:(pointer-events-none opacity-50)",
-        "[&_svg]:(pointer-events-none shrink-0)",
+        "focus:bg-accent focus:text-accent-foreground",
+        "*:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0",
         props.class
       )}
       {...rest}
@@ -195,7 +195,7 @@ export const SelectLabel = <T extends ValidComponent = "label">(props: SelectLab
     <SelectPrimitive.Label
       data-slot="select-label"
       class={cx(
-        "flex select-none items-center gap-2 text-sm font-medium leading-none data-[disabled]:(pointer-events-none cursor-not-allowed opacity-50)",
+        "flex select-none items-center gap-2 text-sm font-medium leading-none data-[disabled]:pointer-events-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
         props.class
       )}
       {...rest}

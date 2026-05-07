@@ -49,7 +49,7 @@ export const TooltipContent = <T extends ValidComponent = "button">(
         data-slot="tooltip-content"
         class={cx(
           "bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 origin-(--kb-tooltip-content-transform-origin) z-50 w-fit text-balance rounded-md px-3 py-1.5 text-xs",
-          "data-[closed]:(animate-out fade-out-0 zoom-out-95)",
+          "data-[closed]:animate-out data-[closed]:fade-out-0 data-[closed]:zoom-out-95",
           context.currentPlacement().includes("top") && "slide-in-from-bottom-2",
           context.currentPlacement().includes("bottom") && "slide-in-from-top-2",
           context.currentPlacement().includes("left") && "slide-in-from-right-2",

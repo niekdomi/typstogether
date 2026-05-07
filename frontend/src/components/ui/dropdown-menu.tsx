@@ -73,9 +73,9 @@ export const DropdownMenuSubTrigger = <T extends ValidComponent = "div">(
       data-inset={props.inset}
       class={cx(
         "outline-hidden flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm data-[inset]:pl-8 [&_svg:not([class*=size-])]:size-4 gap-2",
-        "data-[highlighted]:(bg-accent text-accent-foreground)",
-        "data-[expanded]:(bg-accent text-accent-foreground)",
-        "[&_svg]:(pointer-events-none shrink-0)",
+        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+        "data-[expanded]:bg-accent data-[expanded]:text-accent-foreground",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0",
         props.class
       )}
       {...rest}
@@ -111,8 +111,8 @@ export const DropdownMenuSubContent = <T extends ValidComponent = "div">(
       data-slot="dropdown-menu-sub-content"
       class={cx(
         "bg-popover text-popover-foreground origin-(--kb-menu-content-transform-origin) z-50 min-w-8rem overflow-hidden rounded-md border p-1 shadow-lg outline-none",
-        "data-[expanded]:(animate-in fade-in zoom-in-95)",
-        "data-[closed]:(animate-out fade-out zoom-out-95)",
+        "data-[expanded]:animate-in data-[expanded]:fade-in data-[expanded]:zoom-in-95",
+        "data-[closed]:animate-out data-[closed]:fade-out data-[closed]:zoom-out-95",
         context.currentPlacement().includes("top") && "slide-in-from-bottom-2",
         context.currentPlacement().includes("bottom") && "slide-in-from-top-2",
         context.currentPlacement().includes("left") && "slide-in-from-right-2",
@@ -141,8 +141,8 @@ export const DropdownMenuContent = <T extends ValidComponent = "div">(
         data-slot="dropdown-menu-content"
         class={cx(
           "bg-popover text-popover-foreground origin-(--kb-menu-content-transform-origin) z-50 min-w-8rem overflow-y-auto overflow-x-hidden rounded-md border p-1 shadow-md outline-none",
-          "data-[expanded]:(animate-in fade-in zoom-in-95)",
-          "data-[closed]:(animate-out fade-out zoom-out-95)",
+          "data-[expanded]:animate-in data-[expanded]:fade-in data-[expanded]:zoom-in-95",
+          "data-[closed]:animate-out data-[closed]:fade-out data-[closed]:zoom-out-95",
           context.currentPlacement().includes("top") && "slide-in-from-bottom-2",
           context.currentPlacement().includes("bottom") && "slide-in-from-top-2",
           context.currentPlacement().includes("left") && "slide-in-from-right-2",
@@ -174,10 +174,10 @@ export const DropdownMenuItem = <T extends ValidComponent = "div">(
       data-variant={props.variant}
       class={cx(
         "[&>*:is(svg)]:data-[variant=destructive]:!text-destructive outline-hidden relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm data-[inset]:pl-8 [&_svg:not([class*=size-])]:size-4 [&_svg:not([class*=text-])]:text-muted-foreground",
-        "data-[highlighted]:(bg-accent text-accent-foreground)",
-        "data-[variant=destructive]:data-[highlighted]:(bg-destructive/10 dark:bg-destructive/20 text-destructive)",
-        "data-[disabled]:(pointer-events-none opacity-50)",
-        "[&_svg]:(pointer-events-none shrink-0)",
+        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+        "data-[variant=destructive]:data-[highlighted]:bg-destructive/10 data-[variant=destructive]:data-[highlighted]:dark:bg-destructive/20 data-[variant=destructive]:data-[highlighted]:text-destructive",
+        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0",
         props.class
       )}
       {...rest}
@@ -199,9 +199,9 @@ export const DropdownMenuCheckboxItem = <T extends ValidComponent = "div">(
       data-slot="dropdown-menu-checkbox-item"
       class={cx(
         "outline-hidden relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm [&_svg:not([class*=size-])]:size-4",
-        "data-[highlighted]:(bg-accent text-accent-foreground)",
-        "data-[disabled]:(pointer-events-none opacity-50)",
-        "[&_svg]:(pointer-events-none shrink-0)",
+        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0",
         props.class
       )}
       {...rest}
@@ -242,9 +242,9 @@ export const DropdownMenuRadioItem = <T extends ValidComponent = "div">(
       data-slot="dropdown-menu-radio-item"
       class={cx(
         "outline-hidden relative flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm [&_svg:not([class*=size-])]:size-4",
-        "data-[highlighted]:(bg-accent text-accent-foreground)",
-        "data-[disabled]:(pointer-events-none opacity-50)",
-        "[&_svg]:(pointer-events-none shrink-0)",
+        "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0",
         props.class
       )}
       {...rest}

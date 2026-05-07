@@ -7,17 +7,17 @@ import { cva } from "../../lib/cva";
 export const toggleButtonVariants = cva({
   base: [
     "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium [&_svg:not([class*=size-])]:size-4 outline-none transition-[color,background-color,box-shadow] whitespace-nowrap",
-    "hover:(bg-muted text-muted-foreground)",
-    "disabled:(pointer-events-none opacity-50)",
-    "data-[pressed]:(bg-accent text-accent-foreground)",
-    "[&_svg]:(pointer-events-none shrink-0)",
-    "focus-visible:(border-ring ring-ring/50 ring-[3px])",
+    "hover:bg-muted hover:text-muted-foreground",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "data-[pressed]:bg-accent data-[pressed]:text-accent-foreground",
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0",
+    "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
   ],
   variants: {
     variant: {
       default: "bg-transparent",
       outline:
-        "border border-input bg-transparent shadow-xs hover:(bg-accent text-accent-foreground)",
+        "border border-input bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground",
     },
     size: {
       default: "h-9 px-2 min-w-9",
