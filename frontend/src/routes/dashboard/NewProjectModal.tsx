@@ -57,7 +57,7 @@ function TemplateCard(props: TemplateCardProps) {
       role="button"
       tabIndex={0}
       class={cx(
-        "h-[240px] py-0 gap-0 overflow-hidden cursor-pointer transition-colors hover:border-foreground",
+        "h-60 py-0 gap-0 overflow-hidden cursor-pointer transition-colors hover:border-foreground",
         props.selected && "border-foreground bg-muted"
       )}
       onClick={props.onSelect}
@@ -118,7 +118,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
     const all = templates() ?? [];
     const set = new Set<string>();
     for (const t of all) for (const c of t.categories) set.add(c);
-    return [...set].toSorted();
+    return ["all", ...[...set].toSorted()];
   });
 
   const filtered = createMemo(() => {
@@ -165,9 +165,6 @@ export default function NewProjectModal(props: NewProjectModalProps) {
               onChange={(v) => setCategory(v ?? "all")}
               class="flex flex-wrap gap-1.5 w-full"
             >
-              <ToggleGroupItem value="all" size="sm" class="rounded-md! border-l! flex-none px-2.5">
-                all
-              </ToggleGroupItem>
               <For each={categories()}>
                 {(c) => (
                   <ToggleGroupItem
@@ -215,7 +212,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
               >
                 <Match when={templates.loading}>
                   <For each={Array.from({ length: 8 })}>
-                    {() => <Skeleton class="h-[240px] rounded-xl" />}
+                    {() => <Skeleton class="h-60 rounded-xl" />}
                   </For>
                 </Match>
                 <Match when={templates.error !== undefined}>

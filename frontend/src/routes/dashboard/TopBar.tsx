@@ -8,7 +8,7 @@ import {
 } from "solid-icons/tb";
 import { Show } from "solid-js";
 
-import Logomark from "../../components/Logomark";
+import Logo from "../../components/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { Button } from "../../components/ui/button";
 import {
@@ -34,13 +34,13 @@ interface TopBarProps {
 
 export default function TopBar(props: TopBarProps) {
   return (
-    <header class="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-8 py-[18px]">
-      <Logomark size={20} />
-      <div class="flex items-center gap-[18px]">
+    <header class="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-8 py-4.5">
+      <Logo size={20} />
+      <div class="flex items-center gap-4.5">
         <TextField
           value={props.query}
           onChange={props.onQuery}
-          class="relative block w-[280px] gap-0"
+          class="relative block w-70 gap-0"
         >
           <TbOutlineSearch
             size={14}

@@ -54,7 +54,7 @@ export default function Dashboard() {
         userImage={session().data?.user.image}
         onSignOut={() => void signOut()}
       />
-      <main class="mx-auto flex w-full max-w-[1240px] flex-1 flex-col px-8 py-10">
+      <main class="mx-auto flex w-full max-w-310 flex-1 flex-col px-8 py-10">
         <h1 class="mb-8 mt-2 text-[44px] font-medium tracking-[-0.02em]">Projects</h1>
         <TabsBar
           tab={tab()}
