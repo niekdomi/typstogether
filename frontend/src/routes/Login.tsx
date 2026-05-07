@@ -7,8 +7,6 @@ import { Button } from "../components/ui/button";
 import { api } from "../lib/api";
 import { authClient } from "../lib/auth";
 
-import "./Login.css";
-
 async function loadProviders() {
   const { data } = await api.auth.providers.get();
   return data ?? [];
@@ -40,23 +38,28 @@ export default function Login() {
   return (
     <Switch
       fallback={
-        <div class="fade-in login">
-          <aside class="hero">
+        <div class="grid min-h-screen grid-cols-[1.05fr_1fr] bg-background">
+          <aside class="flex flex-col gap-6 overflow-hidden border-r border-border bg-muted px-12 py-8">
             <Logomark size={20} />
-            <div class="hero-copy">
-              <h1>
-                Typst, but <span class="hero-accent">together.</span>
+            <div class="my-auto max-w-[520px]">
+              <h1 class="mb-[18px] text-[54px] font-medium leading-[1.02] tracking-[-0.025em]">
+                Typst, but <span class="italic text-brand">together.</span>
               </h1>
-              <p>A collaborative editor for Typst documents.</p>
+              <p class="max-w-[460px] text-base leading-[1.5] text-foreground/75">
+                A collaborative editor for Typst documents.
+              </p>
             </div>
           </aside>
 
-          <section class="form-wrap">
-            <div class="form">
-              <h2 class="display form-title">Sign in</h2>
+          <section class="flex items-center justify-center p-10">
+            <div class="w-full max-w-[360px]">
+              <h2 class="mb-1.5 text-[32px] font-medium tracking-[-0.01em]">Sign in</h2>
 
-              <Show when={!providers.loading} fallback={<p class="loading">Loading providers…</p>}>
-                <div class="provider-list">
+              <Show
+                when={!providers.loading}
+                fallback={<p class="text-sm text-muted-foreground">Loading providers…</p>}
+              >
+                <div class="grid gap-2.5">
                   <For each={providers() ?? []}>
                     {(p) => (
                       <Button
@@ -81,7 +84,7 @@ export default function Login() {
       }
     >
       <Match when={session().isPending}>
-        <p class="loading">Loading…</p>
+        <p class="text-sm text-muted-foreground">Loading…</p>
       </Match>
       <Match when={session().data?.user}>
         <Navigate href={safeNext} />
