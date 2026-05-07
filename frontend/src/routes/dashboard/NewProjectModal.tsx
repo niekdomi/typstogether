@@ -185,7 +185,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
                 class="font-mono text-xs"
               />
             </TextField>
-            <div class="grid gap-2 max-h-96 overflow-y-auto p-0.5 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
+            <div class="grid gap-2 h-96 overflow-y-auto p-0.5 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
               <TemplateCard
                 selected={template() === BLANK_ID}
                 onSelect={() => setTemplate(BLANK_ID)}
