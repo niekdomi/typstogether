@@ -13,5 +13,5 @@ const providers = [
   .map(({ id, name }) => ({ id, name }));
 
 export const authRoutes = new Elysia({ name: "auth-routes" })
-  .all("/api/auth/*", ({ request }) => auth.handler(request))
+  .all("/auth/*", ({ request }) => auth.handler(request))
   .get("/auth/providers", () => providers, { response: t.Array(providerModel) });

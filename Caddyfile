@@ -1,6 +1,5 @@
 {$DOMAIN:localhost} {
-    @backend path /api/* /auth/* /projects/* /collab*
-    handle @backend {
+    handle /api/* {
         reverse_proxy backend:3000
     }
 

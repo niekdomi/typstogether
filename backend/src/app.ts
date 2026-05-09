@@ -10,7 +10,7 @@ import { projectRoutes } from "./modules/projects";
 import { templateRoutes } from "./modules/templates";
 
 export function buildApp() {
-  return new Elysia()
+  return new Elysia({ prefix: "/api" })
     .use(cors()) // TODO: Restrict to specific domain
     .onError(({ error, status }) => {
       if (error instanceof HttpError) return status(error.status, error.message);
