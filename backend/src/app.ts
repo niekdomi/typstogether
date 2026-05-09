@@ -1,6 +1,7 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 
+import { frontendUrl } from "./env";
 import { HttpError } from "./errors";
 import { authRoutes } from "./modules/auth";
 import { collabWs } from "./modules/collab/server";
@@ -11,7 +12,7 @@ import { templateRoutes } from "./modules/templates";
 
 export function buildApp() {
   return new Elysia({ prefix: "/api" })
-    .use(cors()) // TODO: Restrict to specific domain
+    .use(cors({ origin: new URL(frontendUrl).origin, credentials: true }))
     .onError(({ error, status }) => {
       if (error instanceof HttpError) return status(error.status, error.message);
       return;

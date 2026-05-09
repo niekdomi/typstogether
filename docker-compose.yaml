@@ -1,12 +1,12 @@
 services:
   db:
-    image: postgres:18.3-alpine
+    image: docker.io/library/postgres:18.3-alpine
     environment:
       POSTGRES_DB: typstogether
       POSTGRES_USER: typstogether
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U typstogether"]
       interval: 5s
@@ -18,10 +18,10 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      FRONTEND_URL: ${FRONTEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       DATABASE_URL: postgresql://typstogether:${POSTGRES_PASSWORD}@db:5432/typstogether
 
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+      BETTER_AUTH_URL: ${FRONTEND_URL:-http://localhost}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
 
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
@@ -34,6 +34,16 @@ services:
       GITLAB_CLIENT_SECRET: ${GITLAB_CLIENT_SECRET:-}
       GITLAB_ISSUER: ${GITLAB_ISSUER:-https://gitlab.ost.ch}
     command: sh -c "bun run dist/migrate.js && bun run dist/index.js"
+    healthcheck:
+      test:
+        - CMD
+        - bun
+        - -e
+        - "process.exit((await fetch('http://localhost:3000/api/auth/providers')).ok ? 0 : 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
       db:
         condition: service_healthy
@@ -44,18 +54,19 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        VITE_API_URL: ${FRONTEND_URL}
+        VITE_API_URL: ${FRONTEND_URL:-http://localhost}
     environment:
-      DOMAIN: ${DOMAIN}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile:Z
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
