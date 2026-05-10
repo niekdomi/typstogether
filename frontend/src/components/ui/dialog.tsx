@@ -2,7 +2,7 @@ import { Dialog as DialogPrimitive } from "@kobalte/core/dialog";
 import type { ComponentProps, ValidComponent } from "solid-js";
 import { Show, mergeProps, splitProps } from "solid-js";
 
-import { cx } from "../../lib/cva";
+import { cx } from "./cva";
 
 export const DialogPortal = DialogPrimitive.Portal;
 

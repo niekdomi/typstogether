@@ -2,7 +2,7 @@ import { Image as ImagePrimitive } from "@kobalte/core/image";
 import type { ComponentProps, ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 
-import { cx } from "../../lib/cva";
+import { cx } from "./cva";
 
 export type AvatarProps<T extends ValidComponent = "span"> = ComponentProps<
   typeof ImagePrimitive<T>

@@ -2,8 +2,8 @@ import { AlertDialog as AlertDialogPrimitive } from "@kobalte/core/alert-dialog"
 import type { ComponentProps, ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 
-import { cx } from "../../lib/cva";
 import { buttonVariants } from "./button";
+import { cx } from "./cva";
 
 export const AlertDialogPortal = AlertDialogPrimitive.Portal;
 

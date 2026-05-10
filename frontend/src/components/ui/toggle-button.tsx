@@ -2,7 +2,7 @@ import { ToggleButton as ToggleButtonPrimitive } from "@kobalte/core/toggle-butt
 import type { VariantProps } from "cva";
 import { splitProps, type ComponentProps, type ValidComponent } from "solid-js";
 
-import { cva } from "../../lib/cva";
+import { cva } from "./cva";
 
 export const toggleButtonVariants = cva({
   base: [

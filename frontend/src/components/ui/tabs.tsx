@@ -2,7 +2,7 @@ import { Tabs as TabsPrimitive } from "@kobalte/core/tabs";
 import type { ComponentProps, ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 
-import { cx } from "../../lib/cva";
+import { cx } from "./cva";
 
 export type TabsProps<T extends ValidComponent = "div"> = ComponentProps<typeof TabsPrimitive<T>>;
 

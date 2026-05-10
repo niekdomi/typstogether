@@ -3,7 +3,7 @@ import type { VariantProps } from "cva";
 import type { ComponentProps, ValidComponent } from "solid-js";
 import { createContext, splitProps, useContext } from "solid-js";
 
-import { cx } from "../../lib/cva";
+import { cx } from "./cva";
 import { toggleButtonVariants } from "./toggle-button";
 
 const ToggleGroupContext = createContext<VariantProps<typeof toggleButtonVariants>>();

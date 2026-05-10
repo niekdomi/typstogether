@@ -12,6 +12,7 @@ import {
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
+import { cx } from "../../components/ui/cva";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +26,6 @@ import { TextField, TextFieldInput, TextFieldLabel } from "../../components/ui/t
 import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import { api } from "../../lib/api";
-import { cx } from "../../lib/cva";
 
 interface NewProjectModalProps {
   open: boolean;
