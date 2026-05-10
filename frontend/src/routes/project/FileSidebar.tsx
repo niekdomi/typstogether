@@ -30,11 +30,15 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../../components/ui/sidebar";
+import { cx } from "../../lib/cva";
 
 interface FileEntry {
   name: string;
   type: "file" | "folder";
+  parent?: string; // folder name; undefined = root
 }
+
+type ConflictFlow = "rename" | "duplicate" | "newFile" | "newFileInFolder";
 
 type DialogState =
   | { type: "rename"; filename: string }
@@ -44,20 +48,25 @@ type DialogState =
       type: "conflict";
       proposedName: string;
       sourceName: string;
-      flow: "rename" | "duplicate" | "newFile";
+      flow: ConflictFlow;
+      folderName?: string;
     }
   | { type: "newFile" }
-  | { type: "newFolder" };
+  | { type: "newFolder" }
+  | { type: "newFileInFolder"; folderName: string };
 
 export default function FileSidebar() {
   const [entries, setEntries] = createSignal<FileEntry[]>([{ name: "main.typ", type: "file" }]);
   const [activeFile, setActiveFile] = createSignal("main.typ");
   const [dialog, setDialog] = createSignal<DialogState | null>(null);
+  const [dragging, setDragging] = createSignal<string | null>(null);
+  const [dragOver, setDragOver] = createSignal<string | null>(null); // folder name | "root" | null
 
   const close = () => setDialog(null);
   const hasEntry = (name: string) => entries().some((e) => e.name === name);
+  const rootEntries = () => entries().filter((e) => !e.parent);
+  const childrenOf = (folder: string) => entries().filter((e) => e.parent === folder);
 
-  // typed dialog accessors for Show
   const d =
     <T extends DialogState["type"]>(type: T) =>
     () => {
@@ -70,6 +79,7 @@ export default function FileSidebar() {
   const conflictD = d("conflict");
   const newFileD = d("newFile");
   const newFolderD = d("newFolder");
+  const newFileInFolderD = d("newFileInFolder");
 
   const handleRename = (oldName: string, newName: string): void => {
     if (newName === oldName) {
@@ -96,7 +106,7 @@ export default function FileSidebar() {
   };
 
   const handleDelete = (filename: string) => {
-    setEntries((prev) => prev.filter((e) => e.name !== filename));
+    setEntries((prev) => prev.filter((e) => e.name !== filename && e.parent !== filename));
     if (activeFile() === filename) {
       const next = entries().find((e) => e.name !== filename && e.type === "file");
       setActiveFile(next?.name ?? "");
@@ -110,6 +120,22 @@ export default function FileSidebar() {
       return;
     }
     setEntries((prev) => [...prev, { name, type: "file" }]);
+    setActiveFile(name);
+    close();
+  };
+
+  const handleNewFileInFolder = (folderName: string, name: string): void => {
+    if (hasEntry(name)) {
+      setDialog({
+        type: "conflict",
+        proposedName: name,
+        sourceName: name,
+        flow: "newFileInFolder",
+        folderName,
+      });
+      return;
+    }
+    setEntries((prev) => [...prev, { name, type: "file", parent: folderName }]);
     setActiveFile(name);
     close();
   };
@@ -138,61 +164,202 @@ export default function FileSidebar() {
     if (!c) return;
     if (c.flow === "rename") setDialog({ type: "rename", filename: c.sourceName });
     else if (c.flow === "duplicate") setDialog({ type: "duplicate", filename: c.sourceName });
+    else if (c.flow === "newFileInFolder" && c.folderName)
+      setDialog({ type: "newFileInFolder", folderName: c.folderName });
     else setDialog({ type: "newFile" });
+  };
+
+  // drag and drop — only files are draggable; folders act as drop targets
+  const onFileDragStart = (e: DragEvent, name: string) => {
+    e.dataTransfer?.setData("text/plain", name);
+    e.stopPropagation();
+    setDragging(name);
+  };
+  const onDragEnd = () => {
+    setDragging(null);
+    setDragOver(null);
+  };
+
+  const onFolderDragOver = (e: DragEvent, folderName: string) => {
+    if (!dragging()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(folderName);
+  };
+  const onFolderDrop = (e: DragEvent, folderName: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const name = e.dataTransfer?.getData("text/plain");
+    if (name)
+      setEntries((prev) =>
+        prev.map((en) => (en.name === name ? { ...en, parent: folderName } : en))
+      );
+    setDragging(null);
+    setDragOver(null);
+  };
+  const onRootDragOver = (e: DragEvent) => {
+    if (!dragging()) return;
+    e.preventDefault();
+    setDragOver("root");
+  };
+  const onRootDrop = (e: DragEvent) => {
+    e.preventDefault();
+    const name = e.dataTransfer?.getData("text/plain");
+    if (name)
+      setEntries((prev) =>
+        prev.map((en) => (en.name === name ? { ...en, parent: undefined } : en))
+      );
+    setDragging(null);
+    setDragOver(null);
   };
 
   return (
     <Sidebar>
       <ContextMenu>
-        <ContextMenuTrigger as="div" class="flex flex-1 flex-col overflow-hidden">
+        <ContextMenuTrigger
+          as="div"
+          class={cx(
+            "flex flex-1 flex-col overflow-hidden",
+            dragOver() === "root" && dragging() && "bg-sidebar-accent/40"
+          )}
+          onDragOver={onRootDragOver}
+          onDragLeave={(e: DragEvent) => {
+            if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node))
+              setDragOver(null);
+          }}
+          onDrop={onRootDrop}
+        >
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupLabel>Files</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <For each={entries()}>
+                  <For each={rootEntries()}>
                     {(entry) => (
-                      <SidebarMenuItem>
-                        <ContextMenu>
-                          <ContextMenuTrigger as="div">
-                            <SidebarMenuButton
-                              isActive={entry.type === "file" && activeFile() === entry.name}
-                              onClick={() => {
-                                if (entry.type === "file") setActiveFile(entry.name);
-                              }}
-                              tooltip={entry.name}
-                            >
-                              <Show when={entry.type === "folder"} fallback={<TbOutlineFileText />}>
-                                <TbOutlineFolder />
-                              </Show>
-                              <span>{entry.name}</span>
-                            </SidebarMenuButton>
-                          </ContextMenuTrigger>
-                          <ContextMenuContent>
-                            <ContextMenuItem
-                              onSelect={() => setDialog({ type: "rename", filename: entry.name })}
-                            >
-                              Rename
-                            </ContextMenuItem>
-                            <Show when={entry.type === "file"}>
-                              <ContextMenuItem
-                                onSelect={() =>
-                                  setDialog({ type: "duplicate", filename: entry.name })
-                                }
+                      <>
+                        <SidebarMenuItem>
+                          <ContextMenu>
+                            <ContextMenuTrigger as="div">
+                              <SidebarMenuButton
+                                isActive={entry.type === "file" && activeFile() === entry.name}
+                                tooltip={entry.name}
+                                draggable={entry.type === "file"}
+                                class={cx(
+                                  entry.type === "folder" &&
+                                    dragOver() === entry.name &&
+                                    "ring-2 ring-sidebar-ring"
+                                )}
+                                onClick={() => {
+                                  if (entry.type === "file") setActiveFile(entry.name);
+                                }}
+                                onDragStart={(e: DragEvent) => {
+                                  onFileDragStart(e, entry.name);
+                                }}
+                                onDragEnd={onDragEnd}
+                                onDragOver={(e: DragEvent) => {
+                                  if (entry.type === "folder") onFolderDragOver(e, entry.name);
+                                }}
+                                onDragLeave={() => setDragOver(null)}
+                                onDrop={(e: DragEvent) => {
+                                  if (entry.type === "folder") onFolderDrop(e, entry.name);
+                                }}
                               >
-                                Duplicate
+                                <Show
+                                  when={entry.type === "folder"}
+                                  fallback={<TbOutlineFileText />}
+                                >
+                                  <TbOutlineFolder />
+                                </Show>
+                                <span>{entry.name}</span>
+                              </SidebarMenuButton>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent>
+                              <Show when={entry.type === "folder"}>
+                                <ContextMenuItem
+                                  onSelect={() =>
+                                    setDialog({ type: "newFileInFolder", folderName: entry.name })
+                                  }
+                                >
+                                  New file
+                                </ContextMenuItem>
+                                <ContextMenuSeparator />
+                              </Show>
+                              <ContextMenuItem
+                                onSelect={() => setDialog({ type: "rename", filename: entry.name })}
+                              >
+                                Rename
                               </ContextMenuItem>
-                            </Show>
-                            <ContextMenuSeparator />
-                            <ContextMenuItem
-                              class="text-destructive focus:text-destructive"
-                              onSelect={() => setDialog({ type: "delete", filename: entry.name })}
-                            >
-                              Delete
-                            </ContextMenuItem>
-                          </ContextMenuContent>
-                        </ContextMenu>
-                      </SidebarMenuItem>
+                              <Show when={entry.type === "file"}>
+                                <ContextMenuItem
+                                  onSelect={() =>
+                                    setDialog({ type: "duplicate", filename: entry.name })
+                                  }
+                                >
+                                  Duplicate
+                                </ContextMenuItem>
+                              </Show>
+                              <ContextMenuSeparator />
+                              <ContextMenuItem
+                                class="text-destructive focus:text-destructive"
+                                onSelect={() => setDialog({ type: "delete", filename: entry.name })}
+                              >
+                                Delete
+                              </ContextMenuItem>
+                            </ContextMenuContent>
+                          </ContextMenu>
+                        </SidebarMenuItem>
+
+                        <Show when={entry.type === "folder"}>
+                          <For each={childrenOf(entry.name)}>
+                            {(child) => (
+                              <SidebarMenuItem class="pl-3">
+                                <ContextMenu>
+                                  <ContextMenuTrigger as="div">
+                                    <SidebarMenuButton
+                                      isActive={activeFile() === child.name}
+                                      tooltip={child.name}
+                                      draggable
+                                      onClick={() => setActiveFile(child.name)}
+                                      onDragStart={(e: DragEvent) => {
+                                        onFileDragStart(e, child.name);
+                                      }}
+                                      onDragEnd={onDragEnd}
+                                    >
+                                      <TbOutlineFileText />
+                                      <span>{child.name}</span>
+                                    </SidebarMenuButton>
+                                  </ContextMenuTrigger>
+                                  <ContextMenuContent>
+                                    <ContextMenuItem
+                                      onSelect={() =>
+                                        setDialog({ type: "rename", filename: child.name })
+                                      }
+                                    >
+                                      Rename
+                                    </ContextMenuItem>
+                                    <ContextMenuItem
+                                      onSelect={() =>
+                                        setDialog({ type: "duplicate", filename: child.name })
+                                      }
+                                    >
+                                      Duplicate
+                                    </ContextMenuItem>
+                                    <ContextMenuSeparator />
+                                    <ContextMenuItem
+                                      class="text-destructive focus:text-destructive"
+                                      onSelect={() =>
+                                        setDialog({ type: "delete", filename: child.name })
+                                      }
+                                    >
+                                      Delete
+                                    </ContextMenuItem>
+                                  </ContextMenuContent>
+                                </ContextMenu>
+                              </SidebarMenuItem>
+                            )}
+                          </For>
+                        </Show>
+                      </>
                     )}
                   </For>
                 </SidebarMenu>
@@ -309,6 +476,22 @@ export default function FileSidebar() {
           initialValue=""
           submitLabel="Create"
         />
+      </Show>
+
+      <Show when={newFileInFolderD()}>
+        {(s) => (
+          <PromptDialog
+            open
+            onClose={close}
+            onSubmit={(name) => {
+              handleNewFileInFolder(s().folderName, name);
+            }}
+            title={`New file in ${s().folderName}`}
+            label="File name"
+            initialValue=""
+            submitLabel="Create"
+          />
+        )}
       </Show>
     </Sidebar>
   );
