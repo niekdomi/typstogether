@@ -22,20 +22,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../components/ui/select";
 import { Separator } from "../../components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
 import { api } from "../../lib/api";
 import { formatDate, formatRelative, userInitial } from "../../lib/format";
 
 type InviteRole = "editor" | "viewer";
-type Expiry = "24h" | "7d" | "30d" | "never";
 
 interface InviteDialogProps {
   open: boolean;
@@ -44,29 +36,10 @@ interface InviteDialogProps {
   projectName: string;
 }
 
-const DAY_MS = 86_400 * 1000;
-
-const EXPIRY_DAYS: Record<Exclude<Expiry, "never">, number> = {
-  "24h": 1,
-  "7d": 7,
-  "30d": 30,
-};
-
-const EXPIRY_LABELS: Record<Expiry, string> = {
-  "24h": "24 hours",
-  "7d": "7 days",
-  "30d": "30 days",
-  never: "never",
-};
-
-function expiryToDate(expiry: Expiry): Date {
-  if (expiry === "never") return new Date("9999-12-31T23:59:59Z");
-  return new Date(Date.now() + EXPIRY_DAYS[expiry] * DAY_MS);
-}
+const INVITE_TTL_MS = 7 * 86_400 * 1000;
 
 function expiresLabel(expiresAt: Date | string): string {
-  const d = new Date(expiresAt);
-  return d.getFullYear() > 9000 ? "no expiry" : `expires ${formatRelative(d)}`;
+  return `expires ${formatRelative(new Date(expiresAt))}`;
 }
 
 async function loadInvites(projectId: string) {
@@ -81,7 +54,6 @@ async function loadMembers(projectId: string) {
 
 export default function InviteDialog(props: InviteDialogProps) {
   const [role, setRole] = createSignal<InviteRole>("editor");
-  const [expiry, setExpiry] = createSignal<Expiry>("7d");
   const [generatedToken, setGeneratedToken] = createSignal<string | null>(null);
   const [copied, setCopied] = createSignal(false);
 
@@ -106,7 +78,7 @@ export default function InviteDialog(props: InviteDialogProps) {
     if (!props.projectId) return;
     const { data, error } = await api.projects({ id: props.projectId }).invites.post({
       role: role(),
-      expiresAt: expiryToDate(expiry()),
+      expiresAt: new Date(Date.now() + INVITE_TTL_MS),
     });
     if (error) {
       toast.error("Could not create invite link.");
@@ -174,7 +146,10 @@ export default function InviteDialog(props: InviteDialogProps) {
         <Separator />
 
         <div class="flex flex-col gap-3">
-          <div class="text-sm font-medium">Invite via link</div>
+          <div class="flex items-baseline justify-between gap-2">
+            <div class="text-sm font-medium">Invite via link</div>
+            <div class="text-xs text-muted-foreground">Expires in 7 days</div>
+          </div>
           <Show
             when={generatedToken()}
             fallback={
@@ -189,24 +164,6 @@ export default function InviteDialog(props: InviteDialogProps) {
                   <ToggleGroupItem value="editor">Editor</ToggleGroupItem>
                   <ToggleGroupItem value="viewer">Viewer</ToggleGroupItem>
                 </ToggleGroup>
-                <Select<Expiry>
-                  value={expiry()}
-                  onChange={(v) => {
-                    if (v) setExpiry(v);
-                  }}
-                  modal={false}
-                  options={["24h", "7d", "30d", "never"]}
-                  itemComponent={(p) => (
-                    <SelectItem item={p.item}>{EXPIRY_LABELS[p.item.rawValue]}</SelectItem>
-                  )}
-                >
-                  <SelectTrigger>
-                    <SelectValue<Expiry>>
-                      {(state) => EXPIRY_LABELS[state.selectedOption()]}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent />
-                </Select>
                 <Button class="ml-auto" onClick={() => void createInvite()}>
                   Generate
                 </Button>
