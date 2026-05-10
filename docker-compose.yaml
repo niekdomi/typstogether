@@ -1,6 +1,8 @@
+x-frontend-url: &frontend-url "${FRONTEND_URL:-http://localhost}"
+
 services:
   db:
-    image: docker.io/library/postgres:18.3-alpine
+    image: postgres:18.3-alpine
     environment:
       POSTGRES_DB: typstogether
       POSTGRES_USER: typstogether
@@ -18,10 +20,10 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FRONTEND_URL: *frontend-url
       DATABASE_URL: postgresql://typstogether:${POSTGRES_PASSWORD}@db:5432/typstogether
 
-      BETTER_AUTH_URL: ${FRONTEND_URL:-http://localhost}
+      BETTER_AUTH_URL: *frontend-url
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
 
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
@@ -33,7 +35,6 @@ services:
       GITLAB_CLIENT_ID: ${GITLAB_CLIENT_ID:-}
       GITLAB_CLIENT_SECRET: ${GITLAB_CLIENT_SECRET:-}
       GITLAB_ISSUER: ${GITLAB_ISSUER:-https://gitlab.ost.ch}
-    command: sh -c "bun run dist/migrate.js && bun run dist/index.js"
     healthcheck:
       test:
         - CMD
@@ -54,9 +55,9 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        VITE_API_URL: ${FRONTEND_URL:-http://localhost}
+        VITE_API_URL: *frontend-url
     environment:
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FRONTEND_URL: *frontend-url
     ports:
       - "80:80"
       - "443:443"
