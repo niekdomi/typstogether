@@ -1,5 +1,6 @@
 dictionaries = ["en_us"]
 words = [
+  "aborter",
   "bunx",
   "bytea",
   "collab",
@@ -15,8 +16,10 @@ words = [
   "typebox",
   "typs",
   "typstogether",
+  "uiw",
   "upserts",
   "vedivad",
+  "vfs",
   "wss",
   "ydoc",
   "yjs",

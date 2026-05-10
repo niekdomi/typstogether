@@ -22,7 +22,7 @@ export function useTypstProject(ytext: () => Y.Text | null) {
 
     const aborter = new AbortController();
     const aborted = (): boolean => aborter.signal.aborted;
-    let proj: TypstProject | null = null;
+    let project: TypstProject | null = null;
     let sync: TypstYjsSync | null = null;
 
     void (async () => {
@@ -32,18 +32,18 @@ export function useTypstProject(ytext: () => Y.Text | null) {
           compiler.destroy();
           return;
         }
-        proj = new TypstProject({
+        project = new TypstProject({
           compiler,
           autoCompile: { debounceMs: 200, maxWaitMs: 1000 },
         });
         sync = syncYTextToTypstProject({
-          project: proj,
+          project: project,
           ytext: t,
           path: MAIN_PATH,
           onError: ({ error: syncError }) => setErrorState(String(syncError)),
         });
         await sync.ready;
-        if (!aborted()) setProject(proj);
+        if (!aborted()) setProject(project);
       } catch (error) {
         setErrorState(String(error));
       }
@@ -52,7 +52,7 @@ export function useTypstProject(ytext: () => Y.Text | null) {
     onCleanup(() => {
       aborter.abort();
       sync?.dispose();
-      proj?.destroy();
+      project?.destroy();
       setProject(null);
     });
   });
