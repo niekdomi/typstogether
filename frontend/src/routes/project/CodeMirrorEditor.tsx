@@ -1,4 +1,4 @@
-import { Compartment, type Extension, EditorState } from "@codemirror/state";
+import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { githubDark, githubLight } from "@uiw/codemirror-theme-github";
 import {
@@ -24,10 +24,15 @@ const fillHeight = EditorView.theme({
 });
 
 interface Props {
-  ytext: Y.Text;
-  path: string;
+  files: Y.Map<Y.Text>;
+  activeFile: () => string;
   project: TypstProject;
   readOnly: () => boolean;
+}
+
+interface PerFileState {
+  state: EditorState;
+  undoManager: Y.UndoManager;
 }
 
 export default function CodeMirrorEditor(props: Props) {
@@ -41,48 +46,99 @@ export default function CodeMirrorEditor(props: Props) {
 
       const readOnlyCompartment = new Compartment();
       const themeCompartment = new Compartment();
-      const undoManager = new Y.UndoManager(props.ytext);
-
       const setup = createTypstSetup({
         project: props.project,
         sync: "external",
         highlighting: controller,
       });
 
-      const view = new EditorView({
-        parent,
-        state: EditorState.create({
-          doc: props.ytext.toJSON(),
+      const states = new Map<string, PerFileState>();
+
+      const buildState = (path: string, text: Y.Text): PerFileState => {
+        const undoManager = new Y.UndoManager(text);
+        const state = EditorState.create({
+          doc: text.toJSON(),
           extensions: [
             basicSetup,
             keymap.of(yUndoManagerKeymap),
             fillHeight,
             themeCompartment.of(editorTheme(theme())),
-            ...setup,
-            yCollab(props.ytext, null, { undoManager }),
             readOnlyCompartment.of(EditorState.readOnly.of(props.readOnly())),
-            typstFilePath.of(props.path),
+            ...setup,
+            yCollab(text, null, { undoManager }),
+            typstFilePath.of(path),
           ],
-        }),
-      });
+        });
+        return { state, undoManager };
+      };
+
+      const ensureState = (path: string): PerFileState | null => {
+        const existing = states.get(path);
+        if (existing) return existing;
+        const text = props.files.get(path);
+        if (!text) return null;
+        const built = buildState(path, text);
+        states.set(path, built);
+        return built;
+      };
+
+      const initialPath = props.activeFile();
+      const initial = ensureState(initialPath);
+      if (!initial) return;
+
+      const view = new EditorView({ parent, state: initial.state });
       view.focus();
+
+      let currentPath = initialPath;
+
+      const syncCompartments = () => {
+        view.dispatch({
+          effects: [
+            themeCompartment.reconfigure(editorTheme(theme())),
+            readOnlyCompartment.reconfigure(EditorState.readOnly.of(props.readOnly())),
+          ],
+        });
+        controller.setTheme(view, theme());
+      };
+
+      const switchTo = (path: string) => {
+        if (path === currentPath) return;
+        const next = ensureState(path);
+        if (!next) return;
+        const current = states.get(currentPath);
+        if (current) current.state = view.state;
+        view.setState(next.state);
+        currentPath = path;
+        syncCompartments();
+      };
+
+      const observer = () => {
+        // Drop states for files that no longer exist.
+        for (const [path, entry] of states) {
+          if (!props.files.has(path)) {
+            entry.undoManager.destroy();
+            states.delete(path);
+          }
+        }
+      };
+      props.files.observe(observer);
 
       runWithOwner(owner, () => {
         createEffect(() => {
-          view.dispatch({
-            effects: readOnlyCompartment.reconfigure(EditorState.readOnly.of(props.readOnly())),
-          });
+          switchTo(props.activeFile());
         });
 
         createEffect(() => {
-          const t = theme();
-          view.dispatch({
-            effects: themeCompartment.reconfigure(editorTheme(t)),
-          });
-          controller.setTheme(view, t);
+          // Touch reactive deps (theme/readOnly) so reconfigure runs on change.
+          theme();
+          props.readOnly();
+          syncCompartments();
         });
 
         onCleanup(() => {
+          props.files.unobserve(observer);
+          for (const entry of states.values()) entry.undoManager.destroy();
+          states.clear();
           view.destroy();
         });
       });

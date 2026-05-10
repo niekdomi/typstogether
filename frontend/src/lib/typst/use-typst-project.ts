@@ -1,19 +1,17 @@
 import { TypstCompiler, TypstProject, TypstRenderer } from "@vedivad/codemirror-typst";
-import { syncYTextToTypstProject, type TypstYjsSync } from "@vedivad/typst-web-yjs";
+import { syncYMapToTypstProject, type TypstYjsSync } from "@vedivad/typst-web-yjs";
 import { createEffect, createSignal, onCleanup } from "solid-js";
 import type * as Y from "yjs";
 
-import { MAIN_PATH } from "../paths";
-
 export const renderer = TypstRenderer.create();
 
-export function useTypstProject(ytext: () => Y.Text | null) {
+export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
   const [projectState, setProjectState] = createSignal<TypstProject | null>(null);
   const [errorState, setErrorState] = createSignal<string | null>(null);
 
   createEffect(() => {
-    const t = ytext();
-    if (!t) {
+    const f = files();
+    if (!f) {
       setProjectState(null);
       return;
     }
@@ -36,10 +34,9 @@ export function useTypstProject(ytext: () => Y.Text | null) {
           compiler,
           autoCompile: { debounceMs: 200, maxWaitMs: 1000 },
         });
-        sync = syncYTextToTypstProject({
+        sync = syncYMapToTypstProject({
           project: project,
-          ytext: t,
-          path: MAIN_PATH,
+          files: f,
           onError: ({ error: syncError }) => setErrorState(String(syncError)),
         });
         await sync.ready;

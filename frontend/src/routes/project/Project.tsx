@@ -1,7 +1,7 @@
 import { WebSocketStatus } from "@hocuspocus/provider";
 import { A, useParams } from "@solidjs/router";
 import type { TypstProject } from "@vedivad/codemirror-typst";
-import { createMemo, createSignal, Match, Show, Switch } from "solid-js";
+import { createEffect, createMemo, createSignal, Match, Switch } from "solid-js";
 import type * as Y from "yjs";
 
 import ThemeToggle from "../../components/ThemeToggle";
@@ -11,7 +11,7 @@ import { SidebarProvider, SidebarTrigger } from "../../components/ui/sidebar";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
-import { MAIN_FILE } from "../../lib/paths";
+import { MAIN_PATH } from "../../lib/paths";
 import { useProject } from "../../lib/projects/use-project";
 import { renderer, useTypstProject } from "../../lib/typst/use-typst-project";
 import CodeMirrorEditor from "./CodeMirrorEditor";
@@ -35,7 +35,7 @@ function statusInfo(status: WebSocketStatus, synced: boolean, readOnly: boolean)
 }
 
 interface Ready {
-  ydoc: Y.Doc;
+  files: Y.Map<Y.Text>;
   project: TypstProject;
 }
 
@@ -43,19 +43,37 @@ export default function Project() {
   const params = useParams<{ id: string }>();
   const project = useProject(() => params.id);
   const collab = useCollabDoc(() => params.id);
-  const typst = useTypstProject(collab.ytext);
+  const typst = useTypstProject(collab.files);
 
-  const [activeFile, setActiveFile] = createSignal(MAIN_FILE);
+  const [requestedFile, setRequestedFile] = createSignal(MAIN_PATH);
   const isReadOnly = () => project()?.role === "viewer" || collab.readOnly();
 
   const ready = createMemo<Ready | null>(() => {
-    const doc = collab.ydoc();
+    const files = collab.files();
     const proj = typst.project();
-    return doc && proj ? { ydoc: doc, project: proj } : null;
+    return files && proj ? { files, project: proj } : null;
+  });
+
+  // Active file falls back to the first available if the requested one was
+  // deleted (or never existed). The signal also re-runs when files mutate via
+  // collab.fileKeys() touching the dependency.
+  const activeFile = createMemo(() => {
+    const r = ready();
+    if (!r) return MAIN_PATH;
+    const requested = requestedFile();
+    if (r.files.has(requested)) return requested;
+    return [...r.files.keys()][0] ?? MAIN_PATH;
+  });
+
+  // Keep `requestedFile` in sync with `activeFile` so the sidebar's selection
+  // reflects fallbacks (e.g. when the requested file is deleted).
+  createEffect(() => {
+    const a = activeFile();
+    if (a !== requestedFile()) setRequestedFile(a);
   });
 
   const loadingLabel = () =>
-    collab.ytext() ? "Booting Typst compiler…" : "Connecting to collab session…";
+    collab.files() ? "Booting Typst compiler…" : "Connecting to collab session…";
 
   return (
     <SidebarProvider class="flex h-screen flex-col bg-background">
@@ -98,63 +116,63 @@ export default function Project() {
       </header>
 
       <div class="flex min-h-0 flex-1">
-        <FileSidebar activeFile={activeFile} setActiveFile={setActiveFile} />
-        <main class="grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x divide-border/60">
-          <Switch
-            fallback={
-              <div class="col-span-2 flex items-center justify-center">
-                <p class="text-sm text-muted-foreground">{loadingLabel()}</p>
-              </div>
-            }
-          >
-            <Match when={project.error !== undefined}>
-              <div class="col-span-2 p-6">
+        <Switch
+          fallback={
+            <div class="flex flex-1 items-center justify-center">
+              <p class="text-sm text-muted-foreground">{loadingLabel()}</p>
+            </div>
+          }
+        >
+          <Match when={project.error !== undefined}>
+            <div class="flex-1 p-6">
+              <Alert variant="destructive">
+                <AlertDescription>Could not load this project.</AlertDescription>
+              </Alert>
+            </div>
+          </Match>
+          <Match when={collab.error()}>
+            {(reason) => (
+              <div class="flex-1 p-6">
                 <Alert variant="destructive">
-                  <AlertDescription>Could not load this project.</AlertDescription>
+                  <AlertDescription>Collaboration error: {reason()}</AlertDescription>
                 </Alert>
               </div>
-            </Match>
-            <Match when={collab.error()}>
-              {(reason) => (
-                <div class="col-span-2 p-6">
-                  <Alert variant="destructive">
-                    <AlertDescription>Collaboration error: {reason()}</AlertDescription>
-                  </Alert>
-                </div>
-              )}
-            </Match>
-            <Match when={typst.error()}>
-              {(reason) => (
-                <div class="col-span-2 p-6">
-                  <Alert variant="destructive">
-                    <AlertDescription>Compiler error: {reason()}</AlertDescription>
-                  </Alert>
-                </div>
-              )}
-            </Match>
-            <Match when={ready()}>
-              {(r) => (
-                <>
+            )}
+          </Match>
+          <Match when={typst.error()}>
+            {(reason) => (
+              <div class="flex-1 p-6">
+                <Alert variant="destructive">
+                  <AlertDescription>Compiler error: {reason()}</AlertDescription>
+                </Alert>
+              </div>
+            )}
+          </Match>
+          <Match when={ready()}>
+            {(r) => (
+              <>
+                <FileSidebar
+                  files={r().files}
+                  activeFile={activeFile}
+                  setActiveFile={setRequestedFile}
+                />
+                <main class="grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x divide-border/60">
                   <div class="min-w-0">
-                    <Show when={activeFile()} keyed>
-                      {(file) => (
-                        <CodeMirrorEditor
-                          ytext={r().ydoc.getText(file)}
-                          path={`/${file}`}
-                          project={r().project}
-                          readOnly={isReadOnly}
-                        />
-                      )}
-                    </Show>
+                    <CodeMirrorEditor
+                      files={r().files}
+                      activeFile={activeFile}
+                      project={r().project}
+                      readOnly={isReadOnly}
+                    />
                   </div>
                   <div class="min-w-0">
                     <PreviewPane project={r().project} renderer={renderer} />
                   </div>
-                </>
-              )}
-            </Match>
-          </Switch>
-        </main>
+                </main>
+              </>
+            )}
+          </Match>
+        </Switch>
       </div>
     </SidebarProvider>
   );
