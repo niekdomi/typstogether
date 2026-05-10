@@ -75,7 +75,7 @@ export default function Project() {
         </div>
       </header>
 
-      <main class="grid min-h-0 flex-1 grid-cols-2 divide-x divide-border/60">
+      <main class="grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x divide-border/60">
         <Switch
           fallback={
             <div class="col-span-2 flex items-center justify-center">
