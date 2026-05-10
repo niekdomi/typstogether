@@ -1,11 +1,11 @@
 import { Navigate } from "@solidjs/router";
 import { For, Match, Show, Switch, createResource, createSignal } from "solid-js";
 
-import Logo from "../components/Logo";
-import ProviderGlyph from "../components/ProviderGlyph";
-import { Button } from "../components/ui/button";
-import { api } from "../lib/api";
-import { authClient } from "../lib/auth";
+import Logo from "../../components/Logo";
+import { Button } from "../../components/ui/button";
+import { api } from "../../lib/api";
+import { authClient } from "../../lib/auth";
+import ProviderGlyph from "./ProviderGlyph";
 
 async function loadProviders() {
   const { data } = await api.auth.providers.get();

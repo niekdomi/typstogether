@@ -2,15 +2,15 @@ import { useNavigate } from "@solidjs/router";
 import { SiGithub } from "solid-icons/si";
 import { For, Match, Switch, createMemo, createSignal } from "solid-js";
 
-import ConfirmDialog from "../../components/ConfirmDialog";
-import PromptDialog from "../../components/PromptDialog";
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Skeleton } from "../../components/ui/skeleton";
 import { authClient } from "../../lib/auth";
 import { useProjects } from "../../lib/projects/use-projects";
+import ConfirmDialog from "./ConfirmDialog";
 import InviteDialog from "./InviteDialog";
 import NewProjectModal from "./NewProjectModal";
 import ProjectCard from "./ProjectCard";
+import PromptDialog from "./PromptDialog";
 import TabsBar, { type Tab } from "./TabsBar";
 import TopBar from "./TopBar";
 

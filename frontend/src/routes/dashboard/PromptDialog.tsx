@@ -1,8 +1,14 @@
 import { createEffect, createSignal } from "solid-js";
 
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
-import { TextField, TextFieldInput, TextFieldLabel } from "./ui/text-field";
+import { Button } from "../../components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import { TextField, TextFieldInput, TextFieldLabel } from "../../components/ui/text-field";
 
 interface PromptDialogProps {
   open: boolean;
