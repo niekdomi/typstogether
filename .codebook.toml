@@ -1,6 +1,7 @@
 dictionaries = ["en_us"]
 words = [
   "aborter",
+  "accessors",
   "bunx",
   "bytea",
   "collab",
@@ -27,6 +28,10 @@ words = [
   "ypst",
   "ytext",
 ]
-include_paths = ["**/*.md", "**/*.ts", "**/*.tsx"]
+include_paths = [
+  "**/*.md",
+  "**/*.ts",
+  "**/*.tsx",
+]
 ignore_paths = ["**/components/ui/**"]
 use_global = false
