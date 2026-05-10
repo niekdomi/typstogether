@@ -119,7 +119,7 @@ function buildTree(
   return out;
 }
 
-// Dialogs ─────────────────────────────────────────────────────────────────────
+// Dialogues ─────────────────────────────────────────────────────────────────────
 
 type ConflictFlow = "renameFile" | "duplicateFile" | "newFile" | "moveFile";
 
@@ -671,7 +671,7 @@ export default function FileSidebar(props: Props) {
         </ContextMenuContent>
       </ContextMenu>
 
-      {/* Dialogs ─────────────────────────────────────────────────────────── */}
+      {/* Dialogues ─────────────────────────────────────────────────────────── */}
 
       <Show when={renameFileDialog()}>
         {(s) => (
