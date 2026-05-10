@@ -59,6 +59,7 @@ export default function CodeMirrorEditor(props: Props) {
           ],
         }),
       });
+      view.focus();
 
       runWithOwner(owner, () => {
         createEffect(() => {

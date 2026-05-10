@@ -8,13 +8,13 @@ import { MAIN_PATH } from "../paths";
 export const renderer = TypstRenderer.create();
 
 export function useTypstProject(ytext: () => Y.Text | null) {
-  const [project, setProject] = createSignal<TypstProject | null>(null);
+  const [projectState, setProjectState] = createSignal<TypstProject | null>(null);
   const [errorState, setErrorState] = createSignal<string | null>(null);
 
   createEffect(() => {
     const t = ytext();
     if (!t) {
-      setProject(null);
+      setProjectState(null);
       return;
     }
 
@@ -43,7 +43,9 @@ export function useTypstProject(ytext: () => Y.Text | null) {
           onError: ({ error: syncError }) => setErrorState(String(syncError)),
         });
         await sync.ready;
-        if (!aborted()) setProject(project);
+        if (aborted()) return;
+        await project.compile();
+        if (!aborted()) setProjectState(project);
       } catch (error) {
         setErrorState(String(error));
       }
@@ -53,9 +55,9 @@ export function useTypstProject(ytext: () => Y.Text | null) {
       aborter.abort();
       sync?.dispose();
       project?.destroy();
-      setProject(null);
+      setProjectState(null);
     });
   });
 
-  return { project, error: errorState };
+  return { project: projectState, error: errorState };
 }
