@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Badge } from "../../components/ui/badge";
 import { SidebarProvider, SidebarTrigger } from "../../components/ui/sidebar";
 import { Skeleton } from "../../components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { useProject } from "../../lib/projects/use-project";
 import { renderer, useTypstProject } from "../../lib/typst/use-typst-project";
@@ -16,11 +17,20 @@ import CodeMirrorEditor from "./CodeMirrorEditor";
 import FileSidebar from "./FileSidebar";
 import PreviewPane from "./PreviewPane";
 
-function statusLabel(status: WebSocketStatus, synced: boolean, readOnly: boolean): string {
-  if (readOnly) return "Read-only";
-  if (status === WebSocketStatus.Connected) return synced ? "Connected" : "Syncing…";
-  if (status === WebSocketStatus.Connecting) return "Connecting…";
-  return "Disconnected";
+interface StatusInfo {
+  label: string;
+  color: string;
+}
+
+function statusInfo(status: WebSocketStatus, synced: boolean, readOnly: boolean): StatusInfo {
+  if (readOnly) return { label: "Read-only", color: "bg-muted-foreground" };
+  if (status === WebSocketStatus.Connected)
+    return synced
+      ? { label: "Connected", color: "bg-green-500" }
+      : { label: "Syncing…", color: "bg-yellow-500" };
+  if (status === WebSocketStatus.Connecting)
+    return { label: "Connecting…", color: "bg-yellow-500" };
+  return { label: "Disconnected", color: "bg-red-500" };
 }
 
 interface Ready {
@@ -71,9 +81,16 @@ export default function Project() {
           </Switch>
         </div>
         <div class="flex items-center gap-3">
-          <span class="font-mono text-xs text-muted-foreground">
-            {statusLabel(collab.status(), collab.synced(), isReadOnly())}
-          </span>
+          <Tooltip>
+            <TooltipTrigger as="span" class="flex items-center">
+              <span
+                class={`size-2 rounded-full ${statusInfo(collab.status(), collab.synced(), isReadOnly()).color}`}
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              {statusInfo(collab.status(), collab.synced(), isReadOnly()).label}
+            </TooltipContent>
+          </Tooltip>
           <ThemeToggle />
         </div>
       </header>
