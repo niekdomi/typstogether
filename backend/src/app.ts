@@ -4,7 +4,7 @@ import { Elysia } from "elysia";
 import { frontendUrl } from "./env";
 import { HttpError } from "./errors";
 import { authRoutes } from "./modules/auth";
-import { collabWs } from "./modules/collab/server";
+import { collabRoutes } from "./modules/collab";
 import { inviteRoutes } from "./modules/invites";
 import { memberRoutes } from "./modules/members";
 import { projectRoutes } from "./modules/projects";
@@ -21,22 +21,14 @@ export function buildApp() {
     .use(projectRoutes)
     .use(memberRoutes)
     .use(inviteRoutes)
-    .use(templateRoutes);
+    .use(templateRoutes)
+    .use(collabRoutes);
 }
 
 export function startServer(port = 3000) {
-  const app = buildApp();
-  const server = Bun.serve({
-    port,
-    websocket: collabWs.websocket,
-    fetch(request, srv) {
-      if (request.headers.get("upgrade") === "websocket") {
-        return collabWs.handleUpgrade(request, srv);
-      }
-      return app.handle(request);
-    },
+  const app = buildApp().listen(port, ({ port: actualPort }) => {
+    console.log("Backend running on port", actualPort);
   });
-  console.log("Backend running on port", server.port);
   return app;
 }
 
