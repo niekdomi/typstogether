@@ -11,9 +11,9 @@ import {
   useContext,
 } from "solid-js";
 
-import { cva, cx } from "../../lib/cva";
 import type { ButtonProps } from "./button";
 import { Button } from "./button";
+import { cva, cx } from "./cva";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";

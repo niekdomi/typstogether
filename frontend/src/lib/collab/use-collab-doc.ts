@@ -13,6 +13,7 @@ import { MAIN_FILE } from "../paths";
 import { collabWsUrl } from "./ws-url";
 
 export function useCollabDoc(projectId: () => string) {
+  const [ydoc, setYdoc] = createSignal<Y.Doc | null>(null);
   const [ytext, setYtext] = createSignal<Y.Text | null>(null);
   const [status, setStatus] = createSignal<WebSocketStatus>(WebSocketStatus.Connecting);
   const [synced, setSynced] = createSignal(false);
@@ -28,11 +29,11 @@ export function useCollabDoc(projectId: () => string) {
     setReadOnly(false);
     setError(null);
 
-    const ydoc = new Y.Doc();
+    const doc = new Y.Doc();
     const provider = new HocuspocusProvider({
       url: collabWsUrl(),
       name: id,
-      document: ydoc,
+      document: doc,
     });
 
     provider.on("status", (data: onStatusParameters) => setStatus(data.status));
@@ -44,14 +45,16 @@ export function useCollabDoc(projectId: () => string) {
       setError(data.reason)
     );
 
-    setYtext(ydoc.getText(MAIN_FILE));
+    setYdoc(doc);
+    setYtext(doc.getText(MAIN_FILE));
 
     onCleanup(() => {
       provider.destroy();
-      ydoc.destroy();
+      doc.destroy();
+      setYdoc(null);
       setYtext(null);
     });
   });
 
-  return { ytext, status, synced, readOnly, error };
+  return { ydoc, ytext, status, synced, readOnly, error };
 }

@@ -1,5 +1,5 @@
 import { Compartment, type Extension, EditorState } from "@codemirror/state";
-import { keymap } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
 import { githubDark, githubLight } from "@uiw/codemirror-theme-github";
 import {
   createTypstHighlighting,
@@ -7,12 +7,11 @@ import {
   type TypstProject,
   typstFilePath,
 } from "@vedivad/codemirror-typst";
-import { basicSetup, EditorView } from "codemirror";
+import { basicSetup } from "codemirror";
 import { createEffect, getOwner, onCleanup, onMount, runWithOwner } from "solid-js";
 import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
-import { MAIN_PATH } from "../../lib/paths";
 import { theme, type Theme } from "../../lib/theme";
 
 const highlightingPromise = createTypstHighlighting({ theme: theme() });
@@ -26,6 +25,7 @@ const fillHeight = EditorView.theme({
 
 interface Props {
   ytext: Y.Text;
+  path: string;
   project: TypstProject;
   readOnly: () => boolean;
 }
@@ -61,7 +61,7 @@ export default function CodeMirrorEditor(props: Props) {
             ...setup,
             yCollab(props.ytext, null, { undoManager }),
             readOnlyCompartment.of(EditorState.readOnly.of(props.readOnly())),
-            typstFilePath.of(MAIN_PATH),
+            typstFilePath.of(props.path),
           ],
         }),
       });

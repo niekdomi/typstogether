@@ -1,7 +1,7 @@
 import { WebSocketStatus } from "@hocuspocus/provider";
 import { A, useParams } from "@solidjs/router";
 import type { TypstProject } from "@vedivad/codemirror-typst";
-import { createMemo, Match, Switch } from "solid-js";
+import { createMemo, createSignal, Match, Show, Switch } from "solid-js";
 import type * as Y from "yjs";
 
 import ThemeToggle from "../../components/ThemeToggle";
@@ -11,6 +11,7 @@ import { SidebarProvider, SidebarTrigger } from "../../components/ui/sidebar";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
+import { MAIN_FILE } from "../../lib/paths";
 import { useProject } from "../../lib/projects/use-project";
 import { renderer, useTypstProject } from "../../lib/typst/use-typst-project";
 import CodeMirrorEditor from "./CodeMirrorEditor";
@@ -34,7 +35,7 @@ function statusInfo(status: WebSocketStatus, synced: boolean, readOnly: boolean)
 }
 
 interface Ready {
-  ytext: Y.Text;
+  ydoc: Y.Doc;
   project: TypstProject;
 }
 
@@ -44,12 +45,13 @@ export default function Project() {
   const collab = useCollabDoc(() => params.id);
   const typst = useTypstProject(collab.ytext);
 
+  const [activeFile, setActiveFile] = createSignal(MAIN_FILE);
   const isReadOnly = () => project()?.role === "viewer" || collab.readOnly();
 
   const ready = createMemo<Ready | null>(() => {
-    const ytext = collab.ytext();
+    const doc = collab.ydoc();
     const proj = typst.project();
-    return ytext && proj ? { ytext, project: proj } : null;
+    return doc && proj ? { ydoc: doc, project: proj } : null;
   });
 
   const loadingLabel = () =>
@@ -96,7 +98,7 @@ export default function Project() {
       </header>
 
       <div class="flex min-h-0 flex-1">
-        <FileSidebar />
+        <FileSidebar activeFile={activeFile} setActiveFile={setActiveFile} />
         <main class="grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x divide-border/60">
           <Switch
             fallback={
@@ -134,11 +136,16 @@ export default function Project() {
               {(r) => (
                 <>
                   <div class="min-w-0">
-                    <CodeMirrorEditor
-                      ytext={r().ytext}
-                      project={r().project}
-                      readOnly={isReadOnly}
-                    />
+                    <Show when={activeFile()} keyed>
+                      {(file) => (
+                        <CodeMirrorEditor
+                          ytext={r().ydoc.getText(file)}
+                          path={`/${file}`}
+                          project={r().project}
+                          readOnly={isReadOnly}
+                        />
+                      )}
+                    </Show>
                   </div>
                   <div class="min-w-0">
                     <PreviewPane project={r().project} renderer={renderer} />

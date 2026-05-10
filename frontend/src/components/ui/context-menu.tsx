@@ -2,7 +2,7 @@ import * as ContextMenuPrimitive from "@kobalte/core/context-menu";
 import type { Component, ComponentProps } from "solid-js";
 import { splitProps } from "solid-js";
 
-import { cx } from "../../lib/cva";
+import { cx } from "./cva";
 
 const ContextMenu: Component<ContextMenuPrimitive.ContextMenuRootProps> = (props) => (
   <ContextMenuPrimitive.Root gutter={4} {...props} />
