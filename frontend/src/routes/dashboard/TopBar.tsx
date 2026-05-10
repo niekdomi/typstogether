@@ -1,14 +1,13 @@
 import {
   TbOutlineChevronDown,
   TbOutlineLogout,
-  TbOutlineMoon,
   TbOutlineSearch,
   TbOutlineSettings,
-  TbOutlineSun,
 } from "solid-icons/tb";
 import { Show } from "solid-js";
 
 import Logo from "../../components/Logo";
+import ThemeToggle from "../../components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { Button } from "../../components/ui/button";
 import {
@@ -19,9 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
 import { TextField, TextFieldInput } from "../../components/ui/text-field";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import { userInitial } from "../../lib/format";
-import { theme, toggleTheme } from "../../lib/theme";
 
 interface TopBarProps {
   query: string;
@@ -44,16 +41,7 @@ export default function TopBar(props: TopBarProps) {
           />
           <TextFieldInput type="text" placeholder="Find a project…" class="pl-9 w-full" />
         </TextField>
-        <Tooltip openDelay={150}>
-          <TooltipTrigger as={Button<"button">} variant="outline" size="icon" onClick={toggleTheme}>
-            <Show when={theme() === "dark"} fallback={<TbOutlineMoon size={14} />}>
-              <TbOutlineSun size={14} />
-            </Show>
-          </TooltipTrigger>
-          <TooltipContent>
-            {theme() === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          </TooltipContent>
-        </Tooltip>
+        <ThemeToggle />
         <DropdownMenu placement="bottom-end" gutter={8}>
           <DropdownMenuTrigger
             as={Button<"button">}

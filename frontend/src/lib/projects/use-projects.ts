@@ -1,7 +1,7 @@
 import { createResource } from "solid-js";
 import { toast } from "somoto";
 
-import { api } from "./api";
+import { api } from "../api";
 import type { Membership } from "./types";
 
 async function loadProjects(): Promise<Membership[]> {

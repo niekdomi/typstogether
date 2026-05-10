@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
 import { formatDate, formatRelative } from "../../lib/format";
-import type { ProjectRow, Role } from "../../lib/types";
+import type { ProjectRow, Role } from "../../lib/projects/types";
 
 interface ProjectCardProps {
   project: ProjectRow;

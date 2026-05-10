@@ -9,9 +9,8 @@ import {
 import { createEffect, createSignal, onCleanup } from "solid-js";
 import * as Y from "yjs";
 
+import { MAIN_FILE } from "../paths";
 import { collabWsUrl } from "./ws-url";
-
-export const MAIN_FILE = "main.typ";
 
 export function useCollabDoc(projectId: () => string) {
   const [ytext, setYtext] = createSignal<Y.Text | null>(null);

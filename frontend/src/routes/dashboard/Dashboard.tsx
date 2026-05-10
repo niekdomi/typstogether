@@ -7,7 +7,7 @@ import PromptDialog from "../../components/PromptDialog";
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Skeleton } from "../../components/ui/skeleton";
 import { authClient } from "../../lib/auth";
-import { useProjects } from "../../lib/use-projects";
+import { useProjects } from "../../lib/projects/use-projects";
 import InviteDialog from "./InviteDialog";
 import NewProjectModal from "./NewProjectModal";
 import ProjectCard from "./ProjectCard";

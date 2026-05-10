@@ -1,4 +1,4 @@
-import type { api } from "./api";
+import type { api } from "../api";
 
 type ProjectsResponse = Awaited<ReturnType<typeof api.projects.get>>;
 

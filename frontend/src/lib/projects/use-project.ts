@@ -1,6 +1,6 @@
 import { createResource } from "solid-js";
 
-import { api } from "./api";
+import { api } from "../api";
 import type { Membership } from "./types";
 
 async function loadProject(id: string): Promise<Membership> {
