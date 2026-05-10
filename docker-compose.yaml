@@ -1,0 +1,76 @@
+x-frontend-url: &frontend-url "${FRONTEND_URL:-http://localhost}"
+
+services:
+  db:
+    image: postgres:18.3-alpine
+    environment:
+      POSTGRES_DB: typstogether
+      POSTGRES_USER: typstogether
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U typstogether"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      FRONTEND_URL: *frontend-url
+      DATABASE_URL: postgresql://typstogether:${POSTGRES_PASSWORD}@db:5432/typstogether
+
+      BETTER_AUTH_URL: *frontend-url
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+
+      GITLAB_CLIENT_ID: ${GITLAB_CLIENT_ID:-}
+      GITLAB_CLIENT_SECRET: ${GITLAB_CLIENT_SECRET:-}
+      GITLAB_ISSUER: ${GITLAB_ISSUER:-https://gitlab.ost.ch}
+    healthcheck:
+      test:
+        - CMD
+        - bun
+        - -e
+        - "process.exit((await fetch('http://localhost:3000/api/auth/providers')).ok ? 0 : 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  caddy:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: *frontend-url
+    environment:
+      FRONTEND_URL: *frontend-url
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:Z
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:

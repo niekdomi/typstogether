@@ -1,17 +1,18 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 
+import { frontendUrl } from "./env";
 import { HttpError } from "./errors";
 import { authRoutes } from "./modules/auth";
-import { startCollabServer } from "./modules/collab/server";
+import { collabWs } from "./modules/collab/server";
 import { inviteRoutes } from "./modules/invites";
 import { memberRoutes } from "./modules/members";
 import { projectRoutes } from "./modules/projects";
 import { templateRoutes } from "./modules/templates";
 
 export function buildApp() {
-  return new Elysia()
-    .use(cors()) // TODO: Restrict to specific domain
+  return new Elysia({ prefix: "/api" })
+    .use(cors({ origin: new URL(frontendUrl).origin, credentials: true }))
     .onError(({ error, status }) => {
       if (error instanceof HttpError) return status(error.status, error.message);
       return;
@@ -24,9 +25,18 @@ export function buildApp() {
 }
 
 export function startServer(port = 3000) {
-  const app = buildApp().listen(port);
-  console.log("Backend running on port", app.server?.port);
-  startCollabServer();
+  const app = buildApp();
+  const server = Bun.serve({
+    port,
+    websocket: collabWs.websocket,
+    fetch(request, srv) {
+      if (request.headers.get("upgrade") === "websocket") {
+        return collabWs.handleUpgrade(request, srv);
+      }
+      return app.handle(request);
+    },
+  });
+  console.log("Backend running on port", server.port);
   return app;
 }
 

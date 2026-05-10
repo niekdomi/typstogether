@@ -1,0 +1,26 @@
+.git
+.github/
+.vscode/
+.idea/
+.zed/
+
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+frontend/dist/
+backend/dist/
+
+.env
+.env.*
+
+**/*.test.ts
+**/test/
+
+# Files unrelated to image builds — excluded for cache stability.
+*.md
+LICENSE
+.codebook.toml
+.oxlintrc.json
+.oxfmtrc.json
+docker-compose.yaml
+Caddyfile

@@ -17,6 +17,7 @@ words = [
   "typs",
   "typstogether",
   "upserts",
+  "ypst",
 ]
 include_paths = ["**/*.md", "**/*.ts", "**/*.tsx"]
 ignore_paths = ["**/components/ui/**"]

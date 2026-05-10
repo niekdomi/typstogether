@@ -1,22 +1,26 @@
-export const databaseUrl = process.env["DATABASE_URL"] ?? "";
-export const collabPort = Number(process.env["COLLAB_PORT"] ?? 3001);
+const env = (key: string): string | undefined => {
+  const value = process.env[key];
+  return value === "" ? undefined : value;
+};
 
-export const authBaseUrl = process.env["BETTER_AUTH_URL"] ?? "http://localhost:3000";
-export const authSecret = process.env["BETTER_AUTH_SECRET"] ?? "development-secret-change-me";
-export const frontendUrl = process.env["FRONTEND_URL"] ?? "http://localhost:5173";
+export const databaseUrl = env("DATABASE_URL") ?? "";
+
+export const authBaseUrl = env("BETTER_AUTH_URL") ?? "http://localhost:3000";
+export const authSecret = env("BETTER_AUTH_SECRET") ?? "development-secret-change-me";
+export const frontendUrl = env("FRONTEND_URL") ?? "http://localhost:5173";
 
 export const githubOAuth = {
-  clientId: process.env["GITHUB_CLIENT_ID"] ?? "",
-  clientSecret: process.env["GITHUB_CLIENT_SECRET"] ?? "",
+  clientId: env("GITHUB_CLIENT_ID") ?? "",
+  clientSecret: env("GITHUB_CLIENT_SECRET") ?? "",
 };
 
 export const googleOAuth = {
-  clientId: process.env["GOOGLE_CLIENT_ID"] ?? "",
-  clientSecret: process.env["GOOGLE_CLIENT_SECRET"] ?? "",
+  clientId: env("GOOGLE_CLIENT_ID") ?? "",
+  clientSecret: env("GOOGLE_CLIENT_SECRET") ?? "",
 };
 
 export const gitlabOAuth = {
-  clientId: process.env["GITLAB_CLIENT_ID"] ?? "",
-  clientSecret: process.env["GITLAB_CLIENT_SECRET"] ?? "",
-  issuer: process.env["GITLAB_ISSUER"] ?? "https://gitlab.ost.ch",
+  clientId: env("GITLAB_CLIENT_ID") ?? "",
+  clientSecret: env("GITLAB_CLIENT_SECRET") ?? "",
+  issuer: env("GITLAB_ISSUER") ?? "https://gitlab.ost.ch",
 };
