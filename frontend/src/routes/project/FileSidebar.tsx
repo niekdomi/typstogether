@@ -64,15 +64,29 @@ export default function FileSidebar(props: Props) {
   const [entries, setEntries] = createSignal<FileEntry[]>([{ name: "main.typ", type: "file" }]);
   const [dialog, setDialog] = createSignal<DialogState | null>(null);
   const [dragging, setDragging] = createSignal<string | null>(null);
-  const [dragOver, setDragOver] = createSignal<string | null>(null);
+  const [dragOver, setDragOver] = createSignal<string | null>(null); // folder name | "root" | null
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  /** Closes the active dialog. */
   const close = () => setDialog(null);
+
+  /** Returns true if an entry with the given name already exists. */
   const hasEntry = (name: string) => entries().some((e) => e.name === name);
 
+  /**
+   * Flattens the two-level tree into a single ordered list: each root entry is
+   * immediately followed by its children, allowing the JSX to use one `<For>`
+   * with depth-based indentation instead of nested loops.
+   */
   const flatEntries = () => {
     const result: (FileEntry & { depth: number })[] = [];
+
     for (const e of entries()) {
-      if (e.parent) continue;
+      if (e.parent) {
+        continue;
+      }
+
       result.push({ ...e, depth: 0 });
       if (e.type === "folder") {
         for (const child of entries().filter((c) => c.parent === e.name)) {
@@ -80,9 +94,17 @@ export default function FileSidebar(props: Props) {
         }
       }
     }
+
     return result;
   };
 
+  // ── Dialog Accessors ───────────────────────────────────────────────────────
+
+  /**
+   * Returns a typed signal accessor for the current dialog, narrowed to the
+   * given type variant. Returning `undefined` when the type doesn't match lets
+   * `<Show>` skip rendering and provides a non-null value inside its children.
+   */
   const d =
     <T extends DialogState["type"]>(type: T) =>
     () => {
@@ -97,6 +119,9 @@ export default function FileSidebar(props: Props) {
   const newFolderDialog = d("newFolder");
   const newFileInFolderDialog = d("newFileInFolder");
 
+  // ── File Operation Handlers ────────────────────────────────────────────────
+
+  /** Renames an entry; opens the conflict dialog if the target name is already taken. */
   const handleRename = (oldName: string, newName: string): void => {
     if (newName === oldName) {
       close();
@@ -117,6 +142,7 @@ export default function FileSidebar(props: Props) {
     close();
   };
 
+  /** Duplicates a file; opens the conflict dialog if the new name is already taken. */
   const handleDuplicate = (sourceName: string, newName: string): void => {
     if (hasEntry(newName)) {
       setDialog({ type: "conflict", proposedName: newName, sourceName, flow: "duplicate" });
@@ -132,6 +158,10 @@ export default function FileSidebar(props: Props) {
     close();
   };
 
+  /**
+   * Deletes an entry and all its children. If the deleted entry was the active
+   * file, switches focus to the next available file.
+   */
   const handleDelete = (filename: string) => {
     setEntries((prev) => prev.filter((e) => e.name !== filename && e.parent !== filename));
 
@@ -143,6 +173,7 @@ export default function FileSidebar(props: Props) {
     close();
   };
 
+  /** Creates a new root file; opens the conflict dialog if the name is already taken. */
   const handleNewFile = (name: string): void => {
     if (hasEntry(name)) {
       setDialog({ type: "conflict", proposedName: name, sourceName: name, flow: "newFile" });
@@ -155,6 +186,7 @@ export default function FileSidebar(props: Props) {
     close();
   };
 
+  /** Creates a new file inside a folder; opens the conflict dialog if the name is already taken. */
   const handleNewFileInFolder = (folderName: string, name: string): void => {
     if (hasEntry(name)) {
       setDialog({
@@ -173,6 +205,7 @@ export default function FileSidebar(props: Props) {
     close();
   };
 
+  /** Creates a new folder, silently ignoring the action if the name is already taken. */
   const handleNewFolder = (name: string) => {
     if (!hasEntry(name)) {
       setEntries((prev) => [...prev, { name, type: "folder" }]);
@@ -181,6 +214,13 @@ export default function FileSidebar(props: Props) {
     close();
   };
 
+  // ── Conflict Resolution ────────────────────────────────────────────────────
+
+  /**
+   * Overwrites the existing file by deleting it and completing the original
+   * operation. Only the rename flow is currently implemented; other flows
+   * just close the dialog.
+   */
   const handleConflictOverwrite = () => {
     const c = conflictDialog();
     if (!c) {
@@ -202,6 +242,7 @@ export default function FileSidebar(props: Props) {
     close();
   };
 
+  /** Returns to the originating dialog so the user can choose a different name. */
   const handleConflictRename = () => {
     const c = conflictDialog();
     if (!c) {
@@ -229,18 +270,23 @@ export default function FileSidebar(props: Props) {
     }
   };
 
-  // drag and drop — only files are draggable; folders act as drop targets
+  // ── Drag and Drop ──────────────────────────────────────────────────────────
+  // Only files are draggable; folders act as drop targets.
+
+  /** Stores the dragged filename in the transfer payload and marks it as active. */
   const onFileDragStart = (e: DragEvent, name: string) => {
     e.dataTransfer?.setData("text/plain", name);
     e.stopPropagation();
     setDragging(name);
   };
 
+  /** Clears all drag state when a drag operation ends or is cancelled. */
   const onDragEnd = () => {
     setDragging(null);
     setDragOver(null);
   };
 
+  /** Highlights a folder as a drop target while a file is dragged over it. */
   const onFolderDragOver = (e: DragEvent, folderName: string) => {
     if (!dragging()) return;
     e.preventDefault();
@@ -248,6 +294,7 @@ export default function FileSidebar(props: Props) {
     setDragOver(folderName);
   };
 
+  /** Moves the dragged file into the folder on drop. */
   const onFolderDrop = (e: DragEvent, folderName: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -263,12 +310,14 @@ export default function FileSidebar(props: Props) {
     setDragOver(null);
   };
 
+  /** Highlights the root zone when a file is dragged over the sidebar background. */
   const onRootDragOver = (e: DragEvent) => {
     if (!dragging()) return;
     e.preventDefault();
     setDragOver("root");
   };
 
+  /** Moves the dragged file back to the root level (removes its parent) on drop. */
   const onRootDrop = (e: DragEvent) => {
     e.preventDefault();
     const name = e.dataTransfer?.getData("text/plain");
