@@ -15,7 +15,7 @@ import { MAIN_PATH } from "../../lib/paths";
 import { useProject } from "../../lib/projects/use-project";
 import { renderer, useTypstProject } from "../../lib/typst/use-typst-project";
 import CodeMirrorEditor from "./CodeMirrorEditor";
-import FileSidebar from "./FileSidebar";
+import FileSidebar from "./file-sidebar/FileSidebar";
 import PreviewPane from "./PreviewPane";
 
 interface StatusInfo {
