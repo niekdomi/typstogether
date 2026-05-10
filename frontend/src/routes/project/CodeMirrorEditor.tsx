@@ -19,6 +19,11 @@ const highlightingPromise = createTypstHighlighting({ theme: theme() });
 
 const editorTheme = (t: Theme): Extension => (t === "dark" ? githubDark : githubLight);
 
+const fillHeight = EditorView.theme({
+  "&": { height: "100%" },
+  ".cm-scroller": { overflow: "auto" },
+});
+
 interface Props {
   ytext: Y.Text;
   project: TypstProject;
@@ -51,6 +56,7 @@ export default function CodeMirrorEditor(props: Props) {
           extensions: [
             basicSetup,
             keymap.of(yUndoManagerKeymap),
+            fillHeight,
             themeCompartment.of(editorTheme(theme())),
             ...setup,
             yCollab(props.ytext, null, { undoManager }),
@@ -88,7 +94,7 @@ export default function CodeMirrorEditor(props: Props) {
       ref={(el) => {
         parent = el;
       }}
-      class="h-full w-full overflow-auto"
+      class="h-full w-full"
     />
   );
 }
