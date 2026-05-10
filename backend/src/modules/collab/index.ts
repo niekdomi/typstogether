@@ -13,20 +13,21 @@ const hocuspocus = new Hocuspocus({
 
 const connections = new Map<string, ReturnType<typeof hocuspocus.handleConnection>>();
 
+// Yjs only sends binary frames, anything else is ignored.
+function toUint8Array(message: unknown): Uint8Array | null {
+  if (message instanceof Uint8Array) return message;
+  if (message instanceof ArrayBuffer) return new Uint8Array(message);
+  return null;
+}
+
 export const collabRoutes = new Elysia({ name: "collab-routes" }).ws("/collab", {
   open(ws) {
     connections.set(ws.id, hocuspocus.handleConnection(ws.raw, ws.data.request));
   },
   message(ws, message) {
-    if (typeof message === "string") return;
-    const bytes =
-      message instanceof Uint8Array
-        ? message
-        : message instanceof ArrayBuffer
-          ? new Uint8Array(message)
-          : null;
-    if (!bytes) return;
-    connections.get(ws.id)?.handleMessage(bytes);
+    const connection = connections.get(ws.id);
+    const bytes = toUint8Array(message);
+    if (connection && bytes) connection.handleMessage(bytes);
   },
   close(ws, code, reason) {
     connections.get(ws.id)?.handleClose({ code, reason });
