@@ -17,16 +17,35 @@ function findEnclosingPair(
   rangeFrom: number,
   rangeTo: number
 ): { open: number; close: number } | null {
+  if (prefix === suffix) {
+    // Collect all marker positions and pair them sequentially (even = open, odd = close).
+    // This prevents `*foo* bar *baz*` from being treated as enclosing `bar`.
+    const text = state.doc.sliceString(0);
+    const positions: number[] = [];
+    let i = 0;
+    while (i <= text.length - prefix.length) {
+      if (text.startsWith(prefix, i)) {
+        positions.push(i);
+        i += prefix.length;
+      } else {
+        i++;
+      }
+    }
+    for (let k = 0; k + 1 < positions.length; k += 2) {
+      const open = positions[k]!;
+      const close = positions[k + 1]!;
+      if (open + prefix.length <= rangeFrom && rangeTo <= close) {
+        return { open, close };
+      }
+    }
+    return null;
+  }
+
+  // Asymmetric markers (e.g. `#strike[…]`): nearest prefix before, nearest suffix after.
   const openAt = state.doc.sliceString(0, rangeFrom).lastIndexOf(prefix);
-  if (openAt === -1) {
-    return null;
-  }
-
+  if (openAt === -1) return null;
   const closeRel = state.doc.sliceString(rangeTo).indexOf(suffix);
-  if (closeRel === -1) {
-    return null;
-  }
-
+  if (closeRel === -1) return null;
   return { open: openAt, close: rangeTo + closeRel };
 }
 
