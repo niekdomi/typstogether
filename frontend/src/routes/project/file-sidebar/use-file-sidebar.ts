@@ -1,7 +1,14 @@
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import * as Y from "yjs";
 
-import { dirOf, joinPath, leafOf, normalizeFile, normalizeFolder } from "../../../lib/paths";
+import {
+  dirOf,
+  joinPath,
+  leafOf,
+  MAIN_PATH,
+  normalizeFile,
+  normalizeFolder,
+} from "../../../lib/paths";
 import { buildTree } from "./tree";
 import type { DialogState, FileSidebarProps } from "./types";
 
@@ -53,6 +60,7 @@ export function useFileSidebar(props: FileSidebarProps) {
   const close = () => setDialog(null);
   const has = (path: string) => props.files.has(path);
   const folderHasFiles = (folder: string) => paths().some((p) => p.startsWith(folder + "/"));
+  const isLocked = (path: string) => path === MAIN_PATH;
 
   // Narrow the dialog union for type-safe rendering.
   const dialogOf =
@@ -126,6 +134,10 @@ export function useFileSidebar(props: FileSidebarProps) {
   };
 
   const handleRenameFile = (oldPath: string, rawName: string) => {
+    if (isLocked(oldPath)) {
+      close();
+      return;
+    }
     const newPath = normalizeFile(rawName, dirOf(oldPath));
     if (!newPath || newPath === oldPath) {
       close();
@@ -167,7 +179,7 @@ export function useFileSidebar(props: FileSidebarProps) {
   };
 
   const handleDeleteFile = (path: string) => {
-    if (props.files.size <= 1) {
+    if (isLocked(path) || props.files.size <= 1) {
       close();
       return;
     }
@@ -302,6 +314,10 @@ export function useFileSidebar(props: FileSidebarProps) {
   // Drag and drop ──────────────────────────────────────────────────────────
 
   const onFileDragStart = (e: DragEvent, path: string) => {
+    if (isLocked(path)) {
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer?.setData("text/plain", path);
     setDragging(path);
   };
@@ -321,7 +337,7 @@ export function useFileSidebar(props: FileSidebarProps) {
     const src = e.dataTransfer?.getData("text/plain");
     setDragging(null);
     setDragOver(null);
-    if (!src) return;
+    if (!src || isLocked(src)) return;
     const dest = joinPath(folder, leafOf(src));
     if (dest === src || has(dest)) return;
     movePath(src, dest);
@@ -341,7 +357,7 @@ export function useFileSidebar(props: FileSidebarProps) {
     const src = e.dataTransfer?.getData("text/plain");
     setDragging(null);
     setDragOver(null);
-    if (!src) return;
+    if (!src || isLocked(src)) return;
     const dest = `/${leafOf(src)}`;
     if (dest === src || has(dest)) return;
     movePath(src, dest);
@@ -357,7 +373,8 @@ export function useFileSidebar(props: FileSidebarProps) {
     dragging,
     dragOver,
     activeFile: props.activeFile,
-    canDeleteFile: () => props.files.size > 1,
+    canDeleteFile: (path: string) => !isLocked(path) && props.files.size > 1,
+    isLocked,
     onSelectFile: props.setActiveFile,
     toggleCollapsed,
     handleNewFile,

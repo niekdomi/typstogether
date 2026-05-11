@@ -72,6 +72,7 @@ function NodeContextMenu(props: NodeProps) {
       </Show>
       <Show when={props.node.kind === "file"}>
         <ContextMenuItem
+          disabled={props.sb.isLocked(props.node.path)}
           onSelect={() => {
             props.sb.setDialog({ type: "renameFile", path: props.node.path });
           }}
@@ -88,7 +89,7 @@ function NodeContextMenu(props: NodeProps) {
         <ContextMenuSeparator />
         <ContextMenuItem
           class="text-destructive focus:text-destructive"
-          disabled={!props.sb.canDeleteFile()}
+          disabled={!props.sb.canDeleteFile(props.node.path)}
           onSelect={() => {
             props.sb.setDialog({ type: "deleteFile", path: props.node.path });
           }}
@@ -114,7 +115,7 @@ function Node(props: NodeProps) {
                   <SidebarMenuButton
                     isActive={props.sb.activeFile() === file().path}
                     tooltip={file().path}
-                    draggable
+                    draggable={!props.sb.isLocked(file().path)}
                     onClick={() => {
                       props.sb.onSelectFile(file().path);
                     }}
