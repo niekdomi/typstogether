@@ -10,16 +10,6 @@ export const LIST_GROUP = /^[+-] /;
 
 // Helpers ─────────────────────────────────────────────────────────────────────
 
-/**
- * Find an enclosing `prefix…suffix` pair on the line containing the range,
- * allowing other markup between the markers and the range.
- *
- * For symmetric markers (e.g. `*…*`, `_…_`), occurrences on the line are
- * paired sequentially: odd-indexed openers, even-indexed closers.
- *
- * For asymmetric markers (e.g. `#strike[…]`), the nearest `prefix` before the
- * range and nearest `suffix` after the range form a candidate pair.
- */
 function findEnclosingPair(
   state: EditorState,
   prefix: string,
