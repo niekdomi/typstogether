@@ -1,3 +1,4 @@
+import { indentWithTab } from "@codemirror/commands";
 import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { githubDark, githubLight } from "@uiw/codemirror-theme-github";
@@ -229,7 +230,7 @@ export default function CodeMirrorEditor(props: Props) {
           doc: text.toJSON(),
           extensions: [
             basicSetup,
-            keymap.of(yUndoManagerKeymap),
+            keymap.of([indentWithTab, ...yUndoManagerKeymap]),
             formatKeymap,
             fillHeight,
             popupTheme,
