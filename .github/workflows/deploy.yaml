@@ -3,7 +3,8 @@ name: Deploy
 on:
   push:
     branches:
-      - architecture
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -14,6 +15,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+
+      - name: Copy env file
+        run: cp /home/ins/.env .env
 
       - name: Build and deploy
         run: docker compose up --build -d
