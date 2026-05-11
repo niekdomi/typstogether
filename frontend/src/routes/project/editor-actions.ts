@@ -27,50 +27,17 @@ function findEnclosingPair(
   rangeFrom: number,
   rangeTo: number
 ): { open: number; close: number } | null {
-  const line = state.doc.lineAt(rangeFrom);
-  if (line.to < rangeTo) return null;
-
-  const text = line.text;
-  const start = rangeFrom - line.from;
-  const end = rangeTo - line.from;
-
-  if (prefix === suffix) {
-    const positions: number[] = [];
-    let i = 0;
-    while (i <= text.length - prefix.length) {
-      if (text.startsWith(prefix, i)) {
-        positions.push(i);
-        i += prefix.length;
-      } else {
-        i++;
-      }
-    }
-    for (let k = 0; k + 1 < positions.length; k += 2) {
-      const open = positions[k]!;
-      const close = positions[k + 1]!;
-      if (open + prefix.length <= start && end <= close) {
-        return { open: line.from + open, close: line.from + close };
-      }
-    }
+  const openAt = state.doc.sliceString(0, rangeFrom).lastIndexOf(prefix);
+  if (openAt === -1) {
     return null;
   }
 
-  let openAt = -1;
-  for (let i = 0; i + prefix.length <= start; i++) {
-    if (text.startsWith(prefix, i)) openAt = i;
+  const closeRel = state.doc.sliceString(rangeTo).indexOf(suffix);
+  if (closeRel === -1) {
+    return null;
   }
-  if (openAt < 0) return null;
 
-  let closeAt = -1;
-  for (let i = end; i + suffix.length <= text.length; i++) {
-    if (text.startsWith(suffix, i)) {
-      closeAt = i;
-      break;
-    }
-  }
-  if (closeAt < 0) return null;
-
-  return { open: line.from + openAt, close: line.from + closeAt };
+  return { open: openAt, close: rangeTo + closeRel };
 }
 
 /**
