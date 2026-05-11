@@ -1,6 +1,11 @@
 import type { TypstProject, TypstRenderer } from "@vedivad/codemirror-typst";
 import type { RenderedSvgPage } from "@vedivad/typst-web-service";
-import { TbOutlineArrowAutofitWidth, TbOutlineZoomIn, TbOutlineZoomOut } from "solid-icons/tb";
+import {
+  TbOutlineArrowAutofitHeight,
+  TbOutlineArrowAutofitWidth,
+  TbOutlineZoomIn,
+  TbOutlineZoomOut,
+} from "solid-icons/tb";
 import { createEffect, createSignal, For, Match, onCleanup, onMount, Switch } from "solid-js";
 
 import { Button } from "../../components/ui/button";
@@ -82,6 +87,16 @@ export default function PreviewPane(props: Props) {
     e.preventDefault();
     const next = e.deltaY > 0 ? zoom() / ZOOM_STEP : zoom() * ZOOM_STEP;
     zoomAt(next, e.clientX, e.clientY);
+  };
+
+  const fitHeight = () => {
+    if (!scroller) return;
+    const firstPage = pages()?.[0];
+    if (!firstPage) return;
+    const available = scroller.clientHeight - SCROLLER_PADDING_PX;
+    if (available <= 0) return;
+    const pageHeightPx = (firstPage.height / firstPage.width) * BASE_WIDTH_PX;
+    zoomAt(available / pageHeightPx);
   };
 
   const fitWidth = () => {
@@ -171,6 +186,15 @@ export default function PreviewPane(props: Props) {
           }}
         >
           <TbOutlineZoomIn />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          title="Fit width"
+          aria-label="Fit width"
+          onClick={fitHeight}
+        >
+          <TbOutlineArrowAutofitHeight />
         </Button>
         <Button
           variant="ghost"

@@ -2,10 +2,10 @@ import type { EditorView } from "@codemirror/view";
 import { WebSocketStatus } from "@hocuspocus/provider";
 import { A, useNavigate, useParams } from "@solidjs/router";
 import type { TypstProject } from "@vedivad/codemirror-typst";
+import { FaSolidChevronLeft } from "solid-icons/fa";
 import { createEffect, createMemo, createSignal, Match, Switch } from "solid-js";
 import type * as Y from "yjs";
 
-import Logo from "../../components/Logo";
 import ThemeToggle from "../../components/ThemeToggle";
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Badge } from "../../components/ui/badge";
@@ -92,8 +92,12 @@ export default function Project() {
     <SidebarProvider class="flex h-screen flex-col bg-background">
       <header class="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-border bg-background px-8 py-4.5">
         <div class="flex items-center gap-4">
-          <A href="/dashboard" aria-label="Back to dashboard">
-            <Logo size={20} />
+          <A
+            href="/dashboard"
+            aria-label="Back to dashboard"
+            class="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <FaSolidChevronLeft />
           </A>
           <span class="h-6 w-px bg-border/60" />
           <Switch>

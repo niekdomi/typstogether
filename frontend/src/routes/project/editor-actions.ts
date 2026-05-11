@@ -131,10 +131,25 @@ export function togglePrefix(view: EditorView, target: string, group?: RegExp): 
         if (sibling) {
           return [{ from: line.from, to: line.from + sibling[0].length, insert: target }];
         }
-        return [{ from: line.from, insert: target }];
+        return [{ from: line.from, to: line.from, insert: target }];
       });
 
-      return { changes, range };
+      // Shift the selection to account for insertions/deletions at or before each boundary.
+      // Without this, CodeMirror maps a cursor at line.from to before the inserted prefix.
+      let fromShift = 0;
+      let toShift = 0;
+      for (const ch of changes) {
+        const net = ch.insert.length - (ch.to - ch.from);
+        if (ch.from <= range.from) fromShift += net;
+        if (ch.from <= range.to) toShift += net;
+      }
+
+      return {
+        changes,
+        range: range.empty
+          ? EditorSelection.cursor(range.from + fromShift)
+          : EditorSelection.range(range.from + fromShift, range.to + toShift),
+      };
     }),
     { userEvent: "input.format.prefix" }
   );
