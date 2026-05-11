@@ -118,6 +118,7 @@ export default function PreviewPane(props: Props) {
   const onMouseDown = (e: MouseEvent) => {
     if (e.button !== 0 || !scroller) return; // left button only
     e.preventDefault();
+    scroller.focus({ preventScroll: true });
     panOrigin = {
       x: e.clientX,
       y: e.clientY,
@@ -186,7 +187,8 @@ export default function PreviewPane(props: Props) {
         ref={(el) => {
           scroller = el;
         }}
-        class="min-h-0 flex-1 cursor-grab overflow-auto bg-muted/40 p-3"
+        tabindex={-1}
+        class="min-h-0 flex-1 cursor-grab overflow-auto bg-muted/40 p-3 outline-none"
         classList={{ "!cursor-grabbing select-none": panning() }}
         onWheel={onWheel}
         onMouseDown={onMouseDown}

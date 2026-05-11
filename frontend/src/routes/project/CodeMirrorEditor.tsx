@@ -21,6 +21,7 @@ const editorTheme = (t: Theme): Extension => (t === "dark" ? githubDark : github
 
 const fillHeight = EditorView.theme({
   "&": { height: "100%" },
+  "&.cm-focused": { outline: "none" },
   ".cm-scroller": { overflow: "auto" },
 });
 
