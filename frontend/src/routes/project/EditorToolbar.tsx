@@ -2,6 +2,7 @@ import type { EditorView } from "@codemirror/view";
 import {
   TbOutlineBold,
   TbOutlineCode,
+  TbOutlineMath,
   TbOutlineH1,
   TbOutlineH2,
   TbOutlineH3,
@@ -22,6 +23,7 @@ import {
   insertLink,
   LIST_GROUP,
   toggleCode,
+  toggleMath,
   togglePrefix,
   wrapSelection,
 } from "./editor-actions";
@@ -119,6 +121,14 @@ const groups: ToolbarGroup[] = [
         shortcut: sc(MOD, "E"),
         run: (v) => {
           toggleCode(v);
+        },
+      },
+      {
+        icon: () => <TbOutlineMath />,
+        label: "Math",
+        shortcut: sc(MOD, "M"),
+        run: (v) => {
+          toggleMath(v);
         },
       },
       {

@@ -231,6 +231,90 @@ export function toggleCode(view: EditorView): void {
   view.focus();
 }
 
+// Display math requires whitespace (space or newline) on BOTH sides.
+function isMathWS(ch: string): boolean {
+  return ch === " " || ch === "\n";
+}
+
+function isPairDisplay(open: number, close: number, state: EditorState): boolean {
+  return isMathWS(state.sliceDoc(open + 1, open + 2)) && isMathWS(state.sliceDoc(close - 1, close));
+}
+
+/** Cycle math formatting: none -> $...$ -> $ ... $ -> none. */
+export function toggleMath(view: EditorView): void {
+  view.dispatch(
+    view.state.changeByRange((range) => {
+      const state = view.state;
+      const text = state.sliceDoc(range.from, range.to);
+
+      // Selection IS display math ($[ws]…[ws]$) -> strip
+      if (
+        text.startsWith("$") &&
+        text.endsWith("$") &&
+        text.length >= 4 &&
+        isMathWS(text[1]!) &&
+        isMathWS(text.at(-2)!)
+      ) {
+        const inner = text.slice(2, -2);
+        return {
+          changes: { from: range.from, to: range.to, insert: inner },
+          range: EditorSelection.range(range.from, range.from + inner.length),
+        };
+      }
+
+      // Selection IS inline math ($…$) -> upgrade to display math
+      if (text.startsWith("$") && text.endsWith("$") && text.length >= 2) {
+        const inner = text.slice(1, -1);
+        return {
+          changes: { from: range.from, to: range.to, insert: "$ " + inner + " $" },
+          range: EditorSelection.range(range.from + 2, range.from + 2 + inner.length),
+        };
+      }
+
+      // Cursor/selection: find the enclosing $ pair and classify it.
+      const pair = findEnclosingPair(state, "$", "$", range.from, range.to);
+      if (pair) {
+        if (isPairDisplay(pair.open, pair.close, state)) {
+          // Display math -> strip the $ and its adjacent whitespace character
+          return {
+            changes: [
+              { from: pair.open, to: pair.open + 2, insert: "" },
+              { from: pair.close - 1, to: pair.close + 1, insert: "" },
+            ],
+            range: range.empty
+              ? EditorSelection.cursor(range.from - 2)
+              : EditorSelection.range(range.from - 2, range.to - 2),
+          };
+        }
+        // Inline math -> upgrade to display (+1 because "$ " replaces "$")
+        return {
+          changes: [
+            { from: pair.open, to: pair.open + 1, insert: "$ " },
+            { from: pair.close, to: pair.close + 1, insert: " $" },
+          ],
+          range: range.empty
+            ? EditorSelection.cursor(range.from + 1)
+            : EditorSelection.range(range.from + 1, range.to + 1),
+        };
+      }
+
+      // No math -> wrap in inline math
+      if (range.empty) {
+        return {
+          changes: { from: range.from, insert: "$$" },
+          range: EditorSelection.cursor(range.from + 1),
+        };
+      }
+      return {
+        changes: { from: range.from, to: range.to, insert: "$" + text + "$" },
+        range: EditorSelection.range(range.from + 1, range.from + 1 + text.length),
+      };
+    }),
+    { userEvent: "input.format.wrap" }
+  );
+  view.focus();
+}
+
 /** CodeMirror keymap for the format actions. `Mod` = Ctrl / Cmd. */
 export const formatKeymap: Extension = (() => {
   const wrap =
