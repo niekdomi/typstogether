@@ -1,15 +1,25 @@
 import type { EditorView } from "@codemirror/view";
 import { WebSocketStatus } from "@hocuspocus/provider";
 import { A, useNavigate, useParams } from "@solidjs/router";
-import type { TypstProject } from "@vedivad/codemirror-typst";
+import type { DiagnosticMessage, TypstProject } from "@vedivad/codemirror-typst";
 import { FaSolidChevronLeft } from "solid-icons/fa";
-import { createEffect, createMemo, createSignal, Match, Switch } from "solid-js";
+import { TbOutlineAlertTriangle, TbOutlineFiles } from "solid-icons/tb";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  type JSX,
+  Match,
+  onCleanup,
+  Show,
+  Switch,
+} from "solid-js";
 import type * as Y from "yjs";
 
 import ThemeToggle from "../../components/ThemeToggle";
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Badge } from "../../components/ui/badge";
-import { SidebarProvider, SidebarTrigger } from "../../components/ui/sidebar";
+import { cx } from "../../components/ui/cva";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import UserMenu from "../../components/UserMenu";
@@ -19,9 +29,48 @@ import { MAIN_PATH } from "../../lib/paths";
 import { useProject } from "../../lib/projects/use-project";
 import { renderer, useTypstProject } from "../../lib/typst/use-typst-project";
 import CodeMirrorEditor from "./CodeMirrorEditor";
+import DiagnosticsPanel from "./DiagnosticsPanel";
 import EditorToolbar from "./EditorToolbar";
 import FileSidebar from "./file-sidebar/FileSidebar";
 import PreviewPane from "./PreviewPane";
+import WorkspacePanel from "./WorkspacePanel";
+
+type Panel = "files" | "diagnostics" | null;
+
+interface RailButtonProps {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  icon: JSX.Element;
+  badge?: number | undefined;
+}
+
+function RailButton(props: RailButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={props.onClick}
+      title={props.label}
+      aria-label={props.label}
+      aria-pressed={props.active}
+      class={cx(
+        "relative flex size-7 items-center justify-center rounded-md transition-colors",
+        props.active
+          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+          : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+      )}
+    >
+      {props.icon}
+      <Show when={props.badge}>
+        {(n) => (
+          <span class="absolute -bottom-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium leading-none text-white">
+            {n() > 99 ? "99+" : n()}
+          </span>
+        )}
+      </Show>
+    </button>
+  );
+}
 
 interface StatusInfo {
   label: string;
@@ -54,7 +103,15 @@ export default function Project() {
 
   const [requestedFile, setRequestedFile] = createSignal(MAIN_PATH);
   const [editorView, setEditorView] = createSignal<EditorView | null>(null);
+  const [currentPanel, setCurrentPanel] = createSignal<Panel>("files");
+  const [diagnostics, setDiagnostics] = createSignal<DiagnosticMessage[]>([]);
   const isReadOnly = () => project()?.role === "viewer" || collab.readOnly();
+
+  const togglePanel = (p: Exclude<Panel, null>) => {
+    setCurrentPanel((cur) => (cur === p ? null : p));
+  };
+
+  const errorCount = createMemo(() => diagnostics().filter((d) => d.severity === "Error").length);
 
   async function signOut() {
     await authClient.signOut();
@@ -85,11 +142,24 @@ export default function Project() {
     if (a !== requestedFile()) setRequestedFile(a);
   });
 
+  // Track diagnostics from each compile so the rail badge and panel stay in sync.
+  createEffect(() => {
+    const r = ready();
+    if (!r) {
+      setDiagnostics([]);
+      return;
+    }
+    const off = r.project.onCompile((result) => {
+      setDiagnostics(result.diagnostics);
+    });
+    onCleanup(off);
+  });
+
   const loadingLabel = () =>
     collab.files() ? "Booting Typst compiler…" : "Connecting to collab session…";
 
   return (
-    <SidebarProvider class="flex h-screen flex-col bg-background">
+    <div class="flex h-screen flex-col bg-background">
       <header class="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-border bg-background px-8 py-4.5">
         <div class="flex items-center gap-4">
           <A
@@ -140,7 +210,23 @@ export default function Project() {
           class="flex w-10 shrink-0 flex-col items-center gap-1 border-r border-sidebar-border bg-sidebar py-2"
           aria-label="Workspace"
         >
-          <SidebarTrigger title="Toggle file explorer" aria-label="Toggle file explorer" />
+          <RailButton
+            label="File explorer"
+            active={currentPanel() === "files"}
+            onClick={() => {
+              togglePanel("files");
+            }}
+            icon={<TbOutlineFiles size={16} />}
+          />
+          <RailButton
+            label="Problems"
+            active={currentPanel() === "diagnostics"}
+            onClick={() => {
+              togglePanel("diagnostics");
+            }}
+            icon={<TbOutlineAlertTriangle size={16} />}
+            badge={errorCount() > 0 ? errorCount() : undefined}
+          />
         </nav>
         <Switch
           fallback={
@@ -177,11 +263,22 @@ export default function Project() {
           <Match when={ready()}>
             {(r) => (
               <>
-                <FileSidebar
-                  files={r().files}
-                  activeFile={activeFile}
-                  setActiveFile={setRequestedFile}
-                />
+                <WorkspacePanel open={currentPanel() !== null}>
+                  <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
+                    <FileSidebar
+                      files={r().files}
+                      activeFile={activeFile}
+                      setActiveFile={setRequestedFile}
+                    />
+                  </div>
+                  <div class="h-full" classList={{ hidden: currentPanel() !== "diagnostics" }}>
+                    <DiagnosticsPanel
+                      diagnostics={diagnostics}
+                      setActiveFile={setRequestedFile}
+                      view={editorView}
+                    />
+                  </div>
+                </WorkspacePanel>
                 <main class="grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x divide-border/60">
                   <div class="flex min-w-0 flex-col">
                     <EditorToolbar view={editorView} readOnly={isReadOnly} />
@@ -204,6 +301,6 @@ export default function Project() {
           </Match>
         </Switch>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }

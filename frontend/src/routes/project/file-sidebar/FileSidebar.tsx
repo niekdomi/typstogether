@@ -15,7 +15,6 @@ import {
 } from "../../../components/ui/context-menu";
 import { cx } from "../../../components/ui/cva";
 import {
-  Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
@@ -23,6 +22,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarProvider,
 } from "../../../components/ui/sidebar";
 import Dialogs from "./Dialogs";
 import type { FileSidebarProps, FlatNode } from "./types";
@@ -174,7 +174,7 @@ export default function FileSidebar(props: FileSidebarProps) {
   const sb = useFileSidebar(props);
 
   return (
-    <Sidebar>
+    <SidebarProvider class="flex h-full flex-col">
       <ContextMenu>
         <ContextMenuTrigger
           as="div"
@@ -216,6 +216,6 @@ export default function FileSidebar(props: FileSidebarProps) {
       </ContextMenu>
 
       <Dialogs sb={sb} />
-    </Sidebar>
+    </SidebarProvider>
   );
 }
