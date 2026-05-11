@@ -28,6 +28,8 @@ interface Props {
   activeFile: () => string;
   project: TypstProject;
   readOnly: () => boolean;
+  /** Called with the view after mount and with `null` on unmount. */
+  viewRef?: (view: EditorView | null) => void;
 }
 
 interface PerFileState {
@@ -88,6 +90,7 @@ export default function CodeMirrorEditor(props: Props) {
 
       const view = new EditorView({ parent, state: initial.state });
       view.focus();
+      props.viewRef?.(view);
 
       let currentPath = initialPath;
 
@@ -136,6 +139,7 @@ export default function CodeMirrorEditor(props: Props) {
         });
 
         onCleanup(() => {
+          props.viewRef?.(null);
           props.files.unobserve(observer);
           for (const entry of states.values()) entry.undoManager.destroy();
           states.clear();

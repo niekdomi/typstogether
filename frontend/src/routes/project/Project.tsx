@@ -1,3 +1,4 @@
+import type { EditorView } from "@codemirror/view";
 import { WebSocketStatus } from "@hocuspocus/provider";
 import { A, useParams } from "@solidjs/router";
 import type { TypstProject } from "@vedivad/codemirror-typst";
@@ -15,6 +16,7 @@ import { MAIN_PATH } from "../../lib/paths";
 import { useProject } from "../../lib/projects/use-project";
 import { renderer, useTypstProject } from "../../lib/typst/use-typst-project";
 import CodeMirrorEditor from "./CodeMirrorEditor";
+import EditorToolbar from "./EditorToolbar";
 import FileSidebar from "./file-sidebar/FileSidebar";
 import PreviewPane from "./PreviewPane";
 
@@ -46,6 +48,7 @@ export default function Project() {
   const typst = useTypstProject(collab.files);
 
   const [requestedFile, setRequestedFile] = createSignal(MAIN_PATH);
+  const [editorView, setEditorView] = createSignal<EditorView | null>(null);
   const isReadOnly = () => project()?.role === "viewer" || collab.readOnly();
 
   const ready = createMemo<Ready | null>(() => {
@@ -157,13 +160,17 @@ export default function Project() {
                   setActiveFile={setRequestedFile}
                 />
                 <main class="grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x divide-border/60">
-                  <div class="min-w-0">
-                    <CodeMirrorEditor
-                      files={r().files}
-                      activeFile={activeFile}
-                      project={r().project}
-                      readOnly={isReadOnly}
-                    />
+                  <div class="flex min-w-0 flex-col">
+                    <EditorToolbar view={editorView} readOnly={isReadOnly} />
+                    <div class="min-h-0 flex-1">
+                      <CodeMirrorEditor
+                        files={r().files}
+                        activeFile={activeFile}
+                        project={r().project}
+                        readOnly={isReadOnly}
+                        viewRef={setEditorView}
+                      />
+                    </div>
                   </div>
                   <div class="min-w-0">
                     <PreviewPane project={r().project} renderer={renderer} />
