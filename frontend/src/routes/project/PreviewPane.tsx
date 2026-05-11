@@ -1,7 +1,9 @@
 import type { TypstProject, TypstRenderer } from "@vedivad/codemirror-typst";
 import type { RenderedSvgPage } from "@vedivad/typst-web-service";
+import { TbOutlineArrowAutofitWidth, TbOutlineZoomIn, TbOutlineZoomOut } from "solid-icons/tb";
 import { createEffect, createSignal, For, Match, onCleanup, Switch } from "solid-js";
 
+import { Button } from "../../components/ui/button";
 import { theme } from "../../lib/theme";
 
 interface Props {
@@ -9,9 +11,22 @@ interface Props {
   renderer: TypstRenderer;
 }
 
+const BASE_WIDTH_PX = 700;
+const ZOOM_STEP = 1.1;
+const ZOOM_MIN = 0.25;
+const ZOOM_MAX = 4;
+const SCROLLER_PADDING_PX = 24; // matches `p-3` (12px each side)
+
+const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+
 export default function PreviewPane(props: Props) {
   const [pages, setPages] = createSignal<RenderedSvgPage[] | null>(null);
   const [errorState, setErrorState] = createSignal<string | null>(null);
+  const [zoom, setZoom] = createSignal(1);
+  const [panning, setPanning] = createSignal(false);
+
+  let scroller: HTMLDivElement | undefined;
+  let panOrigin: { x: number; y: number; scrollLeft: number; scrollTop: number } | null = null;
 
   createEffect(() => {
     const project = props.project;
@@ -36,32 +51,163 @@ export default function PreviewPane(props: Props) {
     onCleanup(off);
   });
 
+  /**
+   * Zoom around an anchor point (mouse cursor when ctrl+wheel; container
+   * center when button-driven). Adjusts scroll so the anchor stays under the
+   * cursor after the resize.
+   */
+  const zoomAt = (newZoom: number, anchorClientX?: number, anchorClientY?: number) => {
+    if (!scroller) return;
+    const next = clampZoom(newZoom);
+    const prev = zoom();
+    if (next === prev) return;
+    const ratio = next / prev;
+
+    const rect = scroller.getBoundingClientRect();
+    const ax = (anchorClientX ?? rect.left + rect.width / 2) - rect.left;
+    const ay = (anchorClientY ?? rect.top + rect.height / 2) - rect.top;
+    const sl = scroller.scrollLeft;
+    const st = scroller.scrollTop;
+
+    setZoom(next);
+    requestAnimationFrame(() => {
+      if (!scroller) return;
+      scroller.scrollLeft = (sl + ax) * ratio - ax;
+      scroller.scrollTop = (st + ay) * ratio - ay;
+    });
+  };
+
+  const onWheel = (e: WheelEvent) => {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    const next = e.deltaY > 0 ? zoom() / ZOOM_STEP : zoom() * ZOOM_STEP;
+    zoomAt(next, e.clientX, e.clientY);
+  };
+
+  const fitWidth = () => {
+    if (!scroller) return;
+    const available = scroller.clientWidth - SCROLLER_PADDING_PX;
+    if (available <= 0) return;
+    zoomAt(available / BASE_WIDTH_PX);
+  };
+
+  const onMouseMove = (e: MouseEvent) => {
+    if (!panOrigin || !scroller) return;
+    scroller.scrollLeft = panOrigin.scrollLeft - (e.clientX - panOrigin.x);
+    scroller.scrollTop = panOrigin.scrollTop - (e.clientY - panOrigin.y);
+  };
+
+  const onMouseUp = () => {
+    panOrigin = null;
+    setPanning(false);
+    globalThis.removeEventListener("mousemove", onMouseMove);
+    globalThis.removeEventListener("mouseup", onMouseUp);
+  };
+
+  const onMouseDown = (e: MouseEvent) => {
+    if (e.button !== 0 || !scroller) return; // left button only
+    e.preventDefault();
+    panOrigin = {
+      x: e.clientX,
+      y: e.clientY,
+      scrollLeft: scroller.scrollLeft,
+      scrollTop: scroller.scrollTop,
+    };
+    setPanning(true);
+    globalThis.addEventListener("mousemove", onMouseMove);
+    globalThis.addEventListener("mouseup", onMouseUp);
+  };
+
+  onCleanup(() => {
+    globalThis.removeEventListener("mousemove", onMouseMove);
+    globalThis.removeEventListener("mouseup", onMouseUp);
+  });
+
   return (
-    <div class="h-full w-full overflow-auto bg-muted/40 p-6">
-      <Switch fallback={<p class="text-sm text-muted-foreground">Compiling…</p>}>
-        <Match when={pages()}>
-          {(p) => (
-            <div
-              class="mx-auto flex max-w-175 flex-col items-center gap-6"
-              style={theme() === "dark" ? { filter: "invert(0.85) hue-rotate(180deg)" } : undefined}
-            >
-              <For each={p()}>
-                {(page) => (
-                  <div
-                    class="w-full bg-white shadow-md ring-1 ring-black/10 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full"
-                    innerHTML={page.svg}
-                  />
-                )}
-              </For>
-            </div>
-          )}
-        </Match>
-        <Match when={errorState()}>
-          {(reason) => (
-            <pre class="whitespace-pre-wrap font-mono text-sm text-destructive">{reason()}</pre>
-          )}
-        </Match>
-      </Switch>
+    <div class="flex h-full w-full flex-col">
+      <div class="flex shrink-0 items-center gap-1 border-b border-border/60 px-2 py-1">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          title="Zoom out"
+          aria-label="Zoom out"
+          onClick={() => {
+            zoomAt(zoom() / ZOOM_STEP);
+          }}
+        >
+          <TbOutlineZoomOut />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          class="font-mono"
+          title="Reset zoom"
+          aria-label="Reset zoom"
+          onClick={() => {
+            zoomAt(1);
+          }}
+        >
+          {Math.round(zoom() * 100)}%
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          title="Zoom in"
+          aria-label="Zoom in"
+          onClick={() => {
+            zoomAt(zoom() * ZOOM_STEP);
+          }}
+        >
+          <TbOutlineZoomIn />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          title="Fit width"
+          aria-label="Fit width"
+          onClick={fitWidth}
+        >
+          <TbOutlineArrowAutofitWidth />
+        </Button>
+      </div>
+
+      <div
+        ref={(el) => {
+          scroller = el;
+        }}
+        class="min-h-0 flex-1 cursor-grab overflow-auto bg-muted/40 p-3"
+        classList={{ "!cursor-grabbing select-none": panning() }}
+        onWheel={onWheel}
+        onMouseDown={onMouseDown}
+      >
+        <Switch fallback={<p class="text-sm text-muted-foreground">Compiling…</p>}>
+          <Match when={pages()}>
+            {(p) => (
+              <div
+                class="mx-auto flex flex-col items-center gap-6"
+                style={{
+                  width: `${String(zoom() * BASE_WIDTH_PX)}px`,
+                  ...(theme() === "dark" ? { filter: "invert(0.85) hue-rotate(180deg)" } : {}),
+                }}
+              >
+                <For each={p()}>
+                  {(page) => (
+                    <div
+                      class="w-full bg-white shadow-md ring-1 ring-black/10 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full"
+                      innerHTML={page.svg}
+                    />
+                  )}
+                </For>
+              </div>
+            )}
+          </Match>
+          <Match when={errorState()}>
+            {(reason) => (
+              <pre class="whitespace-pre-wrap font-mono text-sm text-destructive">{reason()}</pre>
+            )}
+          </Match>
+        </Switch>
+      </div>
     </div>
   );
 }
