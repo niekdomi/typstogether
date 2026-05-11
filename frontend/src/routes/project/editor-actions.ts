@@ -160,6 +160,77 @@ export function insertLink(view: EditorView): void {
   view.focus();
 }
 
+/** Cycle code formatting: none -> `...` -> ```\n...\n``` -> none. */
+export function toggleCode(view: EditorView): void {
+  view.dispatch(
+    view.state.changeByRange((range) => {
+      const state = view.state;
+      const text = state.sliceDoc(range.from, range.to);
+
+      // Selection IS a code block -> strip (block markers are ```\n and \n```)
+      if (text.startsWith("```\n") && text.endsWith("\n```") && text.length >= 8) {
+        const inner = text.slice(4, -4);
+        return {
+          changes: { from: range.from, to: range.to, insert: inner },
+          range: EditorSelection.range(range.from, range.from + inner.length),
+        };
+      }
+
+      // Cursor/selection inside a code block -> strip
+      const blockPair = findEnclosingPair(state, "```\n", "\n```", range.from, range.to);
+      if (blockPair) {
+        return {
+          changes: [
+            { from: blockPair.open, to: blockPair.open + 4, insert: "" },
+            { from: blockPair.close, to: blockPair.close + 4, insert: "" },
+          ],
+          range: range.empty
+            ? EditorSelection.cursor(range.from - 4)
+            : EditorSelection.range(range.from - 4, range.to - 4),
+        };
+      }
+
+      // Selection IS inline code -> upgrade to code block
+      if (text.startsWith("`") && text.endsWith("`") && text.length >= 2) {
+        const inner = text.slice(1, -1);
+        return {
+          changes: { from: range.from, to: range.to, insert: "```\n" + inner + "\n```" },
+          range: EditorSelection.range(range.from + 4, range.from + 4 + inner.length),
+        };
+      }
+
+      // Cursor/selection inside inline code -> upgrade to code block
+      // (+3 to range because ```\n replaces the `, adding 3 chars before the range)
+      const inlinePair = findEnclosingPair(state, "`", "`", range.from, range.to);
+      if (inlinePair) {
+        return {
+          changes: [
+            { from: inlinePair.open, to: inlinePair.open + 1, insert: "```\n" },
+            { from: inlinePair.close, to: inlinePair.close + 1, insert: "\n```" },
+          ],
+          range: range.empty
+            ? EditorSelection.cursor(range.from + 3)
+            : EditorSelection.range(range.from + 3, range.to + 3),
+        };
+      }
+
+      // No code -> wrap in inline code
+      if (range.empty) {
+        return {
+          changes: { from: range.from, insert: "``" },
+          range: EditorSelection.cursor(range.from + 1),
+        };
+      }
+      return {
+        changes: { from: range.from, to: range.to, insert: "`" + text + "`" },
+        range: EditorSelection.range(range.from + 1, range.from + 1 + text.length),
+      };
+    }),
+    { userEvent: "input.format.wrap" }
+  );
+  view.focus();
+}
+
 /** CodeMirror keymap for the format actions. `Mod` = Ctrl / Cmd. */
 export const formatKeymap: Extension = (() => {
   const wrap =
@@ -179,7 +250,13 @@ export const formatKeymap: Extension = (() => {
     { key: "Mod-i", run: wrap("_") },
     { key: "Mod-Shift-x", run: wrap("#strike[", "]") },
     { key: "Mod-u", run: wrap("#underline[", "]") },
-    { key: "Mod-e", run: wrap("`") },
+    {
+      key: "Mod-e",
+      run: (v) => {
+        toggleCode(v);
+        return true;
+      },
+    },
     { key: "Mod-,", run: wrap("#sub[", "]") },
     { key: "Mod-.", run: wrap("#super[", "]") },
     {

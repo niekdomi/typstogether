@@ -21,6 +21,7 @@ import {
   HEADING_GROUP,
   insertLink,
   LIST_GROUP,
+  toggleCode,
   togglePrefix,
   wrapSelection,
 } from "./editor-actions";
@@ -114,10 +115,10 @@ const groups: ToolbarGroup[] = [
       },
       {
         icon: () => <TbOutlineCode />,
-        label: "Inline code",
+        label: "Code",
         shortcut: sc(MOD, "E"),
         run: (v) => {
-          wrapSelection(v, "`");
+          toggleCode(v);
         },
       },
       {
