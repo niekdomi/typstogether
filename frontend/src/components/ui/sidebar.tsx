@@ -1,15 +1,6 @@
 import type { VariantProps } from "cva";
 import type { Accessor, Component, ComponentProps, JSX, ValidComponent } from "solid-js";
-import {
-  createContext,
-  createEffect,
-  createSignal,
-  mergeProps,
-  onCleanup,
-  Show,
-  splitProps,
-  useContext,
-} from "solid-js";
+import { createContext, createSignal, mergeProps, Show, splitProps, useContext } from "solid-js";
 
 import type { ButtonProps } from "./button";
 import { Button } from "./button";
@@ -19,7 +10,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
-const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 type SidebarContext = {
   state: Accessor<"expanded" | "collapsed">;
@@ -65,17 +55,6 @@ const SidebarProvider: Component<SidebarProviderProps> = (rawProps) => {
   };
 
   const toggleSidebar = () => setOpen((v) => !v);
-
-  createEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        toggleSidebar();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    onCleanup(() => window.removeEventListener("keydown", handleKeyDown));
-  });
 
   const state = () => (open() ? "expanded" : "collapsed");
 

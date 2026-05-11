@@ -13,6 +13,7 @@ import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
 import { theme, type Theme } from "../../lib/theme";
+import { formatKeymap } from "./editor-actions";
 
 const highlightingPromise = createTypstHighlighting({ theme: theme() });
 
@@ -63,6 +64,7 @@ export default function CodeMirrorEditor(props: Props) {
           extensions: [
             basicSetup,
             keymap.of(yUndoManagerKeymap),
+            formatKeymap,
             fillHeight,
             themeCompartment.of(editorTheme(theme())),
             readOnlyCompartment.of(EditorState.readOnly.of(props.readOnly())),
