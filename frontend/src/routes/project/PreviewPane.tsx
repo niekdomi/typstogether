@@ -1,7 +1,7 @@
 import type { TypstProject, TypstRenderer } from "@vedivad/codemirror-typst";
 import type { RenderedSvgPage } from "@vedivad/typst-web-service";
 import { TbOutlineArrowAutofitWidth, TbOutlineZoomIn, TbOutlineZoomOut } from "solid-icons/tb";
-import { createEffect, createSignal, For, Match, onCleanup, Switch } from "solid-js";
+import { createEffect, createSignal, For, Match, onCleanup, onMount, Switch } from "solid-js";
 
 import { Button } from "../../components/ui/button";
 import { theme } from "../../lib/theme";
@@ -90,6 +90,17 @@ export default function PreviewPane(props: Props) {
     if (available <= 0) return;
     zoomAt(available / BASE_WIDTH_PX);
   };
+
+  // Initial zoom: fit-width, capped at 100%. Defer one frame so layout settles.
+  onMount(() => {
+    requestAnimationFrame(() => {
+      if (!scroller) return;
+      const available = scroller.clientWidth - SCROLLER_PADDING_PX;
+      if (available <= 0) return;
+      const fit = available / BASE_WIDTH_PX;
+      if (fit < 1) setZoom(clampZoom(fit));
+    });
+  });
 
   const onMouseMove = (e: MouseEvent) => {
     if (!panOrigin || !scroller) return;

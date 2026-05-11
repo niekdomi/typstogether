@@ -1,16 +1,19 @@
 import type { EditorView } from "@codemirror/view";
 import { WebSocketStatus } from "@hocuspocus/provider";
-import { A, useParams } from "@solidjs/router";
+import { A, useNavigate, useParams } from "@solidjs/router";
 import type { TypstProject } from "@vedivad/codemirror-typst";
 import { createEffect, createMemo, createSignal, Match, Switch } from "solid-js";
 import type * as Y from "yjs";
 
+import Logo from "../../components/Logo";
 import ThemeToggle from "../../components/ThemeToggle";
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Badge } from "../../components/ui/badge";
 import { SidebarProvider, SidebarTrigger } from "../../components/ui/sidebar";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
+import UserMenu from "../../components/UserMenu";
+import { authClient } from "../../lib/auth";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { MAIN_PATH } from "../../lib/paths";
 import { useProject } from "../../lib/projects/use-project";
@@ -43,6 +46,8 @@ interface Ready {
 
 export default function Project() {
   const params = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const session = authClient.useSession();
   const project = useProject(() => params.id);
   const collab = useCollabDoc(() => params.id);
   const typst = useTypstProject(collab.files);
@@ -50,6 +55,11 @@ export default function Project() {
   const [requestedFile, setRequestedFile] = createSignal(MAIN_PATH);
   const [editorView, setEditorView] = createSignal<EditorView | null>(null);
   const isReadOnly = () => project()?.role === "viewer" || collab.readOnly();
+
+  async function signOut() {
+    await authClient.signOut();
+    navigate("/login");
+  }
 
   const ready = createMemo<Ready | null>(() => {
     const files = collab.files();
@@ -80,15 +90,12 @@ export default function Project() {
 
   return (
     <SidebarProvider class="flex h-screen flex-col bg-background">
-      <header class="flex shrink-0 items-center justify-between border-b border-border/60 px-4 py-3">
-        <div class="flex items-center gap-3">
-          <A
-            href="/dashboard"
-            class="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            ← Dashboard
+      <header class="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-border bg-background px-8 py-4.5">
+        <div class="flex items-center gap-4">
+          <A href="/dashboard" aria-label="Back to dashboard">
+            <Logo size={20} />
           </A>
-          <SidebarTrigger />
+          <span class="h-6 w-px bg-border/60" />
           <Switch>
             <Match when={project.loading}>
               <Skeleton class="h-5 w-48" />
@@ -96,14 +103,14 @@ export default function Project() {
             <Match when={project()}>
               {(m) => (
                 <>
-                  <h1 class="text-lg font-medium">{m().project.name}</h1>
+                  <h1 class="text-base font-medium">{m().project.name}</h1>
                   <Badge variant="outline">{m().role}</Badge>
                 </>
               )}
             </Match>
           </Switch>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-4.5">
           <Tooltip>
             <TooltipTrigger as="span" class="flex items-center">
               <span
@@ -115,10 +122,22 @@ export default function Project() {
             </TooltipContent>
           </Tooltip>
           <ThemeToggle />
+          <UserMenu
+            userName={session().data?.user.name}
+            userEmail={session().data?.user.email}
+            userImage={session().data?.user.image}
+            onSignOut={() => void signOut()}
+          />
         </div>
       </header>
 
       <div class="flex min-h-0 flex-1">
+        <nav
+          class="flex w-10 shrink-0 flex-col items-center gap-1 border-r border-sidebar-border bg-sidebar py-2"
+          aria-label="Workspace"
+        >
+          <SidebarTrigger title="Toggle file explorer" aria-label="Toggle file explorer" />
+        </nav>
         <Switch
           fallback={
             <div class="flex flex-1 items-center justify-center">
