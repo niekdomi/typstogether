@@ -30,19 +30,15 @@ function findEnclosingPair(
   return { open: openAt, close: rangeTo + closeRel };
 }
 
-/**
- * Wrap or unwrap each selected range with `${prefix}…${suffix}`:
- *
- * 1. Selection IS `prefix…suffix` → strip both markers.
- * 2. Else an enclosing pair on the same line wraps the selection → strip.
- * 3. Else → insert markers around the selection.
- */
+/** Toggle `prefix…suffix` markers around each selected range. */
 export function wrapSelection(view: EditorView, prefix: string, suffix = prefix): void {
   view.dispatch(
     view.state.changeByRange((range) => {
       const state = view.state;
 
-      if (!range.empty && range.to - range.from >= prefix.length + suffix.length) {
+      // The selection itself is `prefix…suffix` -> strip the markers.
+      const selLen = range.to - range.from;
+      if (selLen >= prefix.length + suffix.length) {
         const text = state.sliceDoc(range.from, range.to);
         if (text.startsWith(prefix) && text.endsWith(suffix)) {
           const inner = text.slice(prefix.length, text.length - suffix.length);
@@ -53,19 +49,24 @@ export function wrapSelection(view: EditorView, prefix: string, suffix = prefix)
         }
       }
 
+      // The selection sits inside an enclosing pair -> strip those markers.
       const pair = findEnclosingPair(state, prefix, suffix, range.from, range.to);
       if (pair) {
+        // Removing the open marker shifts positions left by prefix.length.
+        const newFrom = range.from - prefix.length;
+        const newTo = range.to - prefix.length;
         return {
           changes: [
             { from: pair.open, to: pair.open + prefix.length, insert: "" },
             { from: pair.close, to: pair.close + suffix.length, insert: "" },
           ],
           range: range.empty
-            ? EditorSelection.cursor(range.from - prefix.length)
-            : EditorSelection.range(range.from - prefix.length, range.to - prefix.length),
+            ? EditorSelection.cursor(newFrom)
+            : EditorSelection.range(newFrom, newTo),
         };
       }
 
+      // No enclosing markers -> insert an empty pair at cursor or wrap the selection.
       if (range.empty) {
         return {
           changes: { from: range.from, insert: prefix + suffix },
@@ -86,50 +87,34 @@ export function wrapSelection(view: EditorView, prefix: string, suffix = prefix)
   view.focus();
 }
 
-/**
- * Add/replace/strip a line-start prefix on every line touched by each range.
- *
- * - If every touched line already starts with `target` → strip `target`.
- * - Else, per line: replace any sibling in `group` with `target`; otherwise
- *   insert `target`.
- */
+/** Toggle a line-start prefix on every line touched by each range. */
 export function togglePrefix(view: EditorView, target: string, group?: RegExp): void {
   view.dispatch(
     view.state.changeByRange((range) => {
       const state = view.state;
       const firstLine = state.doc.lineAt(range.from).number;
       const lastLine = state.doc.lineAt(range.to).number;
+      const lines = Array.from({ length: lastLine - firstLine + 1 }, (_, i) =>
+        state.doc.line(firstLine + i)
+      );
 
-      let allHaveTarget = true;
-      for (let n = firstLine; n <= lastLine; n++) {
-        if (!state.doc.line(n).text.startsWith(target)) {
-          allHaveTarget = false;
-          break;
-        }
-      }
+      // If every line already has the prefix, remove it; otherwise add it.
+      const removing = lines.every((line) => line.text.startsWith(target));
 
-      const changes = [];
-      for (let n = firstLine; n <= lastLine; n++) {
-        const line = state.doc.line(n);
-        if (allHaveTarget) {
-          changes.push({ from: line.from, to: line.from + target.length, insert: "" });
-        } else if (line.text.startsWith(target)) {
-          // Already correct.
-        } else if (group) {
-          const match = group.exec(line.text);
-          if (match) {
-            changes.push({
-              from: line.from,
-              to: line.from + match[0].length,
-              insert: target,
-            });
-          } else {
-            changes.push({ from: line.from, insert: target });
-          }
-        } else {
-          changes.push({ from: line.from, insert: target });
+      const changes = lines.flatMap((line) => {
+        if (removing) {
+          return [{ from: line.from, to: line.from + target.length, insert: "" }];
         }
-      }
+        if (line.text.startsWith(target)) {
+          return []; // already has the target prefix
+        }
+        const sibling = group?.exec(line.text);
+        if (sibling) {
+          return [{ from: line.from, to: line.from + sibling[0].length, insert: target }];
+        }
+        return [{ from: line.from, insert: target }];
+      });
+
       return { changes, range };
     }),
     { userEvent: "input.format.prefix" }
@@ -156,79 +141,39 @@ export function insertLink(view: EditorView): void {
   view.focus();
 }
 
-/**
- * CodeMirror keymap for the format actions. `Mod` resolves to Ctrl on
- * Windows/Linux and Cmd on macOS.
- */
-export const formatKeymap: Extension = keymap.of([
-  {
-    key: "Mod-b",
-    run: (v) => {
-      wrapSelection(v, "*");
+/** CodeMirror keymap for the format actions. `Mod` = Ctrl / Cmd. */
+export const formatKeymap: Extension = (() => {
+  const wrap =
+    (p: string, s = p) =>
+    (v: EditorView) => {
+      wrapSelection(v, p, s);
       return true;
+    };
+
+  const prefix = (p: string, g: RegExp) => (v: EditorView) => {
+    togglePrefix(v, p, g);
+    return true;
+  };
+
+  return keymap.of([
+    { key: "Mod-b", run: wrap("*") },
+    { key: "Mod-i", run: wrap("_") },
+    { key: "Mod-Shift-x", run: wrap("#strike[", "]") },
+    { key: "Mod-u", run: wrap("#underline[", "]") },
+    { key: "Mod-e", run: wrap("`") },
+    { key: "Mod-,", run: wrap("#sub[", "]") },
+    { key: "Mod-.", run: wrap("#super[", "]") },
+    {
+      key: "Mod-k",
+      run: (v) => {
+        insertLink(v);
+        return true;
+      },
     },
-  },
-  {
-    key: "Mod-i",
-    run: (v) => {
-      wrapSelection(v, "_");
-      return true;
-    },
-  },
-  {
-    key: "Mod-Shift-x",
-    run: (v) => {
-      wrapSelection(v, "#strike[", "]");
-      return true;
-    },
-  },
-  {
-    key: "Mod-e",
-    run: (v) => {
-      wrapSelection(v, "`");
-      return true;
-    },
-  },
-  {
-    key: "Mod-k",
-    run: (v) => {
-      insertLink(v);
-      return true;
-    },
-  },
-  {
-    key: "Mod-Alt-1",
-    run: (v) => {
-      togglePrefix(v, "= ", HEADING_GROUP);
-      return true;
-    },
-  },
-  {
-    key: "Mod-Alt-2",
-    run: (v) => {
-      togglePrefix(v, "== ", HEADING_GROUP);
-      return true;
-    },
-  },
-  {
-    key: "Mod-Alt-3",
-    run: (v) => {
-      togglePrefix(v, "=== ", HEADING_GROUP);
-      return true;
-    },
-  },
-  {
-    key: "Mod-Shift-8",
-    run: (v) => {
-      togglePrefix(v, "- ", LIST_GROUP);
-      return true;
-    },
-  },
-  {
-    key: "Mod-Shift-7",
-    run: (v) => {
-      togglePrefix(v, "+ ", LIST_GROUP);
-      return true;
-    },
-  },
-]);
+    { key: "Mod-Alt-1", run: prefix("= ", HEADING_GROUP) },
+    { key: "Mod-Alt-2", run: prefix("== ", HEADING_GROUP) },
+    { key: "Mod-Alt-3", run: prefix("=== ", HEADING_GROUP) },
+    { key: "Mod-Shift-8", run: prefix("- ", LIST_GROUP) },
+    { key: "Mod-Shift-7", run: prefix("+ ", LIST_GROUP) },
+  ]);
+})();
