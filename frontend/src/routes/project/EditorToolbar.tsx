@@ -12,6 +12,7 @@ import {
   TbOutlineStrikethrough,
   TbOutlineSubscript,
   TbOutlineSuperscript,
+  TbOutlineUnderline,
 } from "solid-icons/tb";
 import { For, type JSX } from "solid-js";
 
@@ -101,6 +102,14 @@ const groups: ToolbarGroup[] = [
         shortcut: sc(MOD, SHIFT, "X"),
         run: (v) => {
           wrapSelection(v, "#strike[", "]");
+        },
+      },
+      {
+        icon: () => <TbOutlineUnderline />,
+        label: "Underline",
+        shortcut: sc(MOD, "U"),
+        run: (v) => {
+          wrapSelection(v, "#underline[", "]");
         },
       },
       {
