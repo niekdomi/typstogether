@@ -1,15 +1,5 @@
 import { Show } from "solid-js";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../../../components/ui/alert-dialog";
 import { leafOf } from "../../../lib/paths";
 import ConfirmDialog from "../../dashboard/ConfirmDialog";
 import PromptDialog from "../../dashboard/PromptDialog";
@@ -29,7 +19,6 @@ export default function Dialogs(props: Props) {
   const newFolderDialog = props.sb.dialogOf("newFolder");
   const renameFolderDialog = props.sb.dialogOf("renameFolder");
   const deleteFolderDialog = props.sb.dialogOf("deleteFolder");
-  const conflictDialog = props.sb.dialogOf("conflict");
 
   return (
     <>
@@ -38,9 +27,7 @@ export default function Dialogs(props: Props) {
           <PromptDialog
             open
             onClose={props.sb.close}
-            onSubmit={(name) => {
-              props.sb.handleRenameFile(s().path, name);
-            }}
+            onSubmit={(name) => props.sb.handleRenameFile(s().path, name)}
             title="Rename file"
             label="File name"
             initialValue={leafOf(s().path)}
@@ -54,9 +41,7 @@ export default function Dialogs(props: Props) {
           <PromptDialog
             open
             onClose={props.sb.close}
-            onSubmit={(name) => {
-              props.sb.handleDuplicateFile(s().path, name);
-            }}
+            onSubmit={(name) => props.sb.handleDuplicateFile(s().path, name)}
             title="Duplicate file"
             label="New file name"
             initialValue={leafOf(s().path)}
@@ -86,9 +71,7 @@ export default function Dialogs(props: Props) {
           <PromptDialog
             open
             onClose={props.sb.close}
-            onSubmit={(name) => {
-              props.sb.handleNewFile(s().dir, name);
-            }}
+            onSubmit={(name) => props.sb.handleNewFile(s().dir, name)}
             title={s().dir ? `New file in ${dropSlash(s().dir)}` : "New file"}
             label="File name"
             initialValue=""
@@ -102,9 +85,7 @@ export default function Dialogs(props: Props) {
           <PromptDialog
             open
             onClose={props.sb.close}
-            onSubmit={(name) => {
-              props.sb.handleNewFolder(s().dir, name);
-            }}
+            onSubmit={(name) => props.sb.handleNewFolder(s().dir, name)}
             title={s().dir ? `New folder in ${dropSlash(s().dir)}` : "New folder"}
             label="Folder name"
             initialValue=""
@@ -118,9 +99,7 @@ export default function Dialogs(props: Props) {
           <PromptDialog
             open
             onClose={props.sb.close}
-            onSubmit={(name) => {
-              props.sb.handleRenameFolder(s().path, name);
-            }}
+            onSubmit={(name) => props.sb.handleRenameFolder(s().path, name)}
             title="Rename folder"
             label="Folder name"
             initialValue={leafOf(s().path)}
@@ -142,37 +121,6 @@ export default function Dialogs(props: Props) {
             confirmLabel="Delete"
             danger
           />
-        )}
-      </Show>
-
-      <Show when={conflictDialog()}>
-        {(s) => (
-          <AlertDialog
-            open
-            onOpenChange={(o) => {
-              if (!o) props.sb.close();
-            }}
-          >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Already exists</AlertDialogTitle>
-                <AlertDialogDescription>
-                  "{dropSlash(s().proposedPath)}" already exists. Choose a different name
-                  {s().flow === "renameFile" ? " or overwrite the existing file" : ""}.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={props.sb.handleConflictPickAnother}>
-                  Rename
-                </AlertDialogCancel>
-                <Show when={s().flow === "renameFile"}>
-                  <AlertDialogAction onClick={props.sb.handleConflictOverwrite}>
-                    Overwrite
-                  </AlertDialogAction>
-                </Show>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
         )}
       </Show>
     </>

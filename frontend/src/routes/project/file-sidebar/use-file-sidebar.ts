@@ -12,6 +12,9 @@ import {
 import { buildTree } from "./tree";
 import type { DialogState, FileSidebarProps } from "./types";
 
+/** Build the user-facing "already exists" message for a path. */
+const existsMsg = (path: string) => `"${path.replace(/^\//, "")}" already exists.`;
+
 /**
  * Owns all reactive state and operations for the file sidebar. Returns plain
  * accessors and handlers — the JSX layer is pure rendering.
@@ -117,65 +120,38 @@ export function useFileSidebar(props: FileSidebarProps) {
   };
 
   // File operations ────────────────────────────────────────────────────────
+  // All file/folder ops return `string` (inline error to show in the dialog,
+  // dialog stays open) or `undefined` (success — PromptDialog closes itself).
 
-  const handleNewFile = (dir: string, rawName: string) => {
+  const handleNewFile = (dir: string, rawName: string): string | undefined => {
     const path = normalizeFile(rawName, dir);
-    if (!path) {
-      close();
-      return;
-    }
-    if (has(path)) {
-      setDialog({ type: "conflict", proposedPath: path, sourcePath: path, flow: "newFile" });
-      return;
-    }
+    if (!path) return undefined;
+    if (has(path)) return existsMsg(path);
     props.files.set(path, new Y.Text());
     props.setActiveFile(path);
-    close();
+    return undefined;
   };
 
-  const handleRenameFile = (oldPath: string, rawName: string) => {
-    if (isLocked(oldPath)) {
-      close();
-      return;
-    }
+  const handleRenameFile = (oldPath: string, rawName: string): string | undefined => {
+    if (isLocked(oldPath)) return undefined;
     const newPath = normalizeFile(rawName, dirOf(oldPath));
-    if (!newPath || newPath === oldPath) {
-      close();
-      return;
-    }
-    if (has(newPath)) {
-      setDialog({
-        type: "conflict",
-        proposedPath: newPath,
-        sourcePath: oldPath,
-        flow: "renameFile",
-      });
-      return;
-    }
+    if (!newPath || newPath === oldPath) return undefined;
+    if (has(newPath)) return existsMsg(newPath);
     movePath(oldPath, newPath);
     if (props.activeFile() === oldPath) props.setActiveFile(newPath);
-    close();
+    return undefined;
   };
 
-  const handleDuplicateFile = (sourcePath: string, rawName: string) => {
+  const handleDuplicateFile = (sourcePath: string, rawName: string): string | undefined => {
     const newPath = normalizeFile(rawName, dirOf(sourcePath));
-    if (!newPath) {
-      close();
-      return;
-    }
-    if (has(newPath)) {
-      setDialog({ type: "conflict", proposedPath: newPath, sourcePath, flow: "duplicateFile" });
-      return;
-    }
+    if (!newPath) return undefined;
+    if (has(newPath)) return existsMsg(newPath);
     const source = props.files.get(sourcePath);
-    if (!source) {
-      close();
-      return;
-    }
+    if (!source) return undefined;
     const copy = new Y.Text();
     copy.insert(0, source.toJSON());
     props.files.set(newPath, copy);
-    close();
+    return undefined;
   };
 
   const handleDeleteFile = (path: string) => {
@@ -193,38 +169,25 @@ export function useFileSidebar(props: FileSidebarProps) {
 
   // Folder operations ──────────────────────────────────────────────────────
 
-  const handleNewFolder = (dir: string, rawName: string) => {
+  const handleNewFolder = (dir: string, rawName: string): string | undefined => {
     const folder = normalizeFolder(rawName, dir);
-    if (!folder) {
-      close();
-      return;
-    }
+    if (!folder) return undefined;
     if (pendingFolders().has(folder) || folderHasFiles(folder) || has(folder)) {
-      setDialog({ type: "conflict", proposedPath: folder, sourcePath: folder, flow: "newFile" });
-      return;
+      return existsMsg(folder);
     }
     setPendingFolders((prev) => new Set([...prev, folder]));
-    close();
+    return undefined;
   };
 
-  const handleRenameFolder = (oldFolder: string, rawName: string) => {
+  const handleRenameFolder = (oldFolder: string, rawName: string): string | undefined => {
     const leaf = rawName.trim().replace(/\/+$/, "");
-    if (!leaf || leaf === leafOf(oldFolder)) {
-      close();
-      return;
-    }
+    if (!leaf || leaf === leafOf(oldFolder)) return undefined;
     const newFolder = joinPath(dirOf(oldFolder), leaf);
     if (
       pendingFolders().has(newFolder) ||
       [...props.files.keys()].some((p) => p === newFolder || p.startsWith(newFolder + "/"))
     ) {
-      setDialog({
-        type: "conflict",
-        proposedPath: newFolder,
-        sourcePath: oldFolder,
-        flow: "moveFile",
-      });
-      return;
+      return existsMsg(newFolder);
     }
     // Rewrite any pending entries with the matching prefix.
     setPendingFolders((prev) => {
@@ -241,7 +204,7 @@ export function useFileSidebar(props: FileSidebarProps) {
       return changed ? next : prev;
     });
     if (folderHasFiles(oldFolder)) moveFolder(oldFolder, newFolder);
-    close();
+    return undefined;
   };
 
   const handleDeleteFolder = (folder: string) => {
@@ -273,42 +236,6 @@ export function useFileSidebar(props: FileSidebarProps) {
       }
     }
     close();
-  };
-
-  // Conflict resolution ────────────────────────────────────────────────────
-
-  const handleConflictOverwrite = () => {
-    const c = dialogOf("conflict")();
-    if (!c) return;
-    if (c.flow === "renameFile") {
-      props.files.delete(c.proposedPath);
-      movePath(c.sourcePath, c.proposedPath);
-      if (props.activeFile() === c.sourcePath) props.setActiveFile(c.proposedPath);
-    }
-    close();
-  };
-
-  const handleConflictPickAnother = () => {
-    const c = dialogOf("conflict")();
-    if (!c) return;
-    switch (c.flow) {
-      case "renameFile": {
-        setDialog({ type: "renameFile", path: c.sourcePath });
-        break;
-      }
-      case "duplicateFile": {
-        setDialog({ type: "duplicateFile", path: c.sourcePath });
-        break;
-      }
-      case "newFile": {
-        setDialog({ type: "newFile", dir: dirOf(c.proposedPath) });
-        break;
-      }
-      case "moveFile": {
-        setDialog({ type: "renameFolder", path: c.sourcePath });
-        break;
-      }
-    }
   };
 
   // Drag and drop ──────────────────────────────────────────────────────────
@@ -384,8 +311,6 @@ export function useFileSidebar(props: FileSidebarProps) {
     handleNewFolder,
     handleRenameFolder,
     handleDeleteFolder,
-    handleConflictOverwrite,
-    handleConflictPickAnother,
     onFileDragStart,
     onDragEnd,
     onFolderDragOver,

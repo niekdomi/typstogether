@@ -126,6 +126,11 @@ function Node(props: NodeProps) {
                   >
                     <TbOutlineFileText />
                     <span>{file().name}</span>
+                    <Show when={props.sb.isLocked(file().path)}>
+                      <span class="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
+                        entry
+                      </span>
+                    </Show>
                   </SidebarMenuButton>
                 )}
               </Show>
