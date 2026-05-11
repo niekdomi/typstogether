@@ -185,7 +185,7 @@ export default function EditorToolbar(props: Props) {
   const disabled = () => !props.view() || props.readOnly();
 
   return (
-    <div class="flex shrink-0 items-center gap-1 border-b border-border/60 px-2 py-1">
+    <div class="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-border/60 px-2 py-1">
       <For each={groups}>
         {(group, i) => (
           <>
