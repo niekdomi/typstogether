@@ -1,6 +1,12 @@
-import { TypstCompiler, TypstProject, TypstRenderer } from "@vedivad/codemirror-typst";
+import {
+  TypstAnalyzer,
+  TypstCompiler,
+  TypstProject,
+  TypstRenderer,
+} from "@vedivad/codemirror-typst";
 import { syncYMapToTypstProject, type TypstYjsSync } from "@vedivad/typst-web-yjs";
 import { createEffect, createSignal, onCleanup } from "solid-js";
+import tinymistWasmUrl from "tinymist-web/pkg/tinymist_bg.wasm?url";
 import type * as Y from "yjs";
 
 export const renderer = TypstRenderer.create();
@@ -25,13 +31,18 @@ export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
 
     void (async () => {
       try {
-        const compiler = await TypstCompiler.create();
+        const [compiler, analyzer] = await Promise.all([
+          TypstCompiler.create(),
+          TypstAnalyzer.create({ wasmUrl: tinymistWasmUrl }),
+        ]);
         if (aborted()) {
           compiler.destroy();
+          analyzer.destroy();
           return;
         }
         project = new TypstProject({
           compiler,
+          analyzer,
           autoCompile: { debounceMs: 200, maxWaitMs: 1000 },
         });
         sync = syncYMapToTypstProject({
