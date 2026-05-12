@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - editor-integration
   workflow_dispatch:
 
 jobs:
