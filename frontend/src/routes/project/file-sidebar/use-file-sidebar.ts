@@ -1,4 +1,5 @@
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
+import { createStore } from "solid-js/store";
 import * as Y from "yjs";
 
 import {
@@ -31,8 +32,10 @@ export function useFileSidebar() {
   // is removed from here) the moment a file lands inside.
   const [pendingFolders, setPendingFolders] = createSignal(new Set<string>());
   const [dialog, setDialog] = createSignal<DialogState | null>(null);
-  const [dragging, setDragging] = createSignal<string | null>(null);
-  const [dragOver, setDragOver] = createSignal<string | null>(null);
+  const [drag, setDrag] = createStore<{ source: string | null; over: string | null }>({
+    source: null,
+    over: null,
+  });
 
   // Mirror Y.Map keys into a Solid signal so the list re-renders on any
   // mutation (local or remote).
@@ -247,24 +250,22 @@ export function useFileSidebar() {
       return;
     }
     e.dataTransfer?.setData("text/plain", path);
-    setDragging(path);
+    setDrag({ source: path, over: null });
   };
   const onDragEnd = () => {
-    setDragging(null);
-    setDragOver(null);
+    setDrag({ source: null, over: null });
   };
   const onFolderDragOver = (e: DragEvent, folder: string) => {
-    if (!dragging()) return;
+    if (!drag.source) return;
     e.preventDefault();
     e.stopPropagation();
-    setDragOver(folder);
+    setDrag("over", folder);
   };
   const onFolderDrop = (e: DragEvent, folder: string) => {
     e.preventDefault();
     e.stopPropagation();
     const src = e.dataTransfer?.getData("text/plain");
-    setDragging(null);
-    setDragOver(null);
+    setDrag({ source: null, over: null });
     if (!src || isLocked(src)) return;
     const dest = joinPath(folder, leafOf(src));
     if (dest === src || has(dest)) return;
@@ -272,19 +273,20 @@ export function useFileSidebar() {
     if (ctx.activeFile() === src) ctx.setActiveFile(dest);
   };
   const onRootDragOver = (e: DragEvent) => {
-    if (!dragging()) return;
+    if (!drag.source) return;
     e.preventDefault();
-    setDragOver("");
+    setDrag("over", "");
   };
   const onRootDragLeave = (e: DragEvent) => {
-    if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) setDragOver(null);
+    if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) setDrag("over", null);
   };
-  const clearDragOver = () => setDragOver(null);
+  const clearDragOver = () => {
+    setDrag("over", null);
+  };
   const onRootDrop = (e: DragEvent) => {
     e.preventDefault();
     const src = e.dataTransfer?.getData("text/plain");
-    setDragging(null);
-    setDragOver(null);
+    setDrag({ source: null, over: null });
     if (!src || isLocked(src)) return;
     const dest = `/${leafOf(src)}`;
     if (dest === src || has(dest)) return;
@@ -298,8 +300,7 @@ export function useFileSidebar() {
     setDialog,
     close,
     dialogOf,
-    dragging,
-    dragOver,
+    drag,
     activeFile: ctx.activeFile,
     canDeleteFile: (path: string) => !isLocked(path) && files.size > 1,
     isLocked,

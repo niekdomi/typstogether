@@ -6,6 +6,7 @@ import {
   TbOutlineZoomOut,
 } from "solid-icons/tb";
 import { createEffect, createSignal, For, Match, onCleanup, onMount, Switch } from "solid-js";
+import { createStore } from "solid-js/store";
 
 import { Button } from "../../components/ui/button";
 import { theme } from "../../lib/theme";
@@ -22,8 +23,10 @@ const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 
 export default function PreviewPane() {
   const ctx = useProjectContext();
-  const [pages, setPages] = createSignal<RenderedSvgPage[] | null>(null);
-  const [errorState, setErrorState] = createSignal<string | null>(null);
+  const [render, setRender] = createStore<{
+    pages: RenderedSvgPage[] | null;
+    error: string | null;
+  }>({ pages: null, error: null });
   const [zoom, setZoom] = createSignal(1);
   const [panning, setPanning] = createSignal(false);
 
@@ -37,15 +40,14 @@ export default function PreviewPane() {
     const off = project.onCompile((result) => {
       const vector = result.vector;
       if (!vector) {
-        setErrorState(result.diagnostics.find((d) => d.severity === "Error")?.message ?? null);
+        setRender("error", result.diagnostics.find((d) => d.severity === "Error")?.message ?? null);
         return;
       }
       void (async () => {
         try {
-          setPages(await renderer.renderSvgPages(vector));
-          setErrorState(null);
+          setRender({ pages: await renderer.renderSvgPages(vector), error: null });
         } catch (error) {
-          setErrorState(String(error));
+          setRender("error", String(error));
         }
       })();
     });
@@ -88,7 +90,7 @@ export default function PreviewPane() {
 
   const fitHeight = () => {
     if (!scroller) return;
-    const firstPage = pages()?.[0];
+    const firstPage = render.pages?.[0];
     if (!firstPage) return;
     const available = scroller.clientHeight - SCROLLER_PADDING_PX;
     if (available <= 0) return;
@@ -215,7 +217,7 @@ export default function PreviewPane() {
         onMouseDown={onMouseDown}
       >
         <Switch fallback={<p class="text-sm text-muted-foreground">Compiling…</p>}>
-          <Match when={pages()}>
+          <Match when={render.pages}>
             {(p) => (
               <div
                 class="mx-auto flex flex-col items-center gap-6"
@@ -235,7 +237,7 @@ export default function PreviewPane() {
               </div>
             )}
           </Match>
-          <Match when={errorState()}>
+          <Match when={render.error}>
             {(reason) => (
               <pre class="whitespace-pre-wrap font-mono text-sm text-destructive">{reason()}</pre>
             )}

@@ -140,8 +140,8 @@ function Node(props: NodeProps) {
               <SidebarMenuButton
                 tooltip={folder().path}
                 class={cx(
-                  props.sb.dragOver() === folder().path &&
-                    props.sb.dragging() &&
+                  props.sb.drag.over === folder().path &&
+                    props.sb.drag.source &&
                     "ring-2 ring-sidebar-ring"
                 )}
                 onClick={() => {
@@ -180,7 +180,7 @@ export default function FileSidebar() {
           as="div"
           class={cx(
             "flex flex-1 flex-col overflow-hidden",
-            sb.dragOver() === "" && sb.dragging() && "bg-sidebar-accent/40"
+            sb.drag.over === "" && sb.drag.source && "bg-sidebar-accent/40"
           )}
           onDragOver={sb.onRootDragOver}
           onDragLeave={sb.onRootDragLeave}
