@@ -12,33 +12,28 @@ async function loadProjects(): Promise<Membership[]> {
 export function useProjects() {
   const [projects, { refetch }] = createResource(loadProjects);
 
-  async function rename(id: string, newName: string) {
-    const { error } = await api.projects({ id }).patch({ name: newName });
+  async function mutate(
+    fn: () => Promise<{ error: unknown }>,
+    errorMsg: string,
+    onSuccess?: () => void
+  ) {
+    const { error } = await fn();
     if (error) {
-      toast.error("Could not rename project.");
-      return;
-    }
-    void refetch();
-  }
-
-  async function remove(id: string) {
-    const { error } = await api.projects({ id }).delete();
-    if (error) {
-      toast.error("Could not delete project.");
-      return;
-    }
-    void refetch();
-  }
-
-  async function create(name: string, onSuccess?: () => void) {
-    const { error } = await api.projects.post({ name });
-    if (error) {
-      toast.error("Could not create project.");
+      toast.error(errorMsg);
       return;
     }
     void refetch();
     onSuccess?.();
   }
+
+  const rename = (id: string, newName: string) =>
+    mutate(() => api.projects({ id }).patch({ name: newName }), "Could not rename project.");
+
+  const remove = (id: string) =>
+    mutate(() => api.projects({ id }).delete(), "Could not delete project.");
+
+  const create = (name: string, onSuccess?: () => void) =>
+    mutate(() => api.projects.post({ name }), "Could not create project.", onSuccess);
 
   return { projects, rename, remove, create };
 }
