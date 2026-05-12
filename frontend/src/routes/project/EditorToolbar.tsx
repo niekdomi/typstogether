@@ -123,6 +123,10 @@ const groups: ToolbarGroup[] = [
           toggleCode(v);
         },
       },
+    ],
+  },
+  {
+    items: [
       {
         icon: () => <TbOutlineMath />,
         label: "Math",
