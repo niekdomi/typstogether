@@ -1,4 +1,4 @@
-import { Navigate } from "@solidjs/router";
+import { Navigate, useSearchParams } from "@solidjs/router";
 import { For, Match, Show, Switch, createResource, createSignal } from "solid-js";
 
 import Logo from "../../components/Logo";
@@ -12,22 +12,21 @@ async function loadProviders() {
   return data ?? [];
 }
 
-function readNextParam(): string {
-  const next = new URLSearchParams(location.search).get("next");
-  return next?.startsWith("/") ? next : "/dashboard";
-}
-
 export default function Login() {
   const session = authClient.useSession();
   const [providers] = createResource(loadProviders);
   const [submitting, setSubmitting] = createSignal<string | null>(null);
-  const safeNext = readNextParam();
+  const [searchParams] = useSearchParams<{ next?: string }>();
+  const safeNext = () => {
+    const next = searchParams.next;
+    return next?.startsWith("/") ? next : "/dashboard";
+  };
 
   async function signIn(provider: string) {
     setSubmitting(provider);
     const { error } = await authClient.signIn.social({
       provider,
-      callbackURL: location.origin + safeNext,
+      callbackURL: location.origin + safeNext(),
     });
     if (error) {
       console.error("Sign-in failed:", error);
@@ -87,7 +86,7 @@ export default function Login() {
         <p class="text-sm text-muted-foreground">Loading…</p>
       </Match>
       <Match when={session().data?.user}>
-        <Navigate href={safeNext} />
+        <Navigate href={safeNext()} />
       </Match>
     </Switch>
   );
