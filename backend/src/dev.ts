@@ -12,3 +12,5 @@ dbRegistry.set(db);
 
 const { startServer } = await import("./app");
 startServer();
+
+process.on("SIGINT", () => process.exit(0));
