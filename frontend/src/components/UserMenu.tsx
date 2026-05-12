@@ -1,6 +1,7 @@
 import { TbOutlineChevronDown, TbOutlineLogout, TbOutlineSettings } from "solid-icons/tb";
 import { Show } from "solid-js";
 
+import { useCurrentUser, useSignOut } from "../lib/CurrentUserContext";
 import { userInitial } from "../lib/format";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -12,14 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-interface UserMenuProps {
-  userName: string | undefined;
-  userEmail: string | undefined;
-  userImage: string | null | undefined;
-  onSignOut: () => void;
-}
+export default function UserMenu() {
+  const current = useCurrentUser();
+  const signOut = useSignOut();
 
-export default function UserMenu(props: UserMenuProps) {
   return (
     <DropdownMenu placement="bottom-end" gutter={8}>
       <DropdownMenuTrigger
@@ -30,8 +27,8 @@ export default function UserMenu(props: UserMenuProps) {
         aria-label="Account"
       >
         <Avatar class="size-8">
-          <AvatarImage src={props.userImage ?? undefined} alt="" />
-          <AvatarFallback>{userInitial(props.userName)}</AvatarFallback>
+          <AvatarImage src={current.user.image ?? undefined} alt="" />
+          <AvatarFallback>{userInitial(current.user.name)}</AvatarFallback>
         </Avatar>
         <TbOutlineChevronDown
           size={12}
@@ -41,13 +38,13 @@ export default function UserMenu(props: UserMenuProps) {
       <DropdownMenuContent class="min-w-56">
         <div class="flex items-center gap-3 px-2 py-2">
           <Avatar class="size-9">
-            <AvatarImage src={props.userImage ?? undefined} alt="" />
-            <AvatarFallback>{userInitial(props.userName)}</AvatarFallback>
+            <AvatarImage src={current.user.image ?? undefined} alt="" />
+            <AvatarFallback>{userInitial(current.user.name)}</AvatarFallback>
           </Avatar>
           <div class="flex min-w-0 flex-col">
-            <span class="truncate text-sm font-medium">{props.userName ?? "—"}</span>
-            <Show when={props.userEmail}>
-              <span class="truncate text-xs text-muted-foreground">{props.userEmail}</span>
+            <span class="truncate text-sm font-medium">{current.user.name}</span>
+            <Show when={current.user.email}>
+              <span class="truncate text-xs text-muted-foreground">{current.user.email}</span>
             </Show>
           </div>
         </div>
@@ -57,7 +54,7 @@ export default function UserMenu(props: UserMenuProps) {
           Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={props.onSignOut}>
+        <DropdownMenuItem onSelect={() => void signOut()}>
           <TbOutlineLogout size={14} />
           Log out
         </DropdownMenuItem>

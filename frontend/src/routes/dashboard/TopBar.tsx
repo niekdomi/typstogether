@@ -8,10 +8,6 @@ import UserMenu from "../../components/UserMenu";
 interface TopBarProps {
   query: string;
   onQuery: (value: string) => void;
-  userName: string | undefined;
-  userEmail: string | undefined;
-  userImage: string | null | undefined;
-  onSignOut: () => void;
 }
 
 export default function TopBar(props: TopBarProps) {
@@ -27,12 +23,7 @@ export default function TopBar(props: TopBarProps) {
           <TextFieldInput type="text" placeholder="Find a project…" class="pl-9 w-full" />
         </TextField>
         <ThemeToggle />
-        <UserMenu
-          userName={props.userName}
-          userEmail={props.userEmail}
-          userImage={props.userImage}
-          onSignOut={props.onSignOut}
-        />
+        <UserMenu />
       </div>
     </header>
   );

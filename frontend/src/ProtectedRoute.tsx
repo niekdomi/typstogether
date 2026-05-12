@@ -2,6 +2,7 @@ import { Navigate, type RouteSectionProps } from "@solidjs/router";
 import { Match, Switch } from "solid-js";
 
 import { authClient } from "./lib/auth";
+import { CurrentUserProvider } from "./lib/CurrentUserContext";
 
 function loginRedirect(): string {
   const next = location.pathname + location.search;
@@ -18,7 +19,9 @@ export default function ProtectedRoute(props: RouteSectionProps) {
       <Match when={session().isPending}>
         <p>Loading…</p>
       </Match>
-      <Match when={session().data?.user}>{props.children}</Match>
+      <Match when={session().data?.user}>
+        {(user) => <CurrentUserProvider user={user()}>{props.children}</CurrentUserProvider>}
+      </Match>
     </Switch>
   );
 }

@@ -1,6 +1,6 @@
 import type { EditorView } from "@codemirror/view";
 import { WebSocketStatus } from "@hocuspocus/provider";
-import { A, useNavigate, useParams } from "@solidjs/router";
+import { A, useParams } from "@solidjs/router";
 import type { DiagnosticMessage, TypstProject } from "@vedivad/codemirror-typst";
 import { FaSolidChevronLeft } from "solid-icons/fa";
 import { TbOutlineAlertTriangle, TbOutlineFiles } from "solid-icons/tb";
@@ -23,7 +23,6 @@ import { cx } from "../../components/ui/cva";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import UserMenu from "../../components/UserMenu";
-import { authClient } from "../../lib/auth";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { MAIN_PATH } from "../../lib/paths";
 import { useProject } from "../../lib/projects/use-project";
@@ -95,8 +94,6 @@ interface Ready {
 
 export default function Project() {
   const params = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const session = authClient.useSession();
   const project = useProject(() => params.id);
   const collab = useCollabDoc(() => params.id);
   const typst = useTypstProject(collab.files);
@@ -112,11 +109,6 @@ export default function Project() {
   };
 
   const errorCount = createMemo(() => diagnostics().filter((d) => d.severity === "Error").length);
-
-  async function signOut() {
-    await authClient.signOut();
-    navigate("/login");
-  }
 
   const ready = createMemo<Ready | null>(() => {
     const files = collab.files();
@@ -196,12 +188,7 @@ export default function Project() {
             </TooltipContent>
           </Tooltip>
           <ThemeToggle />
-          <UserMenu
-            userName={session().data?.user.name}
-            userEmail={session().data?.user.email}
-            userImage={session().data?.user.image}
-            onSignOut={() => void signOut()}
-          />
+          <UserMenu />
         </div>
       </header>
 
