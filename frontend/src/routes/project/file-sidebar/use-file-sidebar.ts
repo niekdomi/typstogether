@@ -23,7 +23,7 @@ const existsMsg = (path: string) => `"${path.replace(/^\//, "")}" already exists
 export function useFileSidebar() {
   const ctx = useProjectContext();
   // Sidebar only mounts inside `ctx.ready()`, so `files` is non-null.
-  const files = ctx.collab.files()!;
+  const files = ctx.collab.files!;
   const [paths, setPaths] = createSignal<string[]>([]);
   const [collapsed, setCollapsed] = createSignal(new Set<string>());
   // Folders the user created via "New folder" that don't yet contain any file.

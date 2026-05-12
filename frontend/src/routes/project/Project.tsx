@@ -81,7 +81,7 @@ function ProjectView() {
   };
 
   const loadingLabel = () =>
-    ctx.collab.files() ? "Booting Typst compiler…" : "Connecting to collab session…";
+    ctx.collab.files ? "Booting Typst compiler…" : "Connecting to collab session…";
 
   return (
     <div class="flex h-screen flex-col bg-background">
@@ -113,11 +113,11 @@ function ProjectView() {
           <Tooltip>
             <TooltipTrigger as="span" class="flex items-center">
               <span
-                class={`size-2 rounded-full ${statusInfo(ctx.collab.status(), ctx.collab.synced(), ctx.isReadOnly()).color}`}
+                class={`size-2 rounded-full ${statusInfo(ctx.collab.status, ctx.collab.synced, ctx.isReadOnly()).color}`}
               />
             </TooltipTrigger>
             <TooltipContent>
-              {statusInfo(ctx.collab.status(), ctx.collab.synced(), ctx.isReadOnly()).label}
+              {statusInfo(ctx.collab.status, ctx.collab.synced, ctx.isReadOnly()).label}
             </TooltipContent>
           </Tooltip>
           <ThemeToggle />
@@ -162,7 +162,7 @@ function ProjectView() {
               </Alert>
             </div>
           </Match>
-          <Match when={ctx.collab.error()}>
+          <Match when={ctx.collab.error}>
             {(reason) => (
               <div class="flex-1 p-6">
                 <Alert variant="destructive">
@@ -171,7 +171,7 @@ function ProjectView() {
               </div>
             )}
           </Match>
-          <Match when={ctx.typst.error()}>
+          <Match when={ctx.typst.error}>
             {(reason) => (
               <div class="flex-1 p-6">
                 <Alert variant="destructive">

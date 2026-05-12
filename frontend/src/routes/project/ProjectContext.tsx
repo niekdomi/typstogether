@@ -49,18 +49,18 @@ export function ProjectProvider(props: { children: JSX.Element }) {
 
   const membership = useProject(projectId);
   const collab = useCollabDoc(projectId);
-  const typst = useTypstProject(collab.files);
+  const typst = useTypstProject(() => collab.files);
 
   const [requestedFile, setRequestedFile] = createSignal(MAIN_PATH);
   const [editorView, setEditorView] = createSignal<EditorView | null>(null);
   const [diagnostics, setDiagnostics] = createSignal<DiagnosticMessage[]>([]);
 
-  const isReadOnly = () => membership()?.role === "viewer" || collab.readOnly();
+  const isReadOnly = () => membership()?.role === "viewer" || collab.readOnly;
   const errorCount = createMemo(() => diagnostics().filter((d) => d.severity === "Error").length);
 
   const ready = createMemo<Ready | null>(() => {
-    const files = collab.files();
-    const typstProject = typst.project();
+    const files = collab.files;
+    const typstProject = typst.project;
     return files && typstProject ? { files, typstProject } : null;
   });
 

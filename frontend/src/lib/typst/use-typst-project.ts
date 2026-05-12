@@ -5,24 +5,29 @@ import {
   TypstRenderer,
 } from "@vedivad/codemirror-typst";
 import { syncYMapToTypstProject, type TypstYjsSync } from "@vedivad/typst-web-yjs";
-import { createEffect, createSignal, onCleanup } from "solid-js";
+import { createEffect, onCleanup } from "solid-js";
+import { createStore } from "solid-js/store";
 import tinymistWasmUrl from "tinymist-web/pkg/tinymist_bg.wasm?url";
 import type * as Y from "yjs";
 
 export const renderer = TypstRenderer.create();
 
+interface TypstState {
+  project: TypstProject | null;
+  error: string | null;
+}
+
 export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
-  const [projectState, setProjectState] = createSignal<TypstProject | null>(null);
-  const [errorState, setErrorState] = createSignal<string | null>(null);
+  const [state, setState] = createStore<TypstState>({ project: null, error: null });
 
   createEffect(() => {
     const f = files();
     if (!f) {
-      setProjectState(null);
+      setState("project", null);
       return;
     }
 
-    setErrorState(null);
+    setState("error", null);
 
     const aborter = new AbortController();
     const aborted = (): boolean => aborter.signal.aborted;
@@ -48,14 +53,16 @@ export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
         sync = syncYMapToTypstProject({
           project: project,
           files: f,
-          onError: ({ error: syncError }) => setErrorState(String(syncError)),
+          onError: ({ error: syncError }) => {
+            setState("error", String(syncError));
+          },
         });
         await sync.ready;
         if (aborted()) return;
         await project.compile();
-        if (!aborted()) setProjectState(project);
+        if (!aborted()) setState("project", project);
       } catch (error) {
-        setErrorState(String(error));
+        setState("error", String(error));
       }
     })();
 
@@ -63,9 +70,9 @@ export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
       aborter.abort();
       sync?.dispose();
       project?.destroy();
-      setProjectState(null);
+      setState("project", null);
     });
   });
 
-  return { project: projectState, error: errorState };
+  return state;
 }

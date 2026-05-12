@@ -31,7 +31,7 @@ export default function PreviewPane() {
   let panOrigin: { x: number; y: number; scrollLeft: number; scrollTop: number } | null = null;
 
   createEffect(() => {
-    const project = ctx.typst.project();
+    const project = ctx.typst.project;
     if (!project) return;
 
     const off = project.onCompile((result) => {
