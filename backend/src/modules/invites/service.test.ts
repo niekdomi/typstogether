@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 
 import { projectFactory, userFactory } from "../../../test/factories";
 import { cleanDb, expectThrows, futureDate } from "../../../test/helpers";
-import { ConflictError, GoneError, NotFoundError } from "../../errors";
+import { GoneError, NotFoundError } from "../../errors";
 import { memberService } from "../members/service";
 import { projectService } from "../projects/service";
 import { inviteService } from "./service";
@@ -194,7 +194,7 @@ describe("InviteService.redeem", () => {
     await expectThrows(() => inviteService.redeem(newcomer.id, token), GoneError);
   });
 
-  test("throws ConflictError when the redeemer is the project owner", async () => {
+  test("returns the owner membership when the redeemer is the project owner", async () => {
     const owner = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
     const { token } = await inviteService.create({
@@ -204,7 +204,11 @@ describe("InviteService.redeem", () => {
       expiresAt: futureDate(),
     });
 
-    await expectThrows(() => inviteService.redeem(owner.id, token), ConflictError);
+    const result = await inviteService.redeem(owner.id, token);
+
+    expect(result.project.id).toBe(project.id);
+    expect(result.role).toBe("owner");
+    expect(await memberService.list(project.id)).toEqual([]);
   });
 
   test("throws NotFoundError when the project has been soft-deleted", async () => {
@@ -222,7 +226,7 @@ describe("InviteService.redeem", () => {
     await expectThrows(() => inviteService.redeem(newcomer.id, token), NotFoundError);
   });
 
-  test("throws ConflictError when the user is already a member", async () => {
+  test("returns the existing membership when the user is already a member", async () => {
     const owner = await userFactory.create();
     const member = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
@@ -234,6 +238,12 @@ describe("InviteService.redeem", () => {
       expiresAt: futureDate(),
     });
 
-    await expectThrows(() => inviteService.redeem(member.id, token), ConflictError);
+    const result = await inviteService.redeem(member.id, token);
+
+    expect(result.project.id).toBe(project.id);
+    expect(result.role).toBe("viewer");
+    const members = await memberService.list(project.id);
+    expect(members).toHaveLength(1);
+    expect(members[0]!.member.role).toBe("viewer");
   });
 });

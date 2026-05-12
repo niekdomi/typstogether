@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import { type ProjectInvite, projectInvite } from "../../db/app-schema";
-import { ConflictError, GoneError, NotFoundError } from "../../errors";
+import { type ProjectInvite, projectInvite, projectMember } from "../../db/app-schema";
+import { GoneError, NotFoundError } from "../../errors";
 import { currentDb } from "../../transaction";
 import { memberService } from "../members/service";
 import { type ProjectMembership, projectService } from "../projects/service";
@@ -81,11 +81,17 @@ export class InviteService {
     const project = await projectService.findActive(invite.projectId);
 
     if (project.ownerUserId === userId) {
-      throw new ConflictError("You already own this project");
+      return { project, role: "owner" };
     }
 
+    const [existing] = await currentDb()
+      .select()
+      .from(projectMember)
+      .where(and(eq(projectMember.projectId, project.id), eq(projectMember.userId, userId)));
+    if (existing) return { project, role: existing.role };
+
     await memberService.create(project.id, userId, invite.role);
-    return { project: project, role: invite.role };
+    return { project, role: invite.role };
   }
 }
 
