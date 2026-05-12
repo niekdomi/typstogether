@@ -9,7 +9,7 @@ import { createEffect, createSignal, For, Match, onCleanup, onMount, Switch } fr
 import { createStore } from "solid-js/store";
 
 import { Button } from "../../components/ui/button";
-import { theme } from "../../lib/theme";
+import { useTheme } from "../../lib/ThemeContext";
 import { renderer } from "../../lib/typst/use-typst-project";
 import { useProjectContext } from "./ProjectContext";
 
@@ -23,6 +23,7 @@ const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 
 export default function PreviewPane() {
   const ctx = useProjectContext();
+  const { theme } = useTheme();
   const [render, setRender] = createStore<{
     pages: RenderedSvgPage[] | null;
     error: string | null;

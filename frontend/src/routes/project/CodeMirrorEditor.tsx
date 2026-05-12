@@ -12,11 +12,15 @@ import { createEffect, getOwner, onCleanup, onMount, runWithOwner } from "solid-
 import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
-import { theme, type Theme } from "../../lib/theme";
+import { type Theme, useTheme } from "../../lib/ThemeContext";
 import { formatKeymap } from "./editor-actions";
 import { useProjectContext } from "./ProjectContext";
 
-const highlightingPromise = createTypstHighlighting({ theme: theme() });
+let highlightingPromise: ReturnType<typeof createTypstHighlighting> | undefined;
+const getHighlighting = (initial: Theme) => {
+  highlightingPromise ??= createTypstHighlighting({ theme: initial });
+  return highlightingPromise;
+};
 
 const editorTheme = (t: Theme): Extension => (t === "dark" ? githubDark : githubLight);
 
@@ -198,6 +202,7 @@ interface PerFileState {
 
 export default function CodeMirrorEditor() {
   const ctx = useProjectContext();
+  const { theme } = useTheme();
   let parent: HTMLDivElement | undefined;
 
   onMount(() => {
@@ -207,7 +212,7 @@ export default function CodeMirrorEditor() {
       // Editor only mounts inside `ctx.ready()`, so files + typst project are non-null.
       const files = ctx.collab.files!;
       const typstProject = ctx.typst.project!;
-      const controller = await highlightingPromise;
+      const controller = await getHighlighting(theme());
 
       const readOnlyCompartment = new Compartment();
       const themeCompartment = new Compartment();

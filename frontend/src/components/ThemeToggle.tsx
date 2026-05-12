@@ -1,11 +1,12 @@
 import { TbOutlineMoon, TbOutlineSun } from "solid-icons/tb";
 import { Show } from "solid-js";
 
-import { theme, toggleTheme } from "../lib/theme";
+import { useTheme } from "../lib/ThemeContext";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export default function ThemeToggle() {
+  const { theme, toggle } = useTheme();
   return (
     <Tooltip openDelay={150}>
       <TooltipTrigger
@@ -13,7 +14,7 @@ export default function ThemeToggle() {
         variant="outline"
         size="icon"
         class="border-border/60"
-        onClick={toggleTheme}
+        onClick={toggle}
       >
         <Show when={theme() === "dark"} fallback={<TbOutlineMoon size={14} />}>
           <TbOutlineSun size={14} />
