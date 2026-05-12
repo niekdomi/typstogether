@@ -1,20 +1,8 @@
-import type { EditorView } from "@codemirror/view";
 import { WebSocketStatus } from "@hocuspocus/provider";
-import { A, useParams } from "@solidjs/router";
-import type { DiagnosticMessage, TypstProject } from "@vedivad/codemirror-typst";
+import { A } from "@solidjs/router";
 import { FaSolidChevronLeft } from "solid-icons/fa";
 import { TbOutlineAlertTriangle, TbOutlineFiles } from "solid-icons/tb";
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  type JSX,
-  Match,
-  onCleanup,
-  Show,
-  Switch,
-} from "solid-js";
-import type * as Y from "yjs";
+import { createSignal, type JSX, Match, Show, Switch } from "solid-js";
 
 import ThemeToggle from "../../components/ThemeToggle";
 import { Alert, AlertDescription } from "../../components/ui/alert";
@@ -23,15 +11,12 @@ import { cx } from "../../components/ui/cva";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import UserMenu from "../../components/UserMenu";
-import { useCollabDoc } from "../../lib/collab/use-collab-doc";
-import { MAIN_PATH } from "../../lib/paths";
-import { useProject } from "../../lib/projects/use-project";
-import { renderer, useTypstProject } from "../../lib/typst/use-typst-project";
 import CodeMirrorEditor from "./CodeMirrorEditor";
 import DiagnosticsPanel from "./DiagnosticsPanel";
 import EditorToolbar from "./EditorToolbar";
 import FileSidebar from "./file-sidebar/FileSidebar";
 import PreviewPane from "./PreviewPane";
+import { ProjectProvider, useProjectContext } from "./ProjectContext";
 import WorkspacePanel from "./WorkspacePanel";
 
 type Panel = "files" | "diagnostics" | null;
@@ -87,68 +72,16 @@ function statusInfo(status: WebSocketStatus, synced: boolean, readOnly: boolean)
   return { label: "Disconnected", color: "bg-red-500" };
 }
 
-interface Ready {
-  files: Y.Map<Y.Text>;
-  project: TypstProject;
-}
-
-export default function Project() {
-  const params = useParams<{ id: string }>();
-  const project = useProject(() => params.id);
-  const collab = useCollabDoc(() => params.id);
-  const typst = useTypstProject(collab.files);
-
-  const [requestedFile, setRequestedFile] = createSignal(MAIN_PATH);
-  const [editorView, setEditorView] = createSignal<EditorView | null>(null);
+function ProjectView() {
+  const ctx = useProjectContext();
   const [currentPanel, setCurrentPanel] = createSignal<Panel>("files");
-  const [diagnostics, setDiagnostics] = createSignal<DiagnosticMessage[]>([]);
-  const isReadOnly = () => project()?.role === "viewer" || collab.readOnly();
 
   const togglePanel = (p: Exclude<Panel, null>) => {
     setCurrentPanel((cur) => (cur === p ? null : p));
   };
 
-  const errorCount = createMemo(() => diagnostics().filter((d) => d.severity === "Error").length);
-
-  const ready = createMemo<Ready | null>(() => {
-    const files = collab.files();
-    const proj = typst.project();
-    return files && proj ? { files, project: proj } : null;
-  });
-
-  // Active file falls back to the first available if the requested one was
-  // deleted (or never existed). The signal also re-runs when files mutate via
-  // collab.fileKeys() touching the dependency.
-  const activeFile = createMemo(() => {
-    const r = ready();
-    if (!r) return MAIN_PATH;
-    const requested = requestedFile();
-    if (r.files.has(requested)) return requested;
-    return [...r.files.keys()][0] ?? MAIN_PATH;
-  });
-
-  // Keep `requestedFile` in sync with `activeFile` so the sidebar's selection
-  // reflects fallbacks (e.g. when the requested file is deleted).
-  createEffect(() => {
-    const a = activeFile();
-    if (a !== requestedFile()) setRequestedFile(a);
-  });
-
-  // Track diagnostics from each compile so the rail badge and panel stay in sync.
-  createEffect(() => {
-    const r = ready();
-    if (!r) {
-      setDiagnostics([]);
-      return;
-    }
-    const off = r.project.onCompile((result) => {
-      setDiagnostics(result.diagnostics);
-    });
-    onCleanup(off);
-  });
-
   const loadingLabel = () =>
-    collab.files() ? "Booting Typst compiler…" : "Connecting to collab session…";
+    ctx.collab.files() ? "Booting Typst compiler…" : "Connecting to collab session…";
 
   return (
     <div class="flex h-screen flex-col bg-background">
@@ -163,10 +96,10 @@ export default function Project() {
           </A>
           <span class="h-6 w-px bg-border/60" />
           <Switch>
-            <Match when={project.loading}>
+            <Match when={ctx.membership.loading}>
               <Skeleton class="h-5 w-48" />
             </Match>
-            <Match when={project()}>
+            <Match when={ctx.membership()}>
               {(m) => (
                 <>
                   <h1 class="text-base font-medium">{m().project.name}</h1>
@@ -180,11 +113,11 @@ export default function Project() {
           <Tooltip>
             <TooltipTrigger as="span" class="flex items-center">
               <span
-                class={`size-2 rounded-full ${statusInfo(collab.status(), collab.synced(), isReadOnly()).color}`}
+                class={`size-2 rounded-full ${statusInfo(ctx.collab.status(), ctx.collab.synced(), ctx.isReadOnly()).color}`}
               />
             </TooltipTrigger>
             <TooltipContent>
-              {statusInfo(collab.status(), collab.synced(), isReadOnly()).label}
+              {statusInfo(ctx.collab.status(), ctx.collab.synced(), ctx.isReadOnly()).label}
             </TooltipContent>
           </Tooltip>
           <ThemeToggle />
@@ -212,7 +145,7 @@ export default function Project() {
               togglePanel("diagnostics");
             }}
             icon={<TbOutlineAlertTriangle size={16} />}
-            badge={errorCount() > 0 ? errorCount() : undefined}
+            badge={ctx.errorCount() > 0 ? ctx.errorCount() : undefined}
           />
         </nav>
         <Switch
@@ -222,14 +155,14 @@ export default function Project() {
             </div>
           }
         >
-          <Match when={project.error !== undefined}>
+          <Match when={ctx.membership.error !== undefined}>
             <div class="flex-1 p-6">
               <Alert variant="destructive">
                 <AlertDescription>Could not load this project.</AlertDescription>
               </Alert>
             </div>
           </Match>
-          <Match when={collab.error()}>
+          <Match when={ctx.collab.error()}>
             {(reason) => (
               <div class="flex-1 p-6">
                 <Alert variant="destructive">
@@ -238,7 +171,7 @@ export default function Project() {
               </div>
             )}
           </Match>
-          <Match when={typst.error()}>
+          <Match when={ctx.typst.error()}>
             {(reason) => (
               <div class="flex-1 p-6">
                 <Alert variant="destructive">
@@ -247,47 +180,39 @@ export default function Project() {
               </div>
             )}
           </Match>
-          <Match when={ready()}>
-            {(r) => (
-              <>
-                <WorkspacePanel open={currentPanel() !== null}>
-                  <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
-                    <FileSidebar
-                      files={r().files}
-                      activeFile={activeFile}
-                      setActiveFile={setRequestedFile}
-                    />
+          <Match when={ctx.ready()}>
+            <>
+              <WorkspacePanel open={currentPanel() !== null}>
+                <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
+                  <FileSidebar />
+                </div>
+                <div class="h-full" classList={{ hidden: currentPanel() !== "diagnostics" }}>
+                  <DiagnosticsPanel />
+                </div>
+              </WorkspacePanel>
+              <main class="grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x divide-border/60">
+                <div class="flex min-w-0 flex-col">
+                  <EditorToolbar />
+                  <div class="min-h-0 flex-1">
+                    <CodeMirrorEditor />
                   </div>
-                  <div class="h-full" classList={{ hidden: currentPanel() !== "diagnostics" }}>
-                    <DiagnosticsPanel
-                      diagnostics={diagnostics}
-                      setActiveFile={setRequestedFile}
-                      view={editorView}
-                    />
-                  </div>
-                </WorkspacePanel>
-                <main class="grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x divide-border/60">
-                  <div class="flex min-w-0 flex-col">
-                    <EditorToolbar view={editorView} readOnly={isReadOnly} />
-                    <div class="min-h-0 flex-1">
-                      <CodeMirrorEditor
-                        files={r().files}
-                        activeFile={activeFile}
-                        project={r().project}
-                        readOnly={isReadOnly}
-                        viewRef={setEditorView}
-                      />
-                    </div>
-                  </div>
-                  <div class="min-w-0">
-                    <PreviewPane project={r().project} renderer={renderer} />
-                  </div>
-                </main>
-              </>
-            )}
+                </div>
+                <div class="min-w-0">
+                  <PreviewPane />
+                </div>
+              </main>
+            </>
           </Match>
         </Switch>
       </div>
     </div>
+  );
+}
+
+export default function Project() {
+  return (
+    <ProjectProvider>
+      <ProjectView />
+    </ProjectProvider>
   );
 }

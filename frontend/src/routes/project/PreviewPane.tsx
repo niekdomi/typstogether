@@ -1,4 +1,3 @@
-import type { TypstProject, TypstRenderer } from "@vedivad/codemirror-typst";
 import type { RenderedSvgPage } from "@vedivad/typst-web-service";
 import {
   TbOutlineArrowAutofitHeight,
@@ -10,11 +9,8 @@ import { createEffect, createSignal, For, Match, onCleanup, onMount, Switch } fr
 
 import { Button } from "../../components/ui/button";
 import { theme } from "../../lib/theme";
-
-interface Props {
-  project: TypstProject;
-  renderer: TypstRenderer;
-}
+import { renderer } from "../../lib/typst/use-typst-project";
+import { useProjectContext } from "./ProjectContext";
 
 const BASE_WIDTH_PX = 700;
 const ZOOM_STEP = 1.1;
@@ -24,7 +20,8 @@ const SCROLLER_PADDING_PX = 24; // matches `p-3` (12px each side)
 
 const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 
-export default function PreviewPane(props: Props) {
+export default function PreviewPane() {
+  const ctx = useProjectContext();
   const [pages, setPages] = createSignal<RenderedSvgPage[] | null>(null);
   const [errorState, setErrorState] = createSignal<string | null>(null);
   const [zoom, setZoom] = createSignal(1);
@@ -34,8 +31,8 @@ export default function PreviewPane(props: Props) {
   let panOrigin: { x: number; y: number; scrollLeft: number; scrollTop: number } | null = null;
 
   createEffect(() => {
-    const project = props.project;
-    const renderer = props.renderer;
+    const project = ctx.typst.project();
+    if (!project) return;
 
     const off = project.onCompile((result) => {
       const vector = result.vector;

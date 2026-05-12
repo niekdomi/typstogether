@@ -5,7 +5,6 @@ import { githubDark, githubLight } from "@uiw/codemirror-theme-github";
 import {
   createTypstHighlighting,
   createTypstSetup,
-  type TypstProject,
   typstFilePath,
 } from "@vedivad/codemirror-typst";
 import { basicSetup } from "codemirror";
@@ -15,6 +14,7 @@ import * as Y from "yjs";
 
 import { theme, type Theme } from "../../lib/theme";
 import { formatKeymap } from "./editor-actions";
+import { useProjectContext } from "./ProjectContext";
 
 const highlightingPromise = createTypstHighlighting({ theme: theme() });
 
@@ -191,33 +191,28 @@ const popupTheme = EditorView.theme({
   ".cm-diagnostic-info": { borderLeftColor: "var(--brand)" },
 });
 
-interface Props {
-  files: Y.Map<Y.Text>;
-  activeFile: () => string;
-  project: TypstProject;
-  readOnly: () => boolean;
-  /** Called with the view after mount and with `null` on unmount. */
-  viewRef?: (view: EditorView | null) => void;
-}
-
 interface PerFileState {
   state: EditorState;
   undoManager: Y.UndoManager;
 }
 
-export default function CodeMirrorEditor(props: Props) {
+export default function CodeMirrorEditor() {
+  const ctx = useProjectContext();
   let parent: HTMLDivElement | undefined;
 
   onMount(() => {
     const owner = getOwner();
     void (async () => {
       if (!parent || !owner) return;
+      // Editor only mounts inside `ctx.ready()`, so files + typst project are non-null.
+      const files = ctx.collab.files()!;
+      const typstProject = ctx.typst.project()!;
       const controller = await highlightingPromise;
 
       const readOnlyCompartment = new Compartment();
       const themeCompartment = new Compartment();
       const setup = createTypstSetup({
-        project: props.project,
+        project: typstProject,
         sync: "external",
         highlighting: controller,
       });
@@ -235,7 +230,7 @@ export default function CodeMirrorEditor(props: Props) {
             fillHeight,
             popupTheme,
             themeCompartment.of(editorTheme(theme())),
-            readOnlyCompartment.of(EditorState.readOnly.of(props.readOnly())),
+            readOnlyCompartment.of(EditorState.readOnly.of(ctx.isReadOnly())),
             ...setup,
             yCollab(text, null, { undoManager }),
             typstFilePath.of(path),
@@ -247,20 +242,20 @@ export default function CodeMirrorEditor(props: Props) {
       const ensureState = (path: string): PerFileState | null => {
         const existing = states.get(path);
         if (existing) return existing;
-        const text = props.files.get(path);
+        const text = files.get(path);
         if (!text) return null;
         const built = buildState(path, text);
         states.set(path, built);
         return built;
       };
 
-      const initialPath = props.activeFile();
+      const initialPath = ctx.activeFile();
       const initial = ensureState(initialPath);
       if (!initial) return;
 
       const view = new EditorView({ parent, state: initial.state });
       view.focus();
-      props.viewRef?.(view);
+      ctx.setEditorView(view);
 
       let currentPath = initialPath;
 
@@ -268,7 +263,7 @@ export default function CodeMirrorEditor(props: Props) {
         view.dispatch({
           effects: [
             themeCompartment.reconfigure(editorTheme(theme())),
-            readOnlyCompartment.reconfigure(EditorState.readOnly.of(props.readOnly())),
+            readOnlyCompartment.reconfigure(EditorState.readOnly.of(ctx.isReadOnly())),
           ],
         });
         controller.setTheme(view, theme());
@@ -288,29 +283,29 @@ export default function CodeMirrorEditor(props: Props) {
       const observer = () => {
         // Drop states for files that no longer exist.
         for (const [path, entry] of states) {
-          if (!props.files.has(path)) {
+          if (!files.has(path)) {
             entry.undoManager.destroy();
             states.delete(path);
           }
         }
       };
-      props.files.observe(observer);
+      files.observe(observer);
 
       runWithOwner(owner, () => {
         createEffect(() => {
-          switchTo(props.activeFile());
+          switchTo(ctx.activeFile());
         });
 
         createEffect(() => {
           // Touch reactive deps (theme/readOnly) so reconfigure runs on change.
           theme();
-          props.readOnly();
+          ctx.isReadOnly();
           syncCompartments();
         });
 
         onCleanup(() => {
-          props.viewRef?.(null);
-          props.files.unobserve(observer);
+          ctx.setEditorView(null);
+          files.unobserve(observer);
           for (const entry of states.values()) entry.undoManager.destroy();
           states.clear();
           view.destroy();

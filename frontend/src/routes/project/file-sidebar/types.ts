@@ -1,5 +1,3 @@
-import type * as Y from "yjs";
-
 export type FlatNode =
   | { kind: "file"; path: string; depth: number; name: string }
   | { kind: "folder"; path: string; depth: number; name: string; collapsed: boolean };
@@ -12,9 +10,3 @@ export type DialogState =
   | { type: "newFolder"; dir: string }
   | { type: "renameFolder"; path: string }
   | { type: "deleteFolder"; path: string };
-
-export interface FileSidebarProps {
-  files: Y.Map<Y.Text>;
-  activeFile: () => string;
-  setActiveFile: (path: string) => void;
-}

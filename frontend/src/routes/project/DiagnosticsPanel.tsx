@@ -4,12 +4,7 @@ import { TbOutlineAlertCircle, TbOutlineAlertTriangle, TbOutlineInfoCircle } fro
 import { createMemo, For, Show } from "solid-js";
 
 import { SidebarGroupLabel } from "../../components/ui/sidebar";
-
-interface Props {
-  diagnostics: () => DiagnosticMessage[];
-  setActiveFile: (path: string) => void;
-  view: () => EditorView | null;
-}
+import { useProjectContext } from "./ProjectContext";
 
 const SEVERITY_RANK: Record<DiagnosticMessage["severity"], number> = {
   Error: 0,
@@ -27,11 +22,13 @@ function SeverityIcon(props: { severity: DiagnosticMessage["severity"] }) {
   return <TbOutlineInfoCircle class="mt-0.5 size-4 shrink-0 text-muted-foreground" />;
 }
 
-export default function DiagnosticsPanel(props: Props) {
+export default function DiagnosticsPanel() {
+  const ctx = useProjectContext();
+
   // Group by file path, files sorted alphabetically, diagnostics sorted by severity then line.
   const byFile = createMemo<[string, DiagnosticMessage[]][]>(() => {
     const groups = new Map<string, DiagnosticMessage[]>();
-    for (const d of props.diagnostics()) {
+    for (const d of ctx.diagnostics()) {
       const arr = groups.get(d.path) ?? [];
       arr.push(d);
       groups.set(d.path, arr);
@@ -49,9 +46,9 @@ export default function DiagnosticsPanel(props: Props) {
   });
 
   const jumpTo = (d: DiagnosticMessage) => {
-    props.setActiveFile(d.path);
+    ctx.setActiveFile(d.path);
     queueMicrotask(() => {
-      const view = props.view();
+      const view = ctx.editorView();
       if (!view) return;
       const doc = view.state.doc;
       const line = Math.min(d.range.startLine + 1, doc.lines);
@@ -70,7 +67,7 @@ export default function DiagnosticsPanel(props: Props) {
       <SidebarGroupLabel>Problems</SidebarGroupLabel>
       <div class="min-h-0 flex-1 overflow-auto">
         <Show
-          when={props.diagnostics().length > 0}
+          when={ctx.diagnostics().length > 0}
           fallback={
             <p class="px-3 py-2 text-sm italic text-muted-foreground">No problems detected.</p>
           }

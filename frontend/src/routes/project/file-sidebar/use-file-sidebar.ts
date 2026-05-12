@@ -9,8 +9,9 @@ import {
   normalizeFile,
   normalizeFolder,
 } from "../../../lib/paths";
+import { useProjectContext } from "../ProjectContext";
 import { buildTree } from "./tree";
-import type { DialogState, FileSidebarProps } from "./types";
+import type { DialogState } from "./types";
 
 /** Build the user-facing "already exists" message for a path. */
 const existsMsg = (path: string) => `"${path.replace(/^\//, "")}" already exists.`;
@@ -19,7 +20,10 @@ const existsMsg = (path: string) => `"${path.replace(/^\//, "")}" already exists
  * Owns all reactive state and operations for the file sidebar. Returns plain
  * accessors and handlers — the JSX layer is pure rendering.
  */
-export function useFileSidebar(props: FileSidebarProps) {
+export function useFileSidebar() {
+  const ctx = useProjectContext();
+  // Sidebar only mounts inside `ctx.ready()`, so `files` is non-null.
+  const files = ctx.collab.files()!;
   const [paths, setPaths] = createSignal<string[]>([]);
   const [collapsed, setCollapsed] = createSignal(new Set<string>());
   // Folders the user created via "New folder" that don't yet contain any file.
@@ -33,12 +37,11 @@ export function useFileSidebar(props: FileSidebarProps) {
   // Mirror Y.Map keys into a Solid signal so the list re-renders on any
   // mutation (local or remote).
   createEffect(() => {
-    const map = props.files;
-    const refresh = () => setPaths([...map.keys()]);
+    const refresh = () => setPaths([...files.keys()]);
     refresh();
-    map.observe(refresh);
+    files.observe(refresh);
     onCleanup(() => {
-      map.unobserve(refresh);
+      files.unobserve(refresh);
     });
   });
 
@@ -61,7 +64,7 @@ export function useFileSidebar(props: FileSidebarProps) {
   const tree = createMemo(() => buildTree(paths(), pendingFolders(), collapsed()));
 
   const close = () => setDialog(null);
-  const has = (path: string) => props.files.has(path);
+  const has = (path: string) => files.has(path);
   const folderHasFiles = (folder: string) => paths().some((p) => p.startsWith(folder + "/"));
   const isLocked = (path: string) => path === MAIN_PATH;
 
@@ -87,36 +90,36 @@ export function useFileSidebar(props: FileSidebarProps) {
   // content and delete the old key.
 
   const movePath = (oldPath: string, newPath: string) => {
-    const text = props.files.get(oldPath);
+    const text = files.get(oldPath);
     if (!text) return;
     const copy = new Y.Text();
     copy.insert(0, text.toJSON());
-    props.files.doc?.transact(() => {
-      props.files.set(newPath, copy);
-      props.files.delete(oldPath);
+    files.doc?.transact(() => {
+      files.set(newPath, copy);
+      files.delete(oldPath);
     });
   };
 
   const moveFolder = (oldFolder: string, newFolder: string) => {
     const moves: [string, string][] = [];
-    for (const p of props.files.keys()) {
+    for (const p of files.keys()) {
       if (p === oldFolder || p.startsWith(oldFolder + "/")) {
         moves.push([p, newFolder + p.slice(oldFolder.length)]);
       }
     }
-    props.files.doc?.transact(() => {
+    files.doc?.transact(() => {
       for (const [from, to] of moves) {
-        const text = props.files.get(from);
+        const text = files.get(from);
         if (!text) continue;
         const copy = new Y.Text();
         copy.insert(0, text.toJSON());
-        props.files.set(to, copy);
-        props.files.delete(from);
+        files.set(to, copy);
+        files.delete(from);
       }
     });
-    const active = props.activeFile();
+    const active = ctx.activeFile();
     const moved = moves.find(([from]) => from === active);
-    if (moved) props.setActiveFile(moved[1]);
+    if (moved) ctx.setActiveFile(moved[1]);
   };
 
   // File operations ────────────────────────────────────────────────────────
@@ -127,8 +130,8 @@ export function useFileSidebar(props: FileSidebarProps) {
     const path = normalizeFile(rawName, dir);
     if (!path) return undefined;
     if (has(path)) return existsMsg(path);
-    props.files.set(path, new Y.Text());
-    props.setActiveFile(path);
+    files.set(path, new Y.Text());
+    ctx.setActiveFile(path);
     return undefined;
   };
 
@@ -138,7 +141,7 @@ export function useFileSidebar(props: FileSidebarProps) {
     if (!newPath || newPath === oldPath) return undefined;
     if (has(newPath)) return existsMsg(newPath);
     movePath(oldPath, newPath);
-    if (props.activeFile() === oldPath) props.setActiveFile(newPath);
+    if (ctx.activeFile() === oldPath) ctx.setActiveFile(newPath);
     return undefined;
   };
 
@@ -146,23 +149,23 @@ export function useFileSidebar(props: FileSidebarProps) {
     const newPath = normalizeFile(rawName, dirOf(sourcePath));
     if (!newPath) return undefined;
     if (has(newPath)) return existsMsg(newPath);
-    const source = props.files.get(sourcePath);
+    const source = files.get(sourcePath);
     if (!source) return undefined;
     const copy = new Y.Text();
     copy.insert(0, source.toJSON());
-    props.files.set(newPath, copy);
+    files.set(newPath, copy);
     return undefined;
   };
 
   const handleDeleteFile = (path: string) => {
-    if (isLocked(path) || props.files.size <= 1) {
+    if (isLocked(path) || files.size <= 1) {
       close();
       return;
     }
-    props.files.delete(path);
-    if (props.activeFile() === path) {
-      const next = [...props.files.keys()][0];
-      if (next) props.setActiveFile(next);
+    files.delete(path);
+    if (ctx.activeFile() === path) {
+      const next = [...files.keys()][0];
+      if (next) ctx.setActiveFile(next);
     }
     close();
   };
@@ -185,7 +188,7 @@ export function useFileSidebar(props: FileSidebarProps) {
     const newFolder = joinPath(dirOf(oldFolder), leaf);
     if (
       pendingFolders().has(newFolder) ||
-      [...props.files.keys()].some((p) => p === newFolder || p.startsWith(newFolder + "/"))
+      [...files.keys()].some((p) => p === newFolder || p.startsWith(newFolder + "/"))
     ) {
       return existsMsg(newFolder);
     }
@@ -208,10 +211,8 @@ export function useFileSidebar(props: FileSidebarProps) {
   };
 
   const handleDeleteFolder = (folder: string) => {
-    const toDelete = [...props.files.keys()].filter(
-      (p) => p === folder || p.startsWith(folder + "/")
-    );
-    if (toDelete.length === props.files.size) {
+    const toDelete = [...files.keys()].filter((p) => p === folder || p.startsWith(folder + "/"));
+    if (toDelete.length === files.size) {
       close();
       return;
     }
@@ -227,12 +228,12 @@ export function useFileSidebar(props: FileSidebarProps) {
       return changed ? next : prev;
     });
     if (toDelete.length > 0) {
-      props.files.doc?.transact(() => {
-        for (const p of toDelete) props.files.delete(p);
+      files.doc?.transact(() => {
+        for (const p of toDelete) files.delete(p);
       });
-      if (toDelete.includes(props.activeFile())) {
-        const next = [...props.files.keys()][0];
-        if (next) props.setActiveFile(next);
+      if (toDelete.includes(ctx.activeFile())) {
+        const next = [...files.keys()][0];
+        if (next) ctx.setActiveFile(next);
       }
     }
     close();
@@ -268,7 +269,7 @@ export function useFileSidebar(props: FileSidebarProps) {
     const dest = joinPath(folder, leafOf(src));
     if (dest === src || has(dest)) return;
     movePath(src, dest);
-    if (props.activeFile() === src) props.setActiveFile(dest);
+    if (ctx.activeFile() === src) ctx.setActiveFile(dest);
   };
   const onRootDragOver = (e: DragEvent) => {
     if (!dragging()) return;
@@ -288,7 +289,7 @@ export function useFileSidebar(props: FileSidebarProps) {
     const dest = `/${leafOf(src)}`;
     if (dest === src || has(dest)) return;
     movePath(src, dest);
-    if (props.activeFile() === src) props.setActiveFile(dest);
+    if (ctx.activeFile() === src) ctx.setActiveFile(dest);
   };
 
   return {
@@ -299,10 +300,10 @@ export function useFileSidebar(props: FileSidebarProps) {
     dialogOf,
     dragging,
     dragOver,
-    activeFile: props.activeFile,
-    canDeleteFile: (path: string) => !isLocked(path) && props.files.size > 1,
+    activeFile: ctx.activeFile,
+    canDeleteFile: (path: string) => !isLocked(path) && files.size > 1,
     isLocked,
-    onSelectFile: props.setActiveFile,
+    onSelectFile: ctx.setActiveFile,
     toggleCollapsed,
     handleNewFile,
     handleRenameFile,

@@ -27,11 +27,7 @@ import {
   togglePrefix,
   wrapSelection,
 } from "./editor-actions";
-
-interface Props {
-  view: () => EditorView | null;
-  readOnly: () => boolean;
-}
+import { useProjectContext } from "./ProjectContext";
 
 interface ToolbarAction {
   icon: () => JSX.Element;
@@ -185,8 +181,9 @@ const groups: ToolbarGroup[] = [
   },
 ];
 
-export default function EditorToolbar(props: Props) {
-  const disabled = () => !props.view() || props.readOnly();
+export default function EditorToolbar() {
+  const ctx = useProjectContext();
+  const disabled = () => !ctx.editorView() || ctx.isReadOnly();
 
   return (
     <div class="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-border/60 px-2 py-1">
@@ -204,7 +201,7 @@ export default function EditorToolbar(props: Props) {
                   aria-keyshortcuts={action.shortcut}
                   disabled={disabled()}
                   onClick={() => {
-                    const v = props.view();
+                    const v = ctx.editorView();
                     if (v) action.run(v);
                   }}
                 >

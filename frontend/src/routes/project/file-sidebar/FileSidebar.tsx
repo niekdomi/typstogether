@@ -25,7 +25,7 @@ import {
   SidebarProvider,
 } from "../../../components/ui/sidebar";
 import Dialogs from "./Dialogs";
-import type { FileSidebarProps, FlatNode } from "./types";
+import type { FlatNode } from "./types";
 import { type FileSidebarController, useFileSidebar } from "./use-file-sidebar";
 
 interface NodeProps {
@@ -170,8 +170,8 @@ function Node(props: NodeProps) {
   );
 }
 
-export default function FileSidebar(props: FileSidebarProps) {
-  const sb = useFileSidebar(props);
+export default function FileSidebar() {
+  const sb = useFileSidebar();
 
   return (
     <SidebarProvider class="flex h-full flex-col">
