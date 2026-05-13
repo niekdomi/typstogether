@@ -16,7 +16,7 @@ class DbRegistry {
   }
 
   get(): Database {
-    if (!this._db) throw new Error("db not initialized — call dbRegistry.set() first");
+    if (!this._db) throw new Error("db not initialized - call dbRegistry.set() first");
     return this._db;
   }
 }

@@ -116,7 +116,7 @@ describe("normalizeFolder", () => {
 describe("folder creation with simulated structure", () => {
   const files = ["/main.typ", "/a/b.typ", "/a/c.typ", "/x/y/z.typ"];
 
-  test(".. name resolves to parent — detected as duplicate when parent has files", () => {
+  test(".. name resolves to parent - detected as duplicate when parent has files", () => {
     // User types ".." as folder name inside /a/b → resolves to /a
     const folder = normalizeFolder("..", "/a/b");
     expect(folder).toBe("/a");
@@ -142,7 +142,7 @@ describe("folder creation with simulated structure", () => {
     expect(has(files, path)).toBe(true);
   });
 
-  test("traversal that exceeds root is clamped — resolves against root-level files", () => {
+  test("traversal that exceeds root is clamped - resolves against root-level files", () => {
     // /a has no root sibling, but /main.typ is at root
     const path = normalizeFile("../../../main", "/a");
     expect(path).toBe("/main.typ");

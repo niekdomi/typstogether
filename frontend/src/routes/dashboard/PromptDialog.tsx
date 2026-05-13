@@ -15,7 +15,7 @@ interface PromptDialogProps {
   onClose: () => void;
   /**
    * Handle the submitted value. Return a string to display as an inline error
-   * and keep the dialog open; return `undefined` on success — the dialog will
+   * and keep the dialog open; return `undefined` on success - the dialog will
    * close itself.
    */
   onSubmit: (value: string) => string | undefined;
