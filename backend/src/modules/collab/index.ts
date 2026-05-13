@@ -33,4 +33,7 @@ export const collabRoutes = new Elysia({ name: "collab-routes" }).ws("/collab", 
     connections.get(ws.id)?.handleClose({ code, reason });
     connections.delete(ws.id);
   },
+  error({ error }) {
+    console.error("collab ws error:", error);
+  },
 });
