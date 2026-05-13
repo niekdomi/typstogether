@@ -1,5 +1,0 @@
-telemetry = false
-
-[test]
-preload = ["./test/setup.ts"]
-coveragePathIgnorePatterns = ["**/test/**", "**/*.test.ts"]
