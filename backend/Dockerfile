@@ -11,7 +11,7 @@ RUN bun install --frozen-lockfile --filter @typstogether/backend
 COPY tsconfig.json ./
 COPY backend/ ./backend/
 
-RUN cd backend && bun build src/index.ts src/migrate.ts --target=bun --bytecode --minify --sourcemap --outdir=dist
+RUN cd backend && bun build src/index.ts src/migrate.ts --target=bun --minify --sourcemap --outdir=dist
 
 FROM oven/bun:${BUN_VERSION}-alpine
 WORKDIR /app
