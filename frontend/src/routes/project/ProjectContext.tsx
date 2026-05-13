@@ -56,7 +56,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
   const [diagnostics, setDiagnostics] = createSignal<DiagnosticMessage[]>([]);
 
   const isReadOnly = () => membership()?.role === "viewer" || collab.readOnly;
-  const errorCount = createMemo(() => diagnostics().filter((d) => d.severity === "Error").length);
+  const errorCount = createMemo(() => diagnostics().filter((d) => (d.severity as string) === "error").length);
 
   const ready = createMemo<Ready | null>(() => {
     const files = collab.files;
@@ -89,7 +89,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
       return;
     }
     const off = r.typstProject.onCompile((result) => {
-      setDiagnostics(result.diagnostics);
+setDiagnostics(result.diagnostics);
     });
     onCleanup(off);
   });
