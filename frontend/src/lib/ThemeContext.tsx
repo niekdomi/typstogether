@@ -17,9 +17,9 @@ function systemTheme(): Theme {
   return globalThis.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function detectInitial(): Theme {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored === "light" || stored === "dark" ? stored : systemTheme();
+// Initial theme is set synchronously in index.html before paint; read it back here.
+function readDomTheme(): Theme {
+  return document.documentElement.dataset["theme"] === "dark" ? "dark" : "light";
 }
 
 function applyTheme(t: Theme): void {
@@ -34,11 +34,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue>();
 
 export function ThemeProvider(props: { children: JSX.Element }) {
-  const [theme, setTheme] = createSignal<Theme>(detectInitial());
-
-  // Apply synchronously in the body so children render against the right
-  // data-theme on first paint.
-  applyTheme(theme());
+  const [theme, setTheme] = createSignal<Theme>(readDomTheme());
 
   const setThemeWithFade = (next: Theme) => {
     const root = document.documentElement;
