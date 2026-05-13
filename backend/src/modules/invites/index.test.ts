@@ -287,7 +287,7 @@ describe("POST /invites/:token/redeem", () => {
     expect(res.status).toBe(410);
   });
 
-  test("409 when the redeemer is the project owner", async () => {
+  test("200 with owner role when the redeemer is the project owner", async () => {
     const owner = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
     const { token } = await inviteService.create({
@@ -300,6 +300,9 @@ describe("POST /invites/:token/redeem", () => {
 
     const res = await request(`/invites/${token}/redeem`, { method: "POST" });
 
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { project: { id: string }; role: string };
+    expect(body.project.id).toBe(project.id);
+    expect(body.role).toBe("owner");
   });
 });

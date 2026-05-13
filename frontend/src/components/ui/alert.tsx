@@ -3,7 +3,7 @@ import type { VariantProps } from "cva";
 import type { ComponentProps, ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 
-import { cva, cx } from "../../lib/cva";
+import { cva, cx } from "./cva";
 
 export const alertVariants = cva({
   base: [

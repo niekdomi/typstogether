@@ -1,8 +1,9 @@
 import { Toaster as Sonner } from "somoto";
 
-import { theme } from "../../lib/theme";
+import { useTheme } from "../../lib/ThemeContext";
 
 export const Toaster = (props: Parameters<typeof Sonner>[0]) => {
+  const { theme } = useTheme();
   return (
     <Sonner
       theme={theme()}

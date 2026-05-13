@@ -3,7 +3,7 @@ import { Select as SelectPrimitive } from "@kobalte/core/select";
 import type { ComponentProps, ValidComponent, VoidProps } from "solid-js";
 import { mergeProps, splitProps } from "solid-js";
 
-import { cx } from "../../lib/cva";
+import { cx } from "./cva";
 
 export const SelectPortal = SelectPrimitive.Portal;
 export const HiddenSelect = SelectPrimitive.HiddenSelect;

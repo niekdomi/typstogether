@@ -3,7 +3,7 @@ import { usePopperContext } from "@kobalte/core/popper";
 import type { ComponentProps, ValidComponent } from "solid-js";
 import { mergeProps, splitProps } from "solid-js";
 
-import { cx } from "../../lib/cva";
+import { cx } from "./cva";
 
 export const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
 

@@ -3,8 +3,8 @@ import { Navigate, Route, Router } from "@solidjs/router";
 import { Toaster } from "./components/ui/sonner";
 import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "./routes/dashboard/Dashboard";
-import Login from "./routes/Login";
-import Project from "./routes/Project";
+import Login from "./routes/login/Login";
+import Project from "./routes/project/Project";
 import RedeemInvite from "./routes/RedeemInvite";
 
 export default function App() {

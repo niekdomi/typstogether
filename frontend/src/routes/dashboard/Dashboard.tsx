@@ -2,21 +2,19 @@ import { useNavigate } from "@solidjs/router";
 import { SiGithub } from "solid-icons/si";
 import { For, Match, Switch, createMemo, createSignal } from "solid-js";
 
-import ConfirmDialog from "../../components/ConfirmDialog";
-import PromptDialog from "../../components/PromptDialog";
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Skeleton } from "../../components/ui/skeleton";
-import { authClient } from "../../lib/auth";
-import { useProjects } from "../../lib/use-projects";
+import { useProjects } from "../../lib/projects/use-projects";
+import ConfirmDialog from "./ConfirmDialog";
 import InviteDialog from "./InviteDialog";
 import NewProjectModal from "./NewProjectModal";
 import ProjectCard from "./ProjectCard";
+import PromptDialog from "./PromptDialog";
 import TabsBar, { type Tab } from "./TabsBar";
 import TopBar from "./TopBar";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const session = authClient.useSession();
   const { projects, rename, remove, create } = useProjects();
 
   const [tab, setTab] = createSignal<Tab>("owned");
@@ -39,21 +37,9 @@ export default function Dashboard() {
     );
   });
 
-  async function signOut() {
-    await authClient.signOut();
-    navigate("/login");
-  }
-
   return (
     <div class="flex min-h-screen flex-col bg-background">
-      <TopBar
-        query={query()}
-        onQuery={setQuery}
-        userName={session().data?.user.name}
-        userEmail={session().data?.user.email}
-        userImage={session().data?.user.image}
-        onSignOut={() => void signOut()}
-      />
+      <TopBar query={query()} onQuery={setQuery} />
       <main class="mx-auto flex w-full max-w-310 flex-1 flex-col px-8 py-10">
         <h1 class="mb-8 mt-2 text-[44px] font-medium tracking-[-0.02em]">Projects</h1>
         <TabsBar

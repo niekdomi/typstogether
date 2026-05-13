@@ -1,13 +1,24 @@
-import { createEffect, createSignal } from "solid-js";
+import { createEffect, createSignal, Show } from "solid-js";
 
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
-import { TextField, TextFieldInput, TextFieldLabel } from "./ui/text-field";
+import { Button } from "../../components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import { TextField, TextFieldInput, TextFieldLabel } from "../../components/ui/text-field";
 
 interface PromptDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (value: string) => void;
+  /**
+   * Handle the submitted value. Return a string to display as an inline error
+   * and keep the dialog open; return `undefined` on success — the dialog will
+   * close itself.
+   */
+  onSubmit: (value: string) => string | undefined;
   title: string;
   label: string;
   initialValue?: string;
@@ -16,9 +27,13 @@ interface PromptDialogProps {
 
 export default function PromptDialog(props: PromptDialogProps) {
   const [value, setValue] = createSignal(props.initialValue ?? "");
+  const [error, setError] = createSignal<string | null>(null);
 
   createEffect(() => {
-    if (props.open) setValue(props.initialValue ?? "");
+    if (props.open) {
+      setValue(props.initialValue ?? "");
+      setError(null);
+    }
   });
 
   return (
@@ -37,15 +52,26 @@ export default function PromptDialog(props: PromptDialogProps) {
             e.preventDefault();
             const trimmed = value().trim();
             if (!trimmed) return;
-            props.onSubmit(trimmed);
+            const message = props.onSubmit(trimmed);
+            if (message) {
+              setError(message);
+              return;
+            }
             props.onClose();
           }}
           class="flex flex-col gap-4"
         >
-          <TextField value={value()} onChange={setValue}>
+          <TextField
+            value={value()}
+            onChange={(v) => {
+              setValue(v);
+              if (error()) setError(null);
+            }}
+          >
             <TextFieldLabel>{props.label}</TextFieldLabel>
             <TextFieldInput autofocus type="text" />
           </TextField>
+          <Show when={error()}>{(msg) => <p class="text-sm text-destructive">{msg()}</p>}</Show>
           <DialogFooter>
             <Button variant="outline" onClick={props.onClose}>
               Cancel

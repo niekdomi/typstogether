@@ -12,3 +12,9 @@ dbRegistry.set(db);
 
 const { startServer } = await import("./app");
 startServer();
+
+// HACK: Without the following line, bun won't produce a `.cpuprofile` when running with `--cpu-prof`.
+// This hack though has the issue that running `bun dev` no longer exists gracefully.
+// FWIW, the backend exists with code 130.
+// This issue is likely related: https://github.com/oven-sh/bun/issues/24787
+// process.on("SIGINT", () => process.exit(0));

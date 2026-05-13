@@ -5,6 +5,7 @@ import {
   TbOutlineLink,
 } from "solid-icons/tb";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
+import { createStore } from "solid-js/store";
 import { toast } from "somoto";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
@@ -54,18 +55,15 @@ async function loadMembers(projectId: string) {
 
 export default function InviteDialog(props: InviteDialogProps) {
   const [role, setRole] = createSignal<InviteRole>("editor");
-  const [generatedToken, setGeneratedToken] = createSignal<string | null>(null);
-  const [copied, setCopied] = createSignal(false);
+  const [link, setLink] = createStore<{ token: string | null; copied: boolean }>({
+    token: null,
+    copied: false,
+  });
 
-  const projectIdMemo = () => props.projectId;
+  const [invites, { refetch: refetchInvites }] = createResource(() => props.projectId, loadInvites);
+  const [members] = createResource(() => props.projectId, loadMembers);
 
-  const [invites, { refetch: refetchInvites }] = createResource(projectIdMemo, loadInvites);
-  const [members] = createResource(projectIdMemo, loadMembers);
-
-  const linkUrl = () => {
-    const token = generatedToken();
-    return token ? `${location.origin}/invite/${token}` : "";
-  };
+  const linkUrl = () => (link.token ? `${location.origin}/invite/${link.token}` : "");
 
   const activeInvites = createMemo(() => {
     const now = Date.now();
@@ -84,15 +82,17 @@ export default function InviteDialog(props: InviteDialogProps) {
       toast.error("Could not create invite link.");
       return;
     }
-    setGeneratedToken(data.token);
+    setLink({ token: data.token, copied: false });
     void refetchInvites();
   }
 
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(linkUrl());
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1400);
+      setLink("copied", true);
+      setTimeout(() => {
+        setLink("copied", false);
+      }, 1400);
     } catch {
       toast.error("Could not copy to clipboard.");
     }
@@ -109,8 +109,7 @@ export default function InviteDialog(props: InviteDialogProps) {
   }
 
   function close() {
-    setGeneratedToken(null);
-    setCopied(false);
+    setLink({ token: null, copied: false });
     props.onClose();
   }
 
@@ -151,7 +150,7 @@ export default function InviteDialog(props: InviteDialogProps) {
             <div class="text-xs text-muted-foreground">Expires in 7 days</div>
           </div>
           <Show
-            when={generatedToken()}
+            when={link.token}
             fallback={
               <div class="flex items-center gap-2">
                 <ToggleGroup
@@ -178,17 +177,19 @@ export default function InviteDialog(props: InviteDialogProps) {
                 value={linkUrl()}
               />
               <Button variant="outline" size="sm" onClick={() => void copyLink()}>
-                <Show when={copied()} fallback={<TbOutlineCopy size={14} />}>
+                <Show when={link.copied} fallback={<TbOutlineCopy size={14} />}>
                   <TbOutlineCheck size={14} />
                 </Show>
-                {copied() ? "Copied" : "Copy"}
+                {link.copied ? "Copied" : "Copy"}
               </Button>
             </div>
             <Button
               variant="ghost"
               size="sm"
               class="self-start"
-              onClick={() => setGeneratedToken(null)}
+              onClick={() => {
+                setLink({ token: null, copied: false });
+              }}
             >
               Generate another link
             </Button>

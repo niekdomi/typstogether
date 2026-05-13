@@ -3,7 +3,7 @@ import type { VariantProps } from "cva";
 import type { ComponentProps, ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 
-import { cva } from "../../lib/cva";
+import { cva } from "./cva";
 
 export const badgeVariants = cva({
   base: [
