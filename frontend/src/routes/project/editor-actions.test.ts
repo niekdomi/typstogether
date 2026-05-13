@@ -45,9 +45,9 @@ const selOf = (v: EditorView) => {
 
 describe("wrapSelection", () => {
   test("empty cursor inserts marker pair and places cursor inside", () => {
-    const v = mkView("hello", 2);
+    const v = mkView("into", 2);
     wrapSelection(v, "*");
-    expect(docOf(v)).toBe("he**llo");
+    expect(docOf(v)).toBe("in**to");
     expect(selOf(v)).toEqual({ from: 3, to: 3 });
   });
 
