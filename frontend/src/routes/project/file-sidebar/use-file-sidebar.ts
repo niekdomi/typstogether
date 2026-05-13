@@ -203,12 +203,11 @@ export function useFileSidebar() {
   };
 
   const handleRenameFolder = (oldFolder: string, rawName: string): string | undefined => {
-    const leaf = rawName.trim().replace(/\/+$/, "");
-    if (leaf === leafOf(oldFolder)) {
+    const newFolder = normalizeFolder(rawName, dirOf(oldFolder));
+    if (!newFolder || newFolder === oldFolder) {
       return undefined;
     }
 
-    const newFolder = joinPath(dirOf(oldFolder), leaf);
     if (pendingFolders().has(newFolder) || folderHasFiles(newFolder)) {
       return existsMsg(newFolder);
     }
