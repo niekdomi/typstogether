@@ -5,13 +5,12 @@ export const FILES_KEY = "files";
 
 /** The directory part of a path. Root is the empty string. */
 export function dirOf(path: string): string {
-  const i = path.lastIndexOf("/");
-  return i <= 0 ? "" : path.slice(0, i);
+  return path.split("/").slice(0, -1).join("/");
 }
 
 /** The leaf (basename) of a path. */
 export function leafOf(path: string): string {
-  return path.slice(path.lastIndexOf("/") + 1);
+  return path.split("/").at(-1)!;
 }
 
 /** Join a directory and a leaf into a full path. */

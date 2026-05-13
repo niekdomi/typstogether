@@ -40,16 +40,19 @@ export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
           TypstCompiler.create(),
           TypstAnalyzer.create({ wasmUrl: tinymistWasmUrl }),
         ]);
+
         if (aborted()) {
           compiler.destroy();
           analyzer.destroy();
           return;
         }
+
         project = new TypstProject({
           compiler,
           analyzer,
           autoCompile: { debounceMs: 200, maxWaitMs: 1000 },
         });
+
         sync = syncYMapToTypstProject({
           project: project,
           files: f,
@@ -58,9 +61,12 @@ export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
           },
         });
         await sync.ready;
+
         if (aborted()) return;
         await project.compile();
-        if (!aborted()) setState("project", project);
+        if (!aborted()) {
+          setState("project", project);
+        }
       } catch (error) {
         setState("error", String(error));
       }

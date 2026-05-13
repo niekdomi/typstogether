@@ -12,6 +12,7 @@ async function loadProjects(): Promise<Membership[]> {
 export function useProjects() {
   const [projects, { refetch }] = createResource(loadProjects);
 
+  /** Runs an API call, shows a toast on error, and refetches the list on success. */
   async function mutate(
     fn: () => Promise<{ error: unknown }>,
     errorMsg: string,
@@ -22,6 +23,7 @@ export function useProjects() {
       toast.error(errorMsg);
       return;
     }
+
     void refetch();
     onSuccess?.();
   }

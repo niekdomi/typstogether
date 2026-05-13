@@ -30,8 +30,12 @@ export function buildTree(
       dir = dirOf(dir);
     }
   };
-  for (const path of paths) addFolderAndAncestors(dirOf(path));
-  for (const folder of pendingFolders) addFolderAndAncestors(folder);
+  for (const path of paths) {
+    addFolderAndAncestors(dirOf(path));
+  }
+  for (const folder of pendingFolders) {
+    addFolderAndAncestors(folder);
+  }
 
   const childrenOf = new Map<string, Item[]>();
   const ensure = (parent: string): Item[] => {

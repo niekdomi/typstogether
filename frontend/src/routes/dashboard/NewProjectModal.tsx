@@ -102,8 +102,9 @@ export default function NewProjectModal(props: NewProjectModalProps) {
   const [name, setName] = createSignal("");
   const [template, setTemplate] = createSignal(BLANK_ID);
   const [search, setSearch] = createSignal("");
-  const [category, setCategory] = createSignal<string>("all");
+  const [category, setCategory] = createSignal("all");
   const [templates] = createResource(loadTemplates);
+  const trimmedName = createMemo(() => name().trim());
 
   createEffect(() => {
     if (props.open) {
@@ -148,8 +149,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            const trimmed = name().trim();
-            if (trimmed) props.onSubmit(trimmed);
+            if (trimmedName()) props.onSubmit(trimmedName());
           }}
           class="flex flex-col gap-4"
         >
@@ -235,12 +235,12 @@ export default function NewProjectModal(props: NewProjectModalProps) {
             <Button variant="outline" onClick={props.onClose}>
               Cancel
             </Button>
-            <Tooltip openDelay={100} disabled={!!name().trim()}>
+            <Tooltip openDelay={100} disabled={!!trimmedName()}>
               <TooltipTrigger as="div" tabIndex={-1}>
                 <Button
                   type="submit"
-                  disabled={!name().trim()}
-                  class={name().trim() ? undefined : "pointer-events-none"}
+                  disabled={!trimmedName()}
+                  class={trimmedName() ? undefined : "pointer-events-none"}
                 >
                   Create
                 </Button>

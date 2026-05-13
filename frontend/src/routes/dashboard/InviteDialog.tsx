@@ -60,10 +60,8 @@ export default function InviteDialog(props: InviteDialogProps) {
     copied: false,
   });
 
-  const projectIdMemo = () => props.projectId;
-
-  const [invites, { refetch: refetchInvites }] = createResource(projectIdMemo, loadInvites);
-  const [members] = createResource(projectIdMemo, loadMembers);
+  const [invites, { refetch: refetchInvites }] = createResource(() => props.projectId, loadInvites);
+  const [members] = createResource(() => props.projectId, loadMembers);
 
   const linkUrl = () => (link.token ? `${location.origin}/invite/${link.token}` : "");
 

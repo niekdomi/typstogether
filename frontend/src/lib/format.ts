@@ -16,6 +16,7 @@ const UNITS = [
   { max: Infinity, divisor: YEAR, unit: "year" },
 ] as const;
 
+/** Returns a locale-aware relative time string, e.g. "3 minutes ago" or "yesterday". */
 export function formatRelative(value: Date | string): string {
   const time = typeof value === "string" ? new Date(value).getTime() : value.getTime();
   const diff = (time - Date.now()) / 1000;

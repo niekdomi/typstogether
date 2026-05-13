@@ -38,7 +38,6 @@ export default function CodeMirrorEditor() {
         sync: "external",
         highlighting: controller,
       });
-
       // Per-file: undo history and last selection persist across switches. The
       // EditorState itself is rebuilt on every switch-in from text.toJSON() so
       // the doc reflects remote edits that landed while the file was inactive.

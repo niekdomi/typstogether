@@ -9,6 +9,10 @@ async function loadProject(id: string): Promise<Membership> {
   return data;
 }
 
+/**
+ * @param id Reactive accessor returning the project id.
+ * You should pass a function, not a plain string, so SolidJS can re-fetch when it changes.
+ */
 export function useProject(id: () => string) {
   const [project] = createResource(id, loadProject);
   return project;

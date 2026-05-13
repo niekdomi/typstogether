@@ -13,10 +13,13 @@ export type Theme = "light" | "dark";
 const STORAGE_KEY = "theme";
 const FADE_MS = 200;
 
+function systemTheme(): Theme {
+  return globalThis.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 function detectInitial(): Theme {
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark") return stored;
-  return globalThis.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return stored === "light" || stored === "dark" ? stored : systemTheme();
 }
 
 function applyTheme(t: Theme): void {
@@ -49,10 +52,13 @@ export function ThemeProvider(props: { children: JSX.Element }) {
 
   onMount(() => {
     const mql = globalThis.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => {
-      if (localStorage.getItem(STORAGE_KEY)) return;
-      setThemeWithFade(e.matches ? "dark" : "light");
+    const handler = () => {
+      if (localStorage.getItem(STORAGE_KEY)) {
+        return;
+      }
+      setThemeWithFade(systemTheme());
     };
+
     mql.addEventListener("change", handler);
     onCleanup(() => {
       mql.removeEventListener("change", handler);
