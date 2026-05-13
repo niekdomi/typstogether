@@ -17,9 +17,15 @@ import type { DialogState } from "./types";
 /** Build the user-facing "already exists" message for a path. */
 const existsMsg = (path: string) => `"${path.replace(/^\//, "")}" already exists.`;
 
+const copyText = (src: Y.Text): Y.Text => {
+  const copy = new Y.Text();
+  copy.insert(0, src.toJSON());
+  return copy;
+};
+
 /**
  * Owns all reactive state and operations for the file sidebar. Returns plain
- * accessors and handlers — the JSX layer is pure rendering.
+ * accessors and handlers - the JSX layer is pure rendering.
  */
 export function useFileSidebar() {
   const ctx = useProjectContext();
@@ -52,15 +58,8 @@ export function useFileSidebar() {
   createEffect(() => {
     const all = paths();
     setPendingFolders((prev) => {
-      let changed = false;
-      const next = new Set(prev);
-      for (const folder of prev) {
-        if (all.some((p) => p.startsWith(folder + "/"))) {
-          next.delete(folder);
-          changed = true;
-        }
-      }
-      return changed ? next : prev;
+      const next = new Set([...prev].filter((f) => !all.some((p) => p.startsWith(f + "/"))));
+      return next.size < prev.size ? next : prev;
     });
   });
 
@@ -95,10 +94,8 @@ export function useFileSidebar() {
   const movePath = (oldPath: string, newPath: string) => {
     const text = files.get(oldPath);
     if (!text) return;
-    const copy = new Y.Text();
-    copy.insert(0, text.toJSON());
     files.doc?.transact(() => {
-      files.set(newPath, copy);
+      files.set(newPath, copyText(text));
       files.delete(oldPath);
     });
   };
@@ -114,9 +111,7 @@ export function useFileSidebar() {
       for (const [from, to] of moves) {
         const text = files.get(from);
         if (!text) continue;
-        const copy = new Y.Text();
-        copy.insert(0, text.toJSON());
-        files.set(to, copy);
+        files.set(to, copyText(text));
         files.delete(from);
       }
     });
@@ -154,9 +149,7 @@ export function useFileSidebar() {
     if (has(newPath)) return existsMsg(newPath);
     const source = files.get(sourcePath);
     if (!source) return undefined;
-    const copy = new Y.Text();
-    copy.insert(0, source.toJSON());
-    files.set(newPath, copy);
+    files.set(newPath, copyText(source));
     return undefined;
   };
 
@@ -197,17 +190,9 @@ export function useFileSidebar() {
     }
     // Rewrite any pending entries with the matching prefix.
     setPendingFolders((prev) => {
-      let changed = false;
-      const next = new Set<string>();
-      for (const p of prev) {
-        if (p === oldFolder || p.startsWith(oldFolder + "/")) {
-          next.add(newFolder + p.slice(oldFolder.length));
-          changed = true;
-        } else {
-          next.add(p);
-        }
-      }
-      return changed ? next : prev;
+      const under = (p: string) => p === oldFolder || p.startsWith(oldFolder + "/");
+      if (![...prev].some((p) => under(p))) return prev;
+      return new Set([...prev].map((p) => (under(p) ? newFolder + p.slice(oldFolder.length) : p)));
     });
     if (folderHasFiles(oldFolder)) moveFolder(oldFolder, newFolder);
     return undefined;
@@ -220,15 +205,8 @@ export function useFileSidebar() {
       return;
     }
     setPendingFolders((prev) => {
-      let changed = false;
-      const next = new Set(prev);
-      for (const p of prev) {
-        if (p === folder || p.startsWith(folder + "/")) {
-          next.delete(p);
-          changed = true;
-        }
-      }
-      return changed ? next : prev;
+      const next = new Set([...prev].filter((p) => p !== folder && !p.startsWith(folder + "/")));
+      return next.size < prev.size ? next : prev;
     });
     if (toDelete.length > 0) {
       files.doc?.transact(() => {
@@ -243,6 +221,17 @@ export function useFileSidebar() {
   };
 
   // Drag and drop ──────────────────────────────────────────────────────────
+
+  const completeDrop = (e: DragEvent, destFor: (src: string) => string) => {
+    e.preventDefault();
+    const src = e.dataTransfer?.getData("text/plain");
+    setDrag({ source: null, over: null });
+    if (!src || isLocked(src)) return;
+    const dest = destFor(src);
+    if (dest === src || has(dest)) return;
+    movePath(src, dest);
+    if (ctx.activeFile() === src) ctx.setActiveFile(dest);
+  };
 
   const onFileDragStart = (e: DragEvent, path: string) => {
     if (isLocked(path)) {
@@ -262,15 +251,8 @@ export function useFileSidebar() {
     setDrag("over", folder);
   };
   const onFolderDrop = (e: DragEvent, folder: string) => {
-    e.preventDefault();
     e.stopPropagation();
-    const src = e.dataTransfer?.getData("text/plain");
-    setDrag({ source: null, over: null });
-    if (!src || isLocked(src)) return;
-    const dest = joinPath(folder, leafOf(src));
-    if (dest === src || has(dest)) return;
-    movePath(src, dest);
-    if (ctx.activeFile() === src) ctx.setActiveFile(dest);
+    completeDrop(e, (src) => joinPath(folder, leafOf(src)));
   };
   const onRootDragOver = (e: DragEvent) => {
     if (!drag.source) return;
@@ -284,14 +266,7 @@ export function useFileSidebar() {
     setDrag("over", null);
   };
   const onRootDrop = (e: DragEvent) => {
-    e.preventDefault();
-    const src = e.dataTransfer?.getData("text/plain");
-    setDrag({ source: null, over: null });
-    if (!src || isLocked(src)) return;
-    const dest = `/${leafOf(src)}`;
-    if (dest === src || has(dest)) return;
-    movePath(src, dest);
-    if (ctx.activeFile() === src) ctx.setActiveFile(dest);
+    completeDrop(e, (src) => `/${leafOf(src)}`);
   };
 
   return {
