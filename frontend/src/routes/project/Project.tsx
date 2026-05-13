@@ -144,8 +144,13 @@ function ProjectView() {
             onClick={() => {
               togglePanel("diagnostics");
             }}
-            icon={<TbOutlineAlertTriangle size={16} />}
-            badge={ctx.errorCount() > 0 ? ctx.errorCount() : undefined}
+            icon={
+              <Show when={ctx.errorCount() > 0} fallback={<TbOutlineAlertTriangle size={16} />}>
+                <TbOutlineAlertTriangle size={16} color="red" />
+              </Show>
+            }
+            // NOTE: I commented this out, since it's in most cases just one, didn't add much value therefore
+            // badge={ctx.errorCount() > 0 ? ctx.errorCount() : undefined}
           />
         </nav>
         <Switch

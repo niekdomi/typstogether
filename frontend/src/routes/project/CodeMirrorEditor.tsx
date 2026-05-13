@@ -1,5 +1,5 @@
 import { indentWithTab } from "@codemirror/commands";
-import { Compartment, type EditorSelection, EditorState } from "@codemirror/state";
+import { Compartment, type EditorSelection, EditorState, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { createTypstSetup, typstFilePath } from "@vedivad/codemirror-typst";
 import { basicSetup } from "codemirror";
@@ -64,7 +64,7 @@ export default function CodeMirrorEditor() {
           extensions: [
             basicSetup,
             keymap.of([indentWithTab, ...yUndoManagerKeymap]),
-            formatKeymap,
+            Prec.high(formatKeymap),
             fillHeight,
             popupTheme,
             themeCompartment.of(editorTheme(theme())),

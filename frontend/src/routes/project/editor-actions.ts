@@ -247,12 +247,15 @@ export function toggleCode(view: EditorView): void {
 }
 
 // Display math requires whitespace (space or newline) on BOTH sides.
-function isMathWS(ch: string): boolean {
+function isMathWhiteSpace(ch: string): boolean {
   return ch === " " || ch === "\n";
 }
 
 function isPairDisplay(open: number, close: number, state: EditorState): boolean {
-  return isMathWS(state.sliceDoc(open + 1, open + 2)) && isMathWS(state.sliceDoc(close - 1, close));
+  return (
+    isMathWhiteSpace(state.sliceDoc(open + 1, open + 2)) &&
+    isMathWhiteSpace(state.sliceDoc(close - 1, close))
+  );
 }
 
 /** Cycle math formatting: none -> $...$ -> $ ... $ -> none. */
@@ -267,8 +270,8 @@ export function toggleMath(view: EditorView): void {
         text.startsWith("$") &&
         text.endsWith("$") &&
         text.length >= 4 &&
-        isMathWS(text[1]!) &&
-        isMathWS(text.at(-2)!)
+        isMathWhiteSpace(text[1]!) &&
+        isMathWhiteSpace(text.at(-2)!)
       ) {
         const inner = text.slice(2, -2);
         return {

@@ -38,7 +38,10 @@ export function buildTree(
   const childrenOf = new Map<string, Item[]>();
   const ensure = (parent: string): Item[] => {
     const existing = childrenOf.get(parent);
-    if (existing) return existing;
+    if (existing) {
+      return existing;
+    }
+
     const arr: Item[] = [];
     childrenOf.set(parent, arr);
     return arr;
@@ -50,11 +53,10 @@ export function buildTree(
   for (const path of paths) {
     ensure(dirOf(path)).push({ kind: "file", path, name: leafOf(path) });
   }
+
+  const kindRank: Record<Item["kind"], number> = { folder: 0, file: 1 };
   for (const arr of childrenOf.values()) {
-    arr.sort((a, b) => {
-      if (a.kind !== b.kind) return a.kind === "folder" ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    });
+    arr.sort((a, b) => kindRank[a.kind] - kindRank[b.kind] || a.name.localeCompare(b.name));
   }
 
   const out: FlatNode[] = [];
@@ -63,12 +65,16 @@ export function buildTree(
       if (kind === "folder") {
         const isCollapsed = collapsed.has(path);
         out.push({ kind, path, depth, name, collapsed: isCollapsed });
-        if (!isCollapsed) visit(path, depth + 1);
+
+        if (!isCollapsed) {
+          visit(path, depth + 1);
+        }
       } else {
         out.push({ kind, path, depth, name });
       }
     }
   };
   visit("", 0);
+
   return out;
 }

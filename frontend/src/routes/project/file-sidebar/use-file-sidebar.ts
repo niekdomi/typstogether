@@ -81,8 +81,13 @@ export function useFileSidebar() {
   const toggleCollapsed = (path: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
+
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+
       return next;
     });
   };
@@ -93,7 +98,10 @@ export function useFileSidebar() {
 
   const movePath = (oldPath: string, newPath: string) => {
     const text = files.get(oldPath);
-    if (!text) return;
+    if (!text) {
+      return;
+    }
+
     files.doc?.transact(() => {
       files.set(newPath, copyText(text));
       files.delete(oldPath);
@@ -102,22 +110,29 @@ export function useFileSidebar() {
 
   const moveFolder = (oldFolder: string, newFolder: string) => {
     const moves: [string, string][] = [];
-    for (const p of files.keys()) {
-      if (p === oldFolder || p.startsWith(oldFolder + "/")) {
-        moves.push([p, newFolder + p.slice(oldFolder.length)]);
+    for (const path of files.keys()) {
+      if (path.startsWith(oldFolder + "/")) {
+        moves.push([path, newFolder + path.slice(oldFolder.length)]);
       }
     }
+
     files.doc?.transact(() => {
       for (const [from, to] of moves) {
         const text = files.get(from);
-        if (!text) continue;
+        if (!text) {
+          continue;
+        }
+
         files.set(to, copyText(text));
         files.delete(from);
       }
     });
+
     const active = ctx.activeFile();
     const moved = moves.find(([from]) => from === active);
-    if (moved) ctx.setActiveFile(moved[1]);
+    if (moved) {
+      ctx.setActiveFile(moved[1]);
+    }
   };
 
   // File operations ────────────────────────────────────────────────────────
@@ -136,10 +151,19 @@ export function useFileSidebar() {
   const handleRenameFile = (oldPath: string, rawName: string): string | undefined => {
     if (isLocked(oldPath)) return undefined;
     const newPath = normalizeFile(rawName, dirOf(oldPath));
-    if (!newPath || newPath === oldPath) return undefined;
-    if (has(newPath)) return existsMsg(newPath);
+    if (newPath === oldPath) {
+      return undefined;
+    }
+
+    if (has(newPath)) {
+      return existsMsg(newPath);
+    }
+
     movePath(oldPath, newPath);
-    if (ctx.activeFile() === oldPath) ctx.setActiveFile(newPath);
+    if (ctx.activeFile() === oldPath) {
+      ctx.setActiveFile(newPath);
+    }
+
     return undefined;
   };
 
@@ -180,43 +204,58 @@ export function useFileSidebar() {
 
   const handleRenameFolder = (oldFolder: string, rawName: string): string | undefined => {
     const leaf = rawName.trim().replace(/\/+$/, "");
-    if (!leaf || leaf === leafOf(oldFolder)) return undefined;
+    if (leaf === leafOf(oldFolder)) {
+      return undefined;
+    }
+
     const newFolder = joinPath(dirOf(oldFolder), leaf);
-    if (
-      pendingFolders().has(newFolder) ||
-      [...files.keys()].some((p) => p === newFolder || p.startsWith(newFolder + "/"))
-    ) {
+    if (pendingFolders().has(newFolder) || folderHasFiles(newFolder)) {
       return existsMsg(newFolder);
     }
+
     // Rewrite any pending entries with the matching prefix.
     setPendingFolders((prev) => {
       const under = (p: string) => p === oldFolder || p.startsWith(oldFolder + "/");
-      if (![...prev].some((p) => under(p))) return prev;
+      if (![...prev].some((p) => under(p))) {
+        return prev;
+      }
       return new Set([...prev].map((p) => (under(p) ? newFolder + p.slice(oldFolder.length) : p)));
     });
-    if (folderHasFiles(oldFolder)) moveFolder(oldFolder, newFolder);
+
+    if (folderHasFiles(oldFolder)) {
+      moveFolder(oldFolder, newFolder);
+    }
+
     return undefined;
   };
 
   const handleDeleteFolder = (folder: string) => {
-    const toDelete = [...files.keys()].filter((p) => p === folder || p.startsWith(folder + "/"));
+    const toDelete = [...files.keys()].filter((p) => p.startsWith(folder + "/"));
     if (toDelete.length === files.size) {
       close();
       return;
     }
+
     setPendingFolders((prev) => {
       const next = new Set([...prev].filter((p) => p !== folder && !p.startsWith(folder + "/")));
       return next.size < prev.size ? next : prev;
     });
+
     if (toDelete.length > 0) {
       files.doc?.transact(() => {
-        for (const p of toDelete) files.delete(p);
+        for (const p of toDelete) {
+          files.delete(p);
+        }
       });
+
       if (toDelete.includes(ctx.activeFile())) {
         const next = [...files.keys()][0];
-        if (next) ctx.setActiveFile(next);
+        if (next) {
+          ctx.setActiveFile(next);
+        }
       }
     }
+
     close();
   };
 

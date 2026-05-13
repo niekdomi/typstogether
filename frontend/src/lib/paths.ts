@@ -3,7 +3,7 @@
 export const MAIN_PATH = "/main.typ";
 export const FILES_KEY = "files";
 
-/** The directory part of a path. Root is the empty string. */
+/** The directory part of a path. Returns "" for root-level paths, which is falsy and acts as the loop terminator when walking ancestors. */
 export function dirOf(path: string): string {
   return path.split("/").slice(0, -1).join("/");
 }
