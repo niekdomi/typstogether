@@ -17,7 +17,7 @@ function systemTheme(): Theme {
   return globalThis.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-// Initial theme is set synchronously in index.html before paint; read it back here.
+// NOTE: Initial theme is set synchronously in index.html before paint, read it back here.
 function readDomTheme(): Theme {
   return document.documentElement.dataset["theme"] === "dark" ? "dark" : "light";
 }
