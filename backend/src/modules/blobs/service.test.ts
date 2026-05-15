@@ -10,7 +10,6 @@ import { currentDb } from "../../transaction";
 import { blobService } from "./service";
 
 const PNG_BYTES = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
-const PNG_SHA256 = "4c4b6a3be1314ab86138bef4314dde022e600960d8689a2c8f8631802d20dab6";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const fileFromBytes = (bytes: Uint8Array, mime = "image/png", name = "blob.png"): File =>
@@ -28,11 +27,10 @@ describe("BlobService", () => {
   afterEach(cleanDb);
 
   describe("store", () => {
-    it("returns a UUID id, sha256, mime, and size; persists the row", async () => {
+    it("returns a UUID id, mime, and size; persists the row", async () => {
       const meta = await blobService.store(projectId, fileFromBytes(PNG_BYTES));
 
       expect(meta.id).toMatch(UUID_RE);
-      expect(meta.sha256).toBe(PNG_SHA256);
       expect(meta.mime).toBe("image/png");
       expect(meta.size).toBe(PNG_BYTES.byteLength);
 
@@ -48,7 +46,6 @@ describe("BlobService", () => {
       const second = await blobService.store(projectId, fileFromBytes(PNG_BYTES));
 
       expect(first.id).not.toBe(second.id);
-      expect(first.sha256).toBe(second.sha256);
 
       const rows = await currentDb()
         .select()
@@ -80,7 +77,6 @@ describe("BlobService", () => {
       expect(blob.bytes).toEqual(PNG_BYTES);
       expect(blob.mime).toBe("image/png");
       expect(blob.size).toBe(PNG_BYTES.byteLength);
-      expect(blob.sha256).toBe(PNG_SHA256);
     });
 
     it("throws NotFoundError when the id is missing in this project", async () => {

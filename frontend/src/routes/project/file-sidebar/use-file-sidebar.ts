@@ -102,7 +102,7 @@ export function useFileSidebar() {
 
   // Path moves ────────────────────────────────────────────────────────────
   // Text values: Y.Text instances can't be transferred between Y.Map keys, so
-  // we copy content and delete the old key. Asset values: the sha256 string is
+  // we copy content and delete the old key. Asset values: the blob_id string is
   // a primitive, so a plain set/delete is enough.
 
   const movePath = (oldPath: string, newPath: string) => {

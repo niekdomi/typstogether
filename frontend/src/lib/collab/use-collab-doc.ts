@@ -16,7 +16,7 @@ import { collabWsUrl } from "./ws-url";
 interface CollabState {
   ydoc: Y.Doc | null;
   files: Y.Map<Y.Text> | null;
-  // path → sha256 of a blob stored via the backend's project_blob table.
+  // path -> blob_id of a row stored in the backend's project_blob table.
   assets: Y.Map<string> | null;
   status: WebSocketStatus;
   synced: boolean;

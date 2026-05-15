@@ -113,8 +113,6 @@ export const projectBlob = pgTable(
     blobId: text("blob_id")
       .notNull()
       .$defaultFn(() => crypto.randomUUID()),
-    // Content hash. Not unique. Used as ETag for HTTP cache revalidation.
-    sha256: text("sha256").notNull(),
     mime: text("mime").notNull(),
     size: integer("size").notNull(),
     bytes: bytea("bytes").notNull(),

@@ -17,7 +17,6 @@ const PNG_BYTES = new Uint8Array([
   0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
   0x42, 0x60, 0x82,
 ]);
-const PNG_SHA256 = "3bdba8cdd985df984cdb8dae9a5da9cb90dd1ada772c92cf813b88c8a6062b86";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const uploadInit = (bytes: Uint8Array, mime = "image/png", name = "blob.png"): RequestInit => {
@@ -28,7 +27,6 @@ const uploadInit = (bytes: Uint8Array, mime = "image/png", name = "blob.png"): R
 
 interface UploadBody {
   id: string;
-  sha256: string;
   mime: string;
   size: number;
 }
@@ -84,7 +82,7 @@ describe("POST /projects/:id/blobs", () => {
     expect(res.status).toBe(422);
   });
 
-  test("200 returns id, sha256, mime, size for the owner", async () => {
+  test("200 returns id, mime, size for the owner", async () => {
     const owner = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
     setTestUser(owner);
@@ -94,7 +92,6 @@ describe("POST /projects/:id/blobs", () => {
 
     expect(res.status).toBe(200);
     expect(body.id).toMatch(UUID_RE);
-    expect(body.sha256).toBe(PNG_SHA256);
     expect(body.mime).toBe("image/png");
     expect(body.size).toBe(PNG_BYTES.byteLength);
   });
@@ -122,7 +119,6 @@ describe("POST /projects/:id/blobs", () => {
     const r2 = (await res2.json()) as UploadBody;
 
     expect(r1.id).not.toBe(r2.id);
-    expect(r1.sha256).toBe(r2.sha256);
   });
 });
 
@@ -175,7 +171,7 @@ describe("GET /projects/:id/blobs/:blobId", () => {
     expect(res.status).toBe(422);
   });
 
-  test("200 viewers can read; bytes, content-type, etag (=sha256), cache-control are set", async () => {
+  test("200 viewers can read; bytes, content-type, cache-control are set", async () => {
     const owner = await userFactory.create();
     const viewer = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
@@ -190,7 +186,6 @@ describe("GET /projects/:id/blobs/:blobId", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("image/png");
-    expect(res.headers.get("etag")).toBe(`"${PNG_SHA256}"`);
     expect(res.headers.get("cache-control")).toBe("private, max-age=31536000, immutable");
     expect(res.headers.get("x-content-type-options")).toBe("nosniff");
     const body = new Uint8Array(await res.arrayBuffer());

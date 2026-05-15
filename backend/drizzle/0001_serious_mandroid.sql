@@ -1,7 +1,6 @@
 CREATE TABLE "project_blob" (
 	"project_id" text NOT NULL,
 	"blob_id" text NOT NULL,
-	"sha256" text NOT NULL,
 	"mime" text NOT NULL,
 	"size" integer NOT NULL,
 	"bytes" "bytea" NOT NULL,

@@ -2,7 +2,6 @@ import { baseUrl } from "../api";
 
 export interface UploadedBlob {
   id: string;
-  sha256: string;
   mime: string;
   size: number;
 }

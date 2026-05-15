@@ -16,7 +16,6 @@ export const blobUploadModel = t.Object({
 
 export const blobMetaModel = t.Object({
   id: t.String(),
-  sha256: t.String(),
   mime: t.String(),
   size: t.Number(),
 });

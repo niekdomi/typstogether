@@ -1,5 +1,5 @@
 {
-  "id": "b337712a-8bc3-443f-b3a0-4448822a1b86",
+  "id": "b7cb9517-d930-496b-a6be-0d5ae2d46a5b",
   "prevId": "c3803930-b472-4d51-a042-4e0d99951280",
   "version": "7",
   "dialect": "postgresql",
@@ -521,12 +521,6 @@
         },
         "blob_id": {
           "name": "blob_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sha256": {
-          "name": "sha256",
           "type": "text",
           "primaryKey": false,
           "notNull": true
