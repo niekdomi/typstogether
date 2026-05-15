@@ -17,7 +17,7 @@ interface TypstState {
   error: string | null;
 }
 
-export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
+export function useTypstProject(files: () => Y.Map<Y.Text | Uint8Array> | null) {
   const [state, setState] = createStore<TypstState>({ project: null, error: null });
 
   createEffect(() => {

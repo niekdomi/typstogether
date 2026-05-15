@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   customType,
   index,
+  integer,
   pgEnum,
   pgTable,
   primaryKey,
@@ -101,6 +102,21 @@ export const collabDocument = pgTable(
   (table) => [index("collab_document_updated_at_idx").on(table.updatedAt)]
 );
 
+export const projectBlob = pgTable(
+  "project_blob",
+  {
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    sha256: text("sha256").notNull(),
+    mime: text("mime").notNull(),
+    size: integer("size").notNull(),
+    bytes: bytea("bytes").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.projectId, table.sha256] })]
+);
+
 export const projectRelations = relations(project, ({ one, many }) => ({
   owner: one(user, {
     fields: [project.ownerUserId],
@@ -147,4 +163,6 @@ export type NewProjectMember = typeof projectMember.$inferInsert;
 export type ProjectInvite = typeof projectInvite.$inferSelect;
 export type NewProjectInvite = typeof projectInvite.$inferInsert;
 export type CollabDocument = typeof collabDocument.$inferSelect;
+export type ProjectBlob = typeof projectBlob.$inferSelect;
+export type NewProjectBlob = typeof projectBlob.$inferInsert;
 export type NewCollabDocument = typeof collabDocument.$inferInsert;

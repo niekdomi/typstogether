@@ -19,7 +19,7 @@ import { useProject } from "../../lib/projects/use-project";
 import { useTypstProject } from "../../lib/typst/use-typst-project";
 
 export interface Ready {
-  files: Y.Map<Y.Text>;
+  files: Y.Map<Y.Text | Uint8Array>;
   typstProject: TypstProject;
 }
 

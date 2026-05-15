@@ -17,10 +17,13 @@ import type { DialogState } from "./types";
 /** Build the user-facing "already exists" message for a path. */
 const existsMsg = (path: string) => `"${path.replace(/^\//, "")}" already exists.`;
 
-const copyText = (src: Y.Text): Y.Text => {
-  const copy = new Y.Text();
-  copy.insert(0, src.toJSON());
-  return copy;
+const copyValue = (src: Y.Text | Uint8Array): Y.Text | Uint8Array => {
+  if (src instanceof Y.Text) {
+    const copy = new Y.Text();
+    copy.insert(0, src.toJSON());
+    return copy;
+  }
+  return new Uint8Array(src);
 };
 
 /**
@@ -103,7 +106,7 @@ export function useFileSidebar() {
     }
 
     files.doc?.transact(() => {
-      files.set(newPath, copyText(text));
+      files.set(newPath, copyValue(text));
       files.delete(oldPath);
     });
   };
@@ -123,7 +126,7 @@ export function useFileSidebar() {
           continue;
         }
 
-        files.set(to, copyText(text));
+        files.set(to, copyValue(text));
         files.delete(from);
       }
     });
@@ -173,7 +176,7 @@ export function useFileSidebar() {
     if (has(newPath)) return existsMsg(newPath);
     const source = files.get(sourcePath);
     if (!source) return undefined;
-    files.set(newPath, copyText(source));
+    files.set(newPath, copyValue(source));
     return undefined;
   };
 

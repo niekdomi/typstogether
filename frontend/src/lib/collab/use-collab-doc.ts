@@ -15,7 +15,7 @@ import { collabWsUrl } from "./ws-url";
 
 interface CollabState {
   ydoc: Y.Doc | null;
-  files: Y.Map<Y.Text> | null;
+  files: Y.Map<Y.Text | Uint8Array> | null;
   status: WebSocketStatus;
   synced: boolean;
   readOnly: boolean;
@@ -44,7 +44,7 @@ export function useCollabDoc(projectId: () => string) {
     });
 
     const doc = new Y.Doc();
-    const map = doc.getMap<Y.Text>(FILES_KEY);
+    const map = doc.getMap<Y.Text | Uint8Array>(FILES_KEY);
     const provider = new HocuspocusProvider({
       url: collabWsUrl(),
       name: id,
