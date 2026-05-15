@@ -11,6 +11,7 @@ import { createStore } from "solid-js/store";
 import { Button } from "../../components/ui/button";
 import { useTheme } from "../../lib/ThemeContext";
 import { renderer } from "../../lib/typst/use-typst-project";
+import ExportPdfButton from "./ExportPdfButton";
 import { useProjectContext } from "./ProjectContext";
 
 const BASE_WIDTH_PX = 700;
@@ -205,6 +206,9 @@ export default function PreviewPane() {
         >
           <TbOutlineArrowAutofitWidth />
         </Button>
+        <div class="ml-auto">
+          <ExportPdfButton />
+        </div>
       </div>
 
       <div
