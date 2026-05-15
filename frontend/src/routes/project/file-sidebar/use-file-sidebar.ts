@@ -25,6 +25,8 @@ const copyText = (src: Y.Text): Y.Text => {
   return copy;
 };
 
+const isLocked = (path: string) => path === MAIN_PATH;
+
 /**
  * Owns all reactive state and operations for the file sidebar. Returns plain
  * accessors and handlers - the JSX layer is pure rendering.
@@ -75,7 +77,6 @@ export function useFileSidebar() {
   const has = (path: string) => files.has(path) || assets.has(path);
   const isAsset = (path: string) => assets.has(path);
   const folderHasFiles = (folder: string) => paths().some((p) => p.startsWith(folder + "/"));
-  const isLocked = (path: string) => path === MAIN_PATH;
   const totalCount = () => files.size + assets.size;
 
   // Narrow the dialog union for type-safe rendering.
