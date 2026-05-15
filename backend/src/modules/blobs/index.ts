@@ -15,9 +15,9 @@ export const blobRoutes = new Elysia({ name: "blob-routes" })
   })
 
   .get(
-    "/projects/:id/blobs/:sha256",
+    "/projects/:id/blobs/:blobId",
     async ({ project, params, set }) => {
-      const blob = await blobService.fetch(project.id, params.sha256);
+      const blob = await blobService.fetch(project.id, params.blobId);
       set.headers["content-type"] = blob.mime;
       set.headers["x-content-type-options"] = "nosniff";
       set.headers["cache-control"] = "private, max-age=31536000, immutable";
@@ -25,7 +25,7 @@ export const blobRoutes = new Elysia({ name: "blob-routes" })
       return new Response(blob.bytes);
     },
     {
-      params: "blob.byShaParams",
+      params: "blob.byIdParams",
       projectMember: true,
     }
   );

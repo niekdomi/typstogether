@@ -108,20 +108,19 @@ export const projectBlob = pgTable(
     projectId: text("project_id")
       .notNull()
       .references(() => project.id, { onDelete: "cascade" }),
+    // Server-generated per upload. Identity for the blob in the assets Y.Map.
+    // Two uploads of the same content produce two rows with different ids.
+    blobId: text("blob_id")
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    // Content hash. Not unique. Used as ETag for HTTP cache revalidation.
     sha256: text("sha256").notNull(),
     mime: text("mime").notNull(),
     size: integer("size").notNull(),
     bytes: bytea("bytes").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
-    // Set when the GC observer notices the blob is unreferenced; cleared when
-    // a re-reference shows up. Sweeper deletes rows where this is older than
-    // the configured delay. NULL = referenced (or freshly uploaded).
-    pendingGcAt: timestamp("pending_gc_at"),
   },
-  (table) => [
-    primaryKey({ columns: [table.projectId, table.sha256] }),
-    index("project_blob_pending_gc_at_idx").on(table.pendingGcAt),
-  ]
+  (table) => [primaryKey({ columns: [table.projectId, table.blobId] })]
 );
 
 export const projectRelations = relations(project, ({ one, many }) => ({

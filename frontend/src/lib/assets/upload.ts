@@ -1,6 +1,7 @@
 import { baseUrl } from "../api";
 
 export interface UploadedBlob {
+  id: string;
   sha256: string;
   mime: string;
   size: number;
@@ -30,6 +31,6 @@ export async function uploadAsset(projectId: string, file: File): Promise<Upload
   return (await res.json()) as UploadedBlob;
 }
 
-export function assetBlobUrl(projectId: string, sha256: string): string {
-  return `${baseUrl}/api/projects/${projectId}/blobs/${sha256}`;
+export function assetBlobUrl(projectId: string, blobId: string): string {
+  return `${baseUrl}/api/projects/${projectId}/blobs/${blobId}`;
 }

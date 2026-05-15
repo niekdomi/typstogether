@@ -18,12 +18,20 @@ const PNG_BYTES = new Uint8Array([
   0x42, 0x60, 0x82,
 ]);
 const PNG_SHA256 = "3bdba8cdd985df984cdb8dae9a5da9cb90dd1ada772c92cf813b88c8a6062b86";
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const uploadInit = (bytes: Uint8Array, mime = "image/png", name = "blob.png"): RequestInit => {
   const form = new FormData();
   form.append("file", new File([bytes], name, { type: mime }));
   return { method: "POST", body: form };
 };
+
+interface UploadBody {
+  id: string;
+  sha256: string;
+  mime: string;
+  size: number;
+}
 
 afterEach(async () => {
   setTestUser(null);
@@ -76,15 +84,16 @@ describe("POST /projects/:id/blobs", () => {
     expect(res.status).toBe(422);
   });
 
-  test("200 returns sha256/mime/size for the owner", async () => {
+  test("200 returns id, sha256, mime, size for the owner", async () => {
     const owner = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
     setTestUser(owner);
 
     const res = await request(`/projects/${project.id}/blobs`, uploadInit(PNG_BYTES));
-    const body = (await res.json()) as { sha256: string; mime: string; size: number };
+    const body = (await res.json()) as UploadBody;
 
     expect(res.status).toBe(200);
+    expect(body.id).toMatch(UUID_RE);
     expect(body.sha256).toBe(PNG_SHA256);
     expect(body.mime).toBe("image/png");
     expect(body.size).toBe(PNG_BYTES.byteLength);
@@ -101,15 +110,32 @@ describe("POST /projects/:id/blobs", () => {
 
     expect(res.status).toBe(200);
   });
+
+  test("two uploads of the same content return different ids (no dedup)", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    setTestUser(owner);
+
+    const res1 = await request(`/projects/${project.id}/blobs`, uploadInit(PNG_BYTES));
+    const r1 = (await res1.json()) as UploadBody;
+    const res2 = await request(`/projects/${project.id}/blobs`, uploadInit(PNG_BYTES));
+    const r2 = (await res2.json()) as UploadBody;
+
+    expect(r1.id).not.toBe(r2.id);
+    expect(r1.sha256).toBe(r2.sha256);
+  });
 });
 
-describe("GET /projects/:id/blobs/:sha256", () => {
+describe("GET /projects/:id/blobs/:blobId", () => {
   test("401 when unauthenticated", async () => {
     const owner = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
-    await blobService.store(project.id, new File([PNG_BYTES], "x.png", { type: "image/png" }));
+    const meta = await blobService.store(
+      project.id,
+      new File([PNG_BYTES], "x.png", { type: "image/png" })
+    );
 
-    const res = await request(`/projects/${project.id}/blobs/${PNG_SHA256}`);
+    const res = await request(`/projects/${project.id}/blobs/${meta.id}`);
 
     expect(res.status).toBe(401);
   });
@@ -118,10 +144,13 @@ describe("GET /projects/:id/blobs/:sha256", () => {
     const owner = await userFactory.create();
     const stranger = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
-    await blobService.store(project.id, new File([PNG_BYTES], "x.png", { type: "image/png" }));
+    const meta = await blobService.store(
+      project.id,
+      new File([PNG_BYTES], "x.png", { type: "image/png" })
+    );
     setTestUser(stranger);
 
-    const res = await request(`/projects/${project.id}/blobs/${PNG_SHA256}`);
+    const res = await request(`/projects/${project.id}/blobs/${meta.id}`);
 
     expect(res.status).toBe(404);
   });
@@ -131,30 +160,33 @@ describe("GET /projects/:id/blobs/:sha256", () => {
     const project = await projectFactory.create({ ownerUserId: owner.id });
     setTestUser(owner);
 
-    const res = await request(`/projects/${project.id}/blobs/${PNG_SHA256}`);
+    const res = await request(`/projects/${project.id}/blobs/${crypto.randomUUID()}`);
 
     expect(res.status).toBe(404);
   });
 
-  test("422 for malformed sha256 in path", async () => {
+  test("422 for malformed UUID in path", async () => {
     const owner = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
     setTestUser(owner);
 
-    const res = await request(`/projects/${project.id}/blobs/not-a-sha`);
+    const res = await request(`/projects/${project.id}/blobs/not-a-uuid`);
 
     expect(res.status).toBe(422);
   });
 
-  test("200 viewers can read; bytes, content-type, etag, cache-control are set", async () => {
+  test("200 viewers can read; bytes, content-type, etag (=sha256), cache-control are set", async () => {
     const owner = await userFactory.create();
     const viewer = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
     await memberService.create(project.id, viewer.id, "viewer");
-    await blobService.store(project.id, new File([PNG_BYTES], "x.png", { type: "image/png" }));
+    const meta = await blobService.store(
+      project.id,
+      new File([PNG_BYTES], "x.png", { type: "image/png" })
+    );
     setTestUser(viewer);
 
-    const res = await request(`/projects/${project.id}/blobs/${PNG_SHA256}`);
+    const res = await request(`/projects/${project.id}/blobs/${meta.id}`);
 
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("image/png");
@@ -165,16 +197,19 @@ describe("GET /projects/:id/blobs/:sha256", () => {
     expect(body).toEqual(PNG_BYTES);
   });
 
-  test("does not leak blobs from another project with the same sha256", async () => {
+  test("does not leak blobs from another project even when the id is known", async () => {
     const ownerA = await userFactory.create();
     const projectA = await projectFactory.create({ ownerUserId: ownerA.id });
-    await blobService.store(projectA.id, new File([PNG_BYTES], "x.png", { type: "image/png" }));
+    const meta = await blobService.store(
+      projectA.id,
+      new File([PNG_BYTES], "x.png", { type: "image/png" })
+    );
 
     const ownerB = await userFactory.create();
     const projectB = await projectFactory.create({ ownerUserId: ownerB.id });
     setTestUser(ownerB);
 
-    const res = await request(`/projects/${projectB.id}/blobs/${PNG_SHA256}`);
+    const res = await request(`/projects/${projectB.id}/blobs/${meta.id}`);
 
     expect(res.status).toBe(404);
   });

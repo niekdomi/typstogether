@@ -4,10 +4,10 @@ import type * as Y from "yjs";
 
 import { assetBlobUrl } from "./upload";
 
-// Observes the `assets` Y.Map (path → sha256) and keeps the Typst project's
+// Observes the `assets` Y.Map (path → blob_id) and keeps the Typst project's
 // virtual filesystem in sync by fetching binary blobs from the backend and
-// calling `setBinary`. The sha256 is the cache key; we never refetch unless
-// the hash changes for a path.
+// calling `setBinary`. The blob_id is the cache key; we never refetch for a
+// path unless its id changes.
 export function useAssetsSync(
   projectId: () => string,
   project: () => TypstProject | null,
@@ -22,17 +22,17 @@ export function useAssetsSync(
     const applied = new Map<string, string>();
     const aborter = new AbortController();
 
-    const apply = async (path: string, sha: string) => {
-      if (applied.get(path) === sha) return;
+    const apply = async (path: string, blobId: string) => {
+      if (applied.get(path) === blobId) return;
       try {
-        const res = await fetch(assetBlobUrl(id, sha), {
+        const res = await fetch(assetBlobUrl(id, blobId), {
           credentials: "include",
           signal: aborter.signal,
         });
         if (!res.ok) return;
         const bytes = new Uint8Array(await res.arrayBuffer());
         await proj.setBinary(path, bytes);
-        applied.set(path, sha);
+        applied.set(path, blobId);
       } catch (error) {
         // fetch throws AbortError when the project/effect tears down; swallow.
         if (error instanceof DOMException && error.name === "AbortError") return;
@@ -40,8 +40,8 @@ export function useAssetsSync(
       }
     };
 
-    for (const [path, sha] of map.entries()) {
-      void apply(path, sha);
+    for (const [path, blobId] of map.entries()) {
+      void apply(path, blobId);
     }
 
     const observer = (event: Y.YMapEvent<string>) => {
@@ -51,8 +51,8 @@ export function useAssetsSync(
           void proj.remove(path);
           continue;
         }
-        const sha = map.get(path);
-        if (sha) void apply(path, sha);
+        const blobId = map.get(path);
+        if (blobId) void apply(path, blobId);
       }
     };
     map.observe(observer);

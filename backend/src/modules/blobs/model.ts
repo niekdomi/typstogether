@@ -15,21 +15,22 @@ export const blobUploadModel = t.Object({
 });
 
 export const blobMetaModel = t.Object({
+  id: t.String(),
   sha256: t.String(),
   mime: t.String(),
   size: t.Number(),
 });
 
-export const blobByShaParamsModel = t.Object({
+export const blobByIdParamsModel = t.Object({
   id: t.String(),
-  sha256: t.String({ pattern: "^[a-f0-9]{64}$" }),
+  blobId: t.String({ format: "uuid" }),
 });
 
 export const blobModels = {
   "blob.upload": blobUploadModel,
   "blob.meta": blobMetaModel,
-  "blob.byShaParams": blobByShaParamsModel,
+  "blob.byIdParams": blobByIdParamsModel,
 };
 
 export type BlobMeta = typeof blobMetaModel.static;
-export type BlobByShaParams = typeof blobByShaParamsModel.static;
+export type BlobByIdParams = typeof blobByIdParamsModel.static;

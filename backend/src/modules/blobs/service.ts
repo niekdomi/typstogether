@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNotNull, isNull, lt, not } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { type ProjectBlob, projectBlob } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
@@ -11,69 +11,38 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
 }
 
 export class BlobService {
+  // Each upload creates a new row with a fresh blob_id, even if the bytes
+  // already exist in this project under a different id. Identity = blob_id;
+  // sha256 is a content fingerprint kept for ETag headers.
   async store(projectId: string, file: File): Promise<BlobMeta> {
     const bytes = new Uint8Array(await file.arrayBuffer());
     const sha256 = await sha256Hex(bytes);
     const mime = file.type;
     const size = bytes.byteLength;
 
-    await currentDb()
+    const [row] = await currentDb()
       .insert(projectBlob)
       .values({ projectId, sha256, mime, size, bytes })
-      .onConflictDoNothing();
+      .returning();
+    if (!row) throw new Error("BlobService.store: insert returned nothing");
 
-    return { sha256, mime, size };
+    return { id: row.blobId, sha256, mime, size };
   }
 
-  async fetch(projectId: string, sha256: string): Promise<ProjectBlob> {
+  async fetch(projectId: string, blobId: string): Promise<ProjectBlob> {
     const [row] = await currentDb()
       .select()
       .from(projectBlob)
-      .where(and(eq(projectBlob.projectId, projectId), eq(projectBlob.sha256, sha256)));
+      .where(and(eq(projectBlob.projectId, projectId), eq(projectBlob.blobId, blobId)));
     if (!row) throw new NotFoundError("Blob not found");
     return row;
   }
 
-  // Sync the per-row `pending_gc_at` marks to the live reference set:
-  //   - unreferenced blobs not already marked → set NOW()
-  //   - referenced blobs that ARE marked → clear (cancel the mark)
-  // Idempotent. Called from the GC extension on doc load and on every assets
-  // map mutation. Never deletes — the sweeper does that after the delay.
-  async refreshMarks(projectId: string, referencedShas: Iterable<string>): Promise<void> {
-    const refs = [...new Set(referencedShas)];
-    const db = currentDb();
-
-    // Mark unreferenced blobs that aren't already pending.
-    const markConditions = [eq(projectBlob.projectId, projectId), isNull(projectBlob.pendingGcAt)];
-    if (refs.length > 0) {
-      markConditions.push(not(inArray(projectBlob.sha256, refs)));
-    }
-    await db
-      .update(projectBlob)
-      .set({ pendingGcAt: new Date() })
-      .where(and(...markConditions));
-
-    // Cancel marks for blobs that are now referenced.
-    if (refs.length > 0) {
-      await db
-        .update(projectBlob)
-        .set({ pendingGcAt: null })
-        .where(
-          and(
-            eq(projectBlob.projectId, projectId),
-            isNotNull(projectBlob.pendingGcAt),
-            inArray(projectBlob.sha256, refs)
-          )
-        );
-    }
-  }
-
-  async sweepMarked(olderThan: Date): Promise<string[]> {
-    const deleted = await currentDb()
+  // Idempotent — no-op if the row was already deleted (or never existed).
+  async deleteBlob(projectId: string, blobId: string): Promise<void> {
+    await currentDb()
       .delete(projectBlob)
-      .where(and(isNotNull(projectBlob.pendingGcAt), lt(projectBlob.pendingGcAt, olderThan)))
-      .returning();
-    return deleted.map((row) => row.sha256);
+      .where(and(eq(projectBlob.projectId, projectId), eq(projectBlob.blobId, blobId)));
   }
 }
 

@@ -11,10 +11,7 @@ await migrate(db, { migrationsFolder: "./drizzle" });
 dbRegistry.set(db);
 
 const { startServer } = await import("./app");
-const { startBlobSweeper } = await import("./modules/blobs/sweeper");
-
 startServer();
-startBlobSweeper();
 
 // HACK: Without the following line, bun won't produce a `.cpuprofile` when running with `--cpu-prof`.
 // This hack though has the issue that running `bun dev` no longer exists gracefully.

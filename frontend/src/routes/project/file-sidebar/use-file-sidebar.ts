@@ -234,8 +234,8 @@ export function useFileSidebar() {
     if (!path) return "Invalid file name.";
     if (has(path)) return existsMsg(path);
     try {
-      const { sha256 } = await uploadAsset(projectId(), file);
-      assets.set(path, sha256);
+      const { id } = await uploadAsset(projectId(), file);
+      assets.set(path, id);
       ctx.setActiveFile(path);
       return undefined;
     } catch (error) {

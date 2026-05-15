@@ -12,15 +12,8 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1778834511620,
-      "tag": "0001_cute_gertrude_yorkes",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1778845748339,
-      "tag": "0002_oval_alex_power",
+      "when": 1778847430405,
+      "tag": "0001_worried_robin_chapel",
       "breakpoints": true
     }
   ]

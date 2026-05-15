@@ -6,37 +6,33 @@ import { blobService } from "../blobs/service";
 // Must match the frontend's ASSETS_KEY (see frontend/src/lib/paths.ts).
 const ASSETS_KEY = "assets";
 
-// Hocuspocus extension that keeps the `project_blob` table's `pending_gc_at`
-// marks in sync with the `assets` Y.Map (path → sha256). Two-pronged:
+// Hocuspocus extension that deletes a `project_blob` row immediately when its
+// `blob_id` is removed from the `assets` Y.Map (delete or overwrite). Safe
+// because each upload produces a unique `blob_id` — no other path can
+// possibly reference it, so an orphaned id is unambiguously deletable.
 //
-//   1. afterLoadDocument: one reconcile pass — refresh marks against the
-//      loaded map. Catches blobs orphaned by failed mid-flight uploads or
-//      drift accumulated while the doc was unloaded.
-//
-//   2. Y.Map observer: on every assets mutation, refresh marks. Re-references
-//      cancel pending marks; new orphans get marked. Runs in the same process
-//      that serializes all writes for the document — no race for refcount.
-//
-// Actual deletion happens in a separate sweeper after a delay, so a concurrent
-// duplicate-set arriving shortly after a delete cancels the mark before any
-// row is removed. See `blobService.refreshMarks` and `blobService.sweepMarked`.
+// Failed mid-flight uploads (client crashed before committing
+// `assets.set(path, id)`) leak one row per occurrence. Acceptable for our
+// scale; can be cleaned up later with a one-shot script if it becomes a
+// real cost.
 const observers = new WeakMap<Y.Doc, (event: Y.YMapEvent<string>) => void>();
 
 export const blobGcExtension: Extension = {
-  async afterLoadDocument({ documentName, document }) {
+  afterLoadDocument({ documentName, document }) {
     const assets = document.getMap<string>(ASSETS_KEY);
 
-    await blobService.refreshMarks(documentName, assets.values());
-
     const observer = (event: Y.YMapEvent<string>) => {
-      // Any mutation can change either side: a delete/update may orphan a sha,
-      // and an add/update may unmark one. Cheap enough to refresh on each.
-      if (event.changes.keys.size === 0) return;
-      void blobService.refreshMarks(documentName, assets.values());
+      for (const change of event.changes.keys.values()) {
+        if (change.action !== "delete" && change.action !== "update") continue;
+        const oldId: unknown = change.oldValue;
+        if (typeof oldId !== "string") continue;
+        void blobService.deleteBlob(documentName, oldId);
+      }
     };
 
     assets.observe(observer);
     observers.set(document, observer);
+    return Promise.resolve();
   },
 
   beforeUnloadDocument({ document }) {
