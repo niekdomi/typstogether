@@ -113,8 +113,15 @@ export const projectBlob = pgTable(
     size: integer("size").notNull(),
     bytes: bytea("bytes").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    // Set when the GC observer notices the blob is unreferenced; cleared when
+    // a re-reference shows up. Sweeper deletes rows where this is older than
+    // the configured delay. NULL = referenced (or freshly uploaded).
+    pendingGcAt: timestamp("pending_gc_at"),
   },
-  (table) => [primaryKey({ columns: [table.projectId, table.sha256] })]
+  (table) => [
+    primaryKey({ columns: [table.projectId, table.sha256] }),
+    index("project_blob_pending_gc_at_idx").on(table.pendingGcAt),
+  ]
 );
 
 export const projectRelations = relations(project, ({ one, many }) => ({

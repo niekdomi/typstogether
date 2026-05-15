@@ -90,54 +90,121 @@ describe("BlobService", () => {
     });
   });
 
-  describe("gcProject", () => {
+  describe("refreshMarks + sweepMarked", () => {
     const OTHER_BYTES = new Uint8Array([1, 2, 3, 4]);
     const OTHER_SHA256 = "9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a";
 
-    it("deletes blobs not in the referenced set (grace=0)", async () => {
+    const fetchMark = async (sha256: string): Promise<Date | null> => {
+      const [row] = await currentDb()
+        .select({ pendingGcAt: projectBlob.pendingGcAt })
+        .from(projectBlob)
+        .where(and(eq(projectBlob.projectId, projectId), eq(projectBlob.sha256, sha256)));
+      return row?.pendingGcAt ?? null;
+    };
+
+    it("marks blobs not in the referenced set", async () => {
       await blobService.store(projectId, fileFromBytes(PNG_BYTES));
       await blobService.store(projectId, fileFromBytes(OTHER_BYTES, "image/jpeg", "other.jpg"));
 
-      const deleted = await blobService.gcProject(projectId, [PNG_SHA256], 0);
+      await blobService.refreshMarks(projectId, [PNG_SHA256]);
 
-      expect(deleted).toEqual([OTHER_SHA256]);
-      const remaining = await currentDb().select().from(projectBlob);
-      expect(remaining.map((r) => r.sha256)).toEqual([PNG_SHA256]);
+      expect(await fetchMark(PNG_SHA256)).toBeNull();
+      expect(await fetchMark(OTHER_SHA256)).toBeInstanceOf(Date);
     });
 
-    it("with an empty referenced set, deletes all blobs in the project (grace=0)", async () => {
+    it("clears the mark when a previously unreferenced sha becomes referenced", async () => {
+      await blobService.store(projectId, fileFromBytes(PNG_BYTES));
+      await blobService.refreshMarks(projectId, []);
+      expect(await fetchMark(PNG_SHA256)).toBeInstanceOf(Date);
+
+      await blobService.refreshMarks(projectId, [PNG_SHA256]);
+      expect(await fetchMark(PNG_SHA256)).toBeNull();
+    });
+
+    it("preserves existing marks (doesn't move pending_gc_at forward on every refresh)", async () => {
+      await blobService.store(projectId, fileFromBytes(PNG_BYTES));
+      await blobService.refreshMarks(projectId, []);
+      const firstMark = await fetchMark(PNG_SHA256);
+      expect(firstMark).toBeInstanceOf(Date);
+
+      // Wait a tick so a re-mark would have a newer timestamp
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      await blobService.refreshMarks(projectId, []);
+      const secondMark = await fetchMark(PNG_SHA256);
+      expect(secondMark!.getTime()).toBe(firstMark!.getTime());
+    });
+
+    it("sweepMarked deletes only marked rows older than the cutoff", async () => {
       await blobService.store(projectId, fileFromBytes(PNG_BYTES));
       await blobService.store(projectId, fileFromBytes(OTHER_BYTES, "image/jpeg", "other.jpg"));
 
-      const deleted = await blobService.gcProject(projectId, [], 0);
+      // Mark only PNG; OTHER stays referenced (and unmarked)
+      await blobService.refreshMarks(projectId, [OTHER_SHA256]);
 
-      expect(deleted.toSorted()).toEqual([OTHER_SHA256, PNG_SHA256].toSorted());
+      const cutoff = new Date(Date.now() + 1000); // future cutoff: catches mark
+      const deleted = await blobService.sweepMarked(cutoff);
+
+      expect(deleted).toEqual([PNG_SHA256]);
       const remaining = await currentDb().select().from(projectBlob);
-      expect(remaining).toEqual([]);
+      expect(remaining.map((r) => r.sha256)).toEqual([OTHER_SHA256]);
     });
 
-    it("never deletes blobs from another project", async () => {
+    it("sweepMarked leaves marked rows alone if cutoff is in the past", async () => {
+      await blobService.store(projectId, fileFromBytes(PNG_BYTES));
+      await blobService.refreshMarks(projectId, []);
+
+      const cutoff = new Date(Date.now() - 60_000); // 1 minute ago
+      const deleted = await blobService.sweepMarked(cutoff);
+
+      expect(deleted).toEqual([]);
+      const remaining = await currentDb().select().from(projectBlob);
+      expect(remaining).toHaveLength(1);
+    });
+
+    it("sweepMarked never deletes unmarked rows", async () => {
+      await blobService.store(projectId, fileFromBytes(PNG_BYTES));
+      // Don't call refreshMarks — pending_gc_at stays NULL.
+
+      const cutoff = new Date(Date.now() + 60_000);
+      const deleted = await blobService.sweepMarked(cutoff);
+
+      expect(deleted).toEqual([]);
+      const remaining = await currentDb().select().from(projectBlob);
+      expect(remaining).toHaveLength(1);
+    });
+
+    it("cancel-on-re-reference: a marked sha that gets re-referenced survives the next sweep", async () => {
+      await blobService.store(projectId, fileFromBytes(PNG_BYTES));
+
+      // Step 1: mark (simulating a delete)
+      await blobService.refreshMarks(projectId, []);
+      expect(await fetchMark(PNG_SHA256)).toBeInstanceOf(Date);
+
+      // Step 2: re-reference (simulating a duplicate-set landing)
+      await blobService.refreshMarks(projectId, [PNG_SHA256]);
+      expect(await fetchMark(PNG_SHA256)).toBeNull();
+
+      // Step 3: sweep — nothing should be deleted
+      const deleted = await blobService.sweepMarked(new Date(Date.now() + 1000));
+      expect(deleted).toEqual([]);
+      const remaining = await currentDb().select().from(projectBlob);
+      expect(remaining).toHaveLength(1);
+    });
+
+    it("never marks blobs from another project", async () => {
       const otherOwner = await userFactory.create();
       const otherProject = await projectFactory.create({ ownerUserId: otherOwner.id });
       await blobService.store(otherProject.id, fileFromBytes(PNG_BYTES));
 
-      const deleted = await blobService.gcProject(projectId, [], 0);
+      // refreshMarks for OUR project with an empty ref set — should NOT touch
+      // the other project's blob (which is unreferenced from our perspective).
+      await blobService.refreshMarks(projectId, []);
 
-      expect(deleted).toEqual([]);
-      const remaining = await currentDb().select().from(projectBlob);
-      expect(remaining).toHaveLength(1);
-      expect(remaining[0]!.projectId).toBe(otherProject.id);
-    });
-
-    it("respects the grace window — blobs younger than `graceSeconds` survive", async () => {
-      await blobService.store(projectId, fileFromBytes(PNG_BYTES));
-
-      // 60-second grace > the ~0s age of the just-inserted row
-      const deleted = await blobService.gcProject(projectId, [], 60);
-
-      expect(deleted).toEqual([]);
-      const remaining = await currentDb().select().from(projectBlob);
-      expect(remaining).toHaveLength(1);
+      const [other] = await currentDb()
+        .select({ pendingGcAt: projectBlob.pendingGcAt })
+        .from(projectBlob)
+        .where(eq(projectBlob.projectId, otherProject.id));
+      expect(other?.pendingGcAt).toBeNull();
     });
   });
 });

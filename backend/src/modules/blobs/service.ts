@@ -1,11 +1,9 @@
-import { and, eq, inArray, lt, not } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, lt, not } from "drizzle-orm";
 
 import { type ProjectBlob, projectBlob } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import { currentDb } from "../../transaction";
 import type { BlobMeta } from "./model";
-
-const DEFAULT_GC_GRACE_SECONDS = 30;
 
 async function sha256Hex(bytes: Uint8Array): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", bytes.buffer as ArrayBuffer);
@@ -36,26 +34,44 @@ export class BlobService {
     return row;
   }
 
-  // Garbage-collect blobs in `projectId` whose sha256 isn't in `referencedShas`.
-  // A grace window protects blobs from concurrent uploads racing against
-  // deletes (a duplicate-set in one client landing after a delete in another):
-  // blobs younger than `graceSeconds` are never GC'd. Returns deleted sha256s.
-  async gcProject(
-    projectId: string,
-    referencedShas: Iterable<string>,
-    graceSeconds = DEFAULT_GC_GRACE_SECONDS
-  ): Promise<string[]> {
+  // Sync the per-row `pending_gc_at` marks to the live reference set:
+  //   - unreferenced blobs not already marked → set NOW()
+  //   - referenced blobs that ARE marked → clear (cancel the mark)
+  // Idempotent. Called from the GC extension on doc load and on every assets
+  // map mutation. Never deletes — the sweeper does that after the delay.
+  async refreshMarks(projectId: string, referencedShas: Iterable<string>): Promise<void> {
     const refs = [...new Set(referencedShas)];
-    const conditions = [eq(projectBlob.projectId, projectId)];
-    if (graceSeconds > 0) {
-      conditions.push(lt(projectBlob.createdAt, new Date(Date.now() - graceSeconds * 1000)));
-    }
+    const db = currentDb();
+
+    // Mark unreferenced blobs that aren't already pending.
+    const markConditions = [eq(projectBlob.projectId, projectId), isNull(projectBlob.pendingGcAt)];
     if (refs.length > 0) {
-      conditions.push(not(inArray(projectBlob.sha256, refs)));
+      markConditions.push(not(inArray(projectBlob.sha256, refs)));
     }
+    await db
+      .update(projectBlob)
+      .set({ pendingGcAt: new Date() })
+      .where(and(...markConditions));
+
+    // Cancel marks for blobs that are now referenced.
+    if (refs.length > 0) {
+      await db
+        .update(projectBlob)
+        .set({ pendingGcAt: null })
+        .where(
+          and(
+            eq(projectBlob.projectId, projectId),
+            isNotNull(projectBlob.pendingGcAt),
+            inArray(projectBlob.sha256, refs)
+          )
+        );
+    }
+  }
+
+  async sweepMarked(olderThan: Date): Promise<string[]> {
     const deleted = await currentDb()
       .delete(projectBlob)
-      .where(and(...conditions))
+      .where(and(isNotNull(projectBlob.pendingGcAt), lt(projectBlob.pendingGcAt, olderThan)))
       .returning();
     return deleted.map((row) => row.sha256);
   }

@@ -11,7 +11,10 @@ const client = new SQL(databaseUrl);
 dbRegistry.set(drizzle({ client, schema }));
 
 const { startServer } = await import("./app");
+const { startBlobSweeper } = await import("./modules/blobs/sweeper");
+
 startServer();
+startBlobSweeper();
 
 export type { App } from "./app";
 export type { ProviderId } from "./modules/auth/model";
