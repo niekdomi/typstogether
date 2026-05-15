@@ -21,6 +21,7 @@ export const blobRoutes = new Elysia({ name: "blob-routes" })
       set.headers["content-type"] = blob.mime;
       set.headers["x-content-type-options"] = "nosniff";
       set.headers["cache-control"] = "private, max-age=31536000, immutable";
+      set.headers["content-security-policy"] = "sandbox";
       return new Response(blob.bytes);
     },
     {

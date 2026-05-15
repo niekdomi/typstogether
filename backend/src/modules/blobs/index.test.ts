@@ -188,6 +188,7 @@ describe("GET /projects/:id/blobs/:blobId", () => {
     expect(res.headers.get("content-type")).toBe("image/png");
     expect(res.headers.get("cache-control")).toBe("private, max-age=31536000, immutable");
     expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(res.headers.get("content-security-policy")).toBe("sandbox");
     const body = new Uint8Array(await res.arrayBuffer());
     expect(body).toEqual(PNG_BYTES);
   });
