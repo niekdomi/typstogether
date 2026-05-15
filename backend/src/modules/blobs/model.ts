@@ -6,6 +6,7 @@ export const ALLOWED_MIME_TYPES = [
   "image/gif",
   "image/svg+xml",
   "image/webp",
+  "application/pdf",
 ] as const;
 
 export const MAX_BLOB_SIZE = "10m";

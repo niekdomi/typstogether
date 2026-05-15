@@ -1,4 +1,4 @@
-import { createMemo, Show } from "solid-js";
+import { createMemo, Match, Show, Switch } from "solid-js";
 
 import { assetBlobUrl } from "../../lib/assets/upload";
 import { useProjectContext } from "./ProjectContext";
@@ -14,6 +14,8 @@ export default function AssetPreview() {
     return assetBlobUrl(ctx.projectId(), sha);
   });
 
+  const isPdf = createMemo(() => ctx.activeFile().toLowerCase().endsWith(".pdf"));
+
   return (
     <div class="flex h-full w-full items-center justify-center overflow-auto bg-muted/30 p-6">
       <Show
@@ -21,7 +23,23 @@ export default function AssetPreview() {
         fallback={<span class="text-sm text-muted-foreground">No preview available</span>}
       >
         {(src) => (
-          <img src={src()} alt={ctx.activeFile()} class="max-h-full max-w-full object-contain" />
+          <Switch>
+            <Match when={isPdf()}>
+              <embed
+                src={src()}
+                type="application/pdf"
+                class="h-full w-full"
+                aria-label={ctx.activeFile()}
+              />
+            </Match>
+            <Match when={!isPdf()}>
+              <img
+                src={src()}
+                alt={ctx.activeFile()}
+                class="max-h-full max-w-full object-contain"
+              />
+            </Match>
+          </Switch>
         )}
       </Show>
     </div>

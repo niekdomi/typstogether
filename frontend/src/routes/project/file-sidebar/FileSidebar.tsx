@@ -305,7 +305,7 @@ function FileSidebarBody() {
         ref={setFileInput}
         type="file"
         multiple
-        accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp"
+        accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp,application/pdf"
         class="hidden"
         onChange={(e) => {
           void onFilesPicked(e);
