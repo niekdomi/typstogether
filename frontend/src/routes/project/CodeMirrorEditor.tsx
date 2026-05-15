@@ -77,9 +77,9 @@ export default function CodeMirrorEditor() {
       };
 
       const buildStateForPath = (path: string): EditorState | null => {
-        const value = files.get(path);
-        if (!(value instanceof Y.Text)) return null;
-        return buildState(path, value, ensureCache(value, path));
+        const text = files.get(path);
+        if (!text) return null;
+        return buildState(path, text, ensureCache(text, path));
       };
 
       const initialPath = ctx.activeFile();

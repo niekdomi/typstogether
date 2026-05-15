@@ -17,7 +17,7 @@ interface TypstState {
   error: string | null;
 }
 
-export function useTypstProject(files: () => Y.Map<Y.Text | Uint8Array> | null) {
+export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
   const [state, setState] = createStore<TypstState>({ project: null, error: null });
 
   createEffect(() => {
@@ -53,9 +53,13 @@ export function useTypstProject(files: () => Y.Map<Y.Text | Uint8Array> | null) 
           autoCompile: { debounceMs: 200, maxWaitMs: 1000 },
         });
 
+        // Plugin types `files` as `Y.Map<Y.Text | Uint8Array>` but we only
+        // store `Y.Text` values. Y.Map is invariant in TS strict mode, so the
+        // narrow→wide assignment fails. Cast through `unknown` to bypass.
+        const widenedFiles = f as unknown as Y.Map<Y.Text | Uint8Array>;
         sync = syncYMapToTypstProject({
           project: project,
-          files: f,
+          files: widenedFiles,
           onError: ({ error: syncError }) => {
             setState("error", String(syncError));
           },

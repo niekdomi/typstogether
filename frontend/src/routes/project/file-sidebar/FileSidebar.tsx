@@ -3,8 +3,10 @@ import {
   TbOutlineChevronRight,
   TbOutlineFileText,
   TbOutlineFolder,
+  TbOutlinePhoto,
+  TbOutlineUpload,
 } from "solid-icons/tb";
-import { For, type JSX, Match, Show, Switch } from "solid-js";
+import { createSignal, For, type JSX, Match, Show, Switch } from "solid-js";
 
 import {
   ContextMenu,
@@ -50,7 +52,9 @@ function FileRow(props: { node: FileNode }) {
           }}
           onDragEnd={sb.onDragEnd}
         >
-          <TbOutlineFileText />
+          <Show when={sb.isAsset(path())} fallback={<TbOutlineFileText />}>
+            <TbOutlinePhoto />
+          </Show>
           <span>{props.node.name}</span>
           <Show when={sb.isLocked(path())}>
             <span class="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -90,7 +94,22 @@ function FileRow(props: { node: FileNode }) {
   );
 }
 
-function FolderRow(props: { node: FolderNode }) {
+async function uploadOsFiles(
+  e: DragEvent,
+  dir: string,
+  upload: (dir: string, file: File) => Promise<string | undefined>
+): Promise<boolean> {
+  const list = e.dataTransfer?.files;
+  if (!list || list.length === 0) return false;
+  e.preventDefault();
+  e.stopPropagation();
+  for (const file of list) {
+    await upload(dir, file);
+  }
+  return true;
+}
+
+function FolderRow(props: { node: FolderNode; onUpload: (dir: string) => void }) {
   const sb = useFileSidebarController();
   const path = () => props.node.path;
 
@@ -108,7 +127,10 @@ function FolderRow(props: { node: FolderNode }) {
           }}
           onDragLeave={sb.clearDragOver}
           onDrop={(e: DragEvent) => {
-            sb.onFolderDrop(e, path());
+            void (async () => {
+              if (await uploadOsFiles(e, path(), sb.handleUploadAsset)) return;
+              sb.onFolderDrop(e, path());
+            })();
           }}
         >
           <Show when={props.node.collapsed} fallback={<TbOutlineChevronDown />}>
@@ -133,6 +155,13 @@ function FolderRow(props: { node: FolderNode }) {
         >
           New folder
         </ContextMenuItem>
+        <ContextMenuItem
+          onSelect={() => {
+            props.onUpload(path());
+          }}
+        >
+          Upload asset…
+        </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem
           onSelect={() => {
@@ -155,7 +184,7 @@ function FolderRow(props: { node: FolderNode }) {
   );
 }
 
-function Node(props: { node: FlatNode }) {
+function Node(props: { node: FlatNode; onUpload: (dir: string) => void }) {
   return (
     <SidebarMenuItem style={{ "padding-left": `${String(props.node.depth * 12)}px` }}>
       <Switch>
@@ -163,14 +192,14 @@ function Node(props: { node: FlatNode }) {
           {(file) => <FileRow node={file()} />}
         </Match>
         <Match when={props.node.kind === "folder" ? props.node : null}>
-          {(folder) => <FolderRow node={folder()} />}
+          {(folder) => <FolderRow node={folder()} onUpload={props.onUpload} />}
         </Match>
       </Switch>
     </SidebarMenuItem>
   );
 }
 
-function RootDropZone(props: { children: JSX.Element }) {
+function RootDropZone(props: { children: JSX.Element; onUpload: (dir: string) => void }) {
   const sb = useFileSidebarController();
   return (
     <ContextMenu>
@@ -182,7 +211,12 @@ function RootDropZone(props: { children: JSX.Element }) {
         )}
         onDragOver={sb.onRootDragOver}
         onDragLeave={sb.onRootDragLeave}
-        onDrop={sb.onRootDrop}
+        onDrop={(e: DragEvent) => {
+          void (async () => {
+            if (await uploadOsFiles(e, "", sb.handleUploadAsset)) return;
+            sb.onRootDrop(e);
+          })();
+        }}
       >
         {props.children}
       </ContextMenuTrigger>
@@ -201,6 +235,13 @@ function RootDropZone(props: { children: JSX.Element }) {
         >
           New folder
         </ContextMenuItem>
+        <ContextMenuItem
+          onSelect={() => {
+            props.onUpload("");
+          }}
+        >
+          Upload asset…
+        </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -208,20 +249,68 @@ function RootDropZone(props: { children: JSX.Element }) {
 
 function FileSidebarBody() {
   const sb = useFileSidebarController();
+  const [uploadDir, setUploadDir] = createSignal("");
+  let fileInput: HTMLInputElement | undefined;
+  const setFileInput = (el: HTMLInputElement) => {
+    fileInput = el;
+  };
+
+  const triggerUpload = (dir: string) => {
+    if (!fileInput) return;
+    setUploadDir(dir);
+    fileInput.value = "";
+    fileInput.click();
+  };
+
+  const onFilesPicked = async (e: Event) => {
+    const target = e.currentTarget as HTMLInputElement;
+    const list = target.files;
+    if (!list || list.length === 0) return;
+    const dir = uploadDir();
+    for (const file of list) {
+      await sb.handleUploadAsset(dir, file);
+    }
+  };
+
   return (
     <SidebarProvider class="flex h-full flex-col">
-      <RootDropZone>
+      <RootDropZone onUpload={triggerUpload}>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Files</SidebarGroupLabel>
+            <SidebarGroupLabel class="flex items-center justify-between gap-1">
+              <span>Files</span>
+              <button
+                type="button"
+                class="rounded p-1 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                title="Upload asset"
+                aria-label="Upload asset"
+                onClick={() => {
+                  triggerUpload("");
+                }}
+              >
+                <TbOutlineUpload />
+              </button>
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                <For each={sb.tree()}>{(node) => <Node node={node} />}</For>
+                <For each={sb.tree()}>
+                  {(node) => <Node node={node} onUpload={triggerUpload} />}
+                </For>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
       </RootDropZone>
+      <input
+        ref={setFileInput}
+        type="file"
+        multiple
+        accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp"
+        class="hidden"
+        onChange={(e) => {
+          void onFilesPicked(e);
+        }}
+      />
       <Dialogs />
     </SidebarProvider>
   );
