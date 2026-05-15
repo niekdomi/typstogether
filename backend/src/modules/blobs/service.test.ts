@@ -89,4 +89,55 @@ describe("BlobService", () => {
       await expectThrows(() => blobService.fetch(projectId, PNG_SHA256), NotFoundError);
     });
   });
+
+  describe("gcProject", () => {
+    const OTHER_BYTES = new Uint8Array([1, 2, 3, 4]);
+    const OTHER_SHA256 = "9f64a747e1b97f131fabb6b447296c9b6f0201e79fb3c5356e6c77e89b6a806a";
+
+    it("deletes blobs not in the referenced set (grace=0)", async () => {
+      await blobService.store(projectId, fileFromBytes(PNG_BYTES));
+      await blobService.store(projectId, fileFromBytes(OTHER_BYTES, "image/jpeg", "other.jpg"));
+
+      const deleted = await blobService.gcProject(projectId, [PNG_SHA256], 0);
+
+      expect(deleted).toEqual([OTHER_SHA256]);
+      const remaining = await currentDb().select().from(projectBlob);
+      expect(remaining.map((r) => r.sha256)).toEqual([PNG_SHA256]);
+    });
+
+    it("with an empty referenced set, deletes all blobs in the project (grace=0)", async () => {
+      await blobService.store(projectId, fileFromBytes(PNG_BYTES));
+      await blobService.store(projectId, fileFromBytes(OTHER_BYTES, "image/jpeg", "other.jpg"));
+
+      const deleted = await blobService.gcProject(projectId, [], 0);
+
+      expect(deleted.toSorted()).toEqual([OTHER_SHA256, PNG_SHA256].toSorted());
+      const remaining = await currentDb().select().from(projectBlob);
+      expect(remaining).toEqual([]);
+    });
+
+    it("never deletes blobs from another project", async () => {
+      const otherOwner = await userFactory.create();
+      const otherProject = await projectFactory.create({ ownerUserId: otherOwner.id });
+      await blobService.store(otherProject.id, fileFromBytes(PNG_BYTES));
+
+      const deleted = await blobService.gcProject(projectId, [], 0);
+
+      expect(deleted).toEqual([]);
+      const remaining = await currentDb().select().from(projectBlob);
+      expect(remaining).toHaveLength(1);
+      expect(remaining[0]!.projectId).toBe(otherProject.id);
+    });
+
+    it("respects the grace window — blobs younger than `graceSeconds` survive", async () => {
+      await blobService.store(projectId, fileFromBytes(PNG_BYTES));
+
+      // 60-second grace > the ~0s age of the just-inserted row
+      const deleted = await blobService.gcProject(projectId, [], 60);
+
+      expect(deleted).toEqual([]);
+      const remaining = await currentDb().select().from(projectBlob);
+      expect(remaining).toHaveLength(1);
+    });
+  });
 });

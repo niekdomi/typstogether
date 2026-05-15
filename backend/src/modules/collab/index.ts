@@ -3,10 +3,11 @@ import { Hocuspocus } from "@hocuspocus/server";
 import { Elysia } from "elysia";
 
 import { onAuthenticate } from "./auth";
+import { blobGcExtension } from "./blob-gc";
 import { persistence } from "./persistence";
 
 const hocuspocus = new Hocuspocus({
-  extensions: [new Logger(), persistence],
+  extensions: [new Logger(), persistence, blobGcExtension],
   quiet: false,
   onAuthenticate,
 });
