@@ -2,7 +2,7 @@ import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 
 import { formatDate, formatRelative, userInitial } from "./format";
 
-const NOW = new Date("2024-06-15T12:00:00Z");
+const NOW = new Date();
 
 afterEach(() => {
   setSystemTime();
@@ -64,11 +64,11 @@ describe("formatRelative", () => {
 
 describe("formatDate", () => {
   test("formats a Date object", () => {
-    expect(formatDate(new Date("2024-01-05T00:00:00Z"))).toBe("Jan 5, 2024");
+    expect(formatDate(new Date("2026-04-20T00:00:00Z"))).toBe("Apr 20, 2026");
   });
 
   test("accepts an ISO string", () => {
-    expect(formatDate("2024-12-25T00:00:00Z")).toBe("Dec 25, 2024");
+    expect(formatDate("2026-04-20T00:00:00Z")).toBe("Apr 20, 2026");
   });
 });
 
@@ -86,7 +86,7 @@ describe("userInitial", () => {
   });
 
   test("returns ? for undefined", () => {
-    const name: string | undefined = undefined;
+    const name = undefined;
     expect(userInitial(name)).toBe("?");
   });
 
