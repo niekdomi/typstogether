@@ -53,9 +53,13 @@ export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
           autoCompile: { debounceMs: 200, maxWaitMs: 1000 },
         });
 
+        // Y.Map<V> is invariant; the library's expected V changed between versions.
+        // Cast through `unknown` to the exact type the function declares so this
+        // compiles regardless of which version is installed.
+        type FilesParam = Parameters<typeof syncYMapToTypstProject>[0]["files"];
         sync = syncYMapToTypstProject({
           project: project,
-          files: f,
+          files: f as unknown as FilesParam,
           onError: ({ error: syncError }) => {
             setState("error", String(syncError));
           },
