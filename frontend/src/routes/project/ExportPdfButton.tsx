@@ -12,8 +12,8 @@ export default function ExportPdfButton() {
   const filename = (): string => {
     const raw = ctx.membership()?.project.name ?? "project";
     // Strip characters that browsers/OSes reject in download names
-    const safe = raw.replaceAll(/[/\\?%*:|"<>]/g, "-").trim() || "project";
-    return `${safe}.pdf`;
+    const sanitizedFilename = raw.replaceAll(/[/\\?%*:|"<>]/g, "-").trim() || "project";
+    return `${sanitizedFilename}.pdf`;
   };
 
   const onClick = async () => {
