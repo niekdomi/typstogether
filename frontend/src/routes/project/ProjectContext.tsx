@@ -14,7 +14,9 @@ import {
 import type * as Y from "yjs";
 
 import { useAssetsSync } from "../../lib/assets/use-assets-sync";
+import { userColor } from "../../lib/collab/awareness-colors";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
+import { useCurrentUser } from "../../lib/CurrentUserContext";
 import { MAIN_PATH } from "../../lib/paths";
 import { useProject } from "../../lib/projects/use-project";
 import { useTypstProject } from "../../lib/typst/use-typst-project";
@@ -50,8 +52,22 @@ export function ProjectProvider(props: { children: JSX.Element }) {
   const params = useParams<{ id: string }>();
   const projectId = () => params.id;
 
+  const { user } = useCurrentUser();
   const membership = useProject(projectId);
   const collab = useCollabDoc(projectId);
+
+  createEffect(() => {
+    const awareness = collab.awareness;
+    if (!awareness) return;
+    const { color, colorLight } = userColor(user.id);
+    awareness.setLocalStateField("user", {
+      userId: user.id,
+      name: user.name,
+      color,
+      colorLight,
+      image: user.image ?? null,
+    });
+  });
   const typst = useTypstProject(() => collab.files);
   useAssetsSync(
     projectId,

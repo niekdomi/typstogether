@@ -8,6 +8,7 @@ import {
 } from "@hocuspocus/provider";
 import { createEffect, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
+import type { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 
 import { ASSETS_KEY, FILES_KEY, MAIN_PATH } from "../paths";
@@ -18,6 +19,7 @@ interface CollabState {
   files: Y.Map<Y.Text> | null;
   // path -> blob_id of a row stored in the backend's project_blob table.
   assets: Y.Map<string> | null;
+  awareness: Awareness | null;
   status: WebSocketStatus;
   synced: boolean;
   readOnly: boolean;
@@ -29,6 +31,7 @@ export function useCollabDoc(projectId: () => string) {
     ydoc: null,
     files: null,
     assets: null,
+    awareness: null,
     status: WebSocketStatus.Connecting,
     synced: false,
     readOnly: false,
@@ -54,6 +57,7 @@ export function useCollabDoc(projectId: () => string) {
       name: id,
       document: doc,
     });
+    setState("awareness", provider.awareness);
 
     provider.on("status", (data: onStatusParameters) => {
       setState("status", data.status);
@@ -83,7 +87,7 @@ export function useCollabDoc(projectId: () => string) {
     onCleanup(() => {
       provider.destroy();
       doc.destroy();
-      setState({ ydoc: null, files: null, assets: null });
+      setState({ ydoc: null, files: null, assets: null, awareness: null });
     });
   });
 

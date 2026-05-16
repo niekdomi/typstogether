@@ -160,7 +160,7 @@ function FolderRow(props: { node: FolderNode; onUpload: (dir: string) => void })
             props.onUpload(path());
           }}
         >
-          Upload asset…
+          Upload asset
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem
@@ -240,7 +240,7 @@ function RootDropZone(props: { children: JSX.Element; onUpload: (dir: string) =>
             props.onUpload("");
           }}
         >
-          Upload asset…
+          Upload asset
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
