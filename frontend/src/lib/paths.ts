@@ -63,14 +63,6 @@ export function normalizeAsset(input: string, dir: string): string {
   return joinPath(dir, name);
 }
 
-/** Normalize an asset name into a Typst VFS path under `dir`, preserving its extension. */
-export function normalizeAsset(input: string, dir: string): string {
-  const name = input.trim();
-  if (!name) return "";
-  if (name.startsWith("/")) return name;
-  return joinPath(dir, name);
-}
-
 /** Normalize a user-entered folder name into a folder path under `dir`. */
 export function normalizeFolder(input: string, dir: string): string {
   const name = input.trim().replace(/\/+$/, "");
