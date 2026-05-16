@@ -41,13 +41,6 @@ words = [
   "ydoc",
   "yjs",
 ]
-include_paths = [
-  "**/*.md",
-  "**/*.ts",
-  "**/*.tsx",
-]
-ignore_paths = [
-  "**/components/ui/**",
-  "frontend/src/routes/project/editor-actions.test.ts",
-]
+include_paths = ["**/*.md", "**/*.ts", "**/*.tsx"]
+ignore_paths = ["**/components/ui/**", "frontend/src/routes/project/editor-actions.test.ts"]
 use_global = false
