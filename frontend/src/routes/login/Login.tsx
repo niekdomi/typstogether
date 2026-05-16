@@ -37,8 +37,8 @@ export default function Login() {
   return (
     <Switch
       fallback={
-        <div class="grid min-h-screen grid-cols-[1.05fr_1fr] bg-background">
-          <aside class="flex flex-col gap-6 overflow-hidden border-r border-border bg-muted px-12 py-8">
+        <div class="grid min-h-screen grid-cols-1 bg-background lg:grid-cols-[1.05fr_1fr]">
+          <aside class="hidden flex-col gap-6 overflow-hidden border-r border-border bg-muted px-12 py-8 lg:flex">
             <Logo size={20} />
             <div class="my-auto max-w-130">
               <h1 class="mb-4.5 text-[54px] font-medium leading-[1.02] tracking-tight">
