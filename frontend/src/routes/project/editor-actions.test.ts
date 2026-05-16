@@ -17,8 +17,7 @@ import {
 
 /** Creates a mock EditorView from a marked string. ˅ markers come in pairs:
  * ˅˅ at the same position is a cursor, ˅text˅ is a selection range. Multiple
- * pairs create multiple cursors/selections; the last pair is the main selection.
- * A lone trailing ˅ is shorthand for a single cursor. */
+ * pairs create multiple cursors/selections; the last pair is the main selection. */
 function mockView(marked: string): EditorView {
   const ranges = [];
   let doc = "";
@@ -37,9 +36,6 @@ function mockView(marked: string): EditorView {
     }
   }
 
-  if (open !== null) {
-    ranges.push(EditorSelection.cursor(open));
-  }
   if (ranges.length === 0) {
     ranges.push(EditorSelection.cursor(0));
   }
@@ -47,6 +43,7 @@ function mockView(marked: string): EditorView {
   let state = EditorState.create({
     doc,
     selection: EditorSelection.create(ranges, ranges.length - 1),
+    extensions: [EditorState.allowMultipleSelections.of(true)],
   });
 
   return {
@@ -230,7 +227,7 @@ describe("toggleCode", () => {
     toggleCode(v);
     expect(markDoc(v)).toBe(
       `\`\`\`
-hel˅˅lo
+he˅˅llo
 \`\`\``
     );
   });
@@ -248,11 +245,75 @@ hello
   test("cursor inside code block strips markers", () => {
     const v = mockView(
       `\`\`\`
-hel˅˅lo
+he˅˅llo
 \`\`\``
     );
     toggleCode(v);
     expect(markDoc(v)).toBe("he˅˅llo");
+  });
+});
+
+// ─── multi-cursor / multi-selection ─────────────────────────────────────────
+
+describe("multi-cursor / multi-selection", () => {
+  test("wrapSelection: two cursors each get their own marker pair", () => {
+    const v = mockView("a˅˅b and c˅˅d");
+    wrapSelection(v, "*");
+    expect(markDoc(v)).toBe("a*˅˅*b and c*˅˅*d");
+  });
+
+  test("wrapSelection: two selections both get wrapped", () => {
+    const v = mockView("˅foo˅ and ˅bar˅");
+    wrapSelection(v, "*");
+    expect(markDoc(v)).toBe("*˅foo˅* and *˅bar˅*");
+  });
+
+  test("wrapSelection: wrapped selection strips while plain selection wraps", () => {
+    const v = mockView("˅*old*˅ and ˅new˅");
+    wrapSelection(v, "*");
+    expect(markDoc(v)).toBe("˅old˅ and *˅new˅*");
+  });
+
+  test("wrapSelection: selection wraps and cursor inserts pair in same dispatch", () => {
+    const v = mockView("˅hello˅ world˅˅");
+    wrapSelection(v, "*");
+    expect(markDoc(v)).toBe("*˅hello˅* world*˅˅*");
+  });
+
+  test("togglePrefix: two cursors on separate lines both get the prefix", () => {
+    const v = mockView(
+      `˅˅foo
+˅˅bar`
+    );
+    togglePrefix(v, "- ", LIST_GROUP);
+    expect(markDoc(v)).toBe(
+      `- ˅˅foo
+- ˅˅bar`
+    );
+  });
+
+  test("togglePrefix: removing on one line and adding on another are independent", () => {
+    const v = mockView(
+      `- fo˅˅o
+ba˅˅r`
+    );
+    togglePrefix(v, "- ", LIST_GROUP);
+    expect(markDoc(v)).toBe(
+      `fo˅˅o
+- ba˅˅r`
+    );
+  });
+
+  test("toggleCode: two cursors each get their own inline code pair", () => {
+    const v = mockView("a˅˅b and c˅˅d");
+    toggleCode(v);
+    expect(markDoc(v)).toBe("a`˅˅`b and c`˅˅`d");
+  });
+
+  test("toggleMath: two cursors each get their own inline math pair", () => {
+    const v = mockView("a˅˅b and c˅˅d");
+    toggleMath(v);
+    expect(markDoc(v)).toBe("a$˅˅$b and c$˅˅$d");
   });
 });
 
