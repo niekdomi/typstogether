@@ -6,7 +6,7 @@ import { createTypstHighlighting } from "@vedivad/codemirror-typst";
 import { type Theme } from "../../lib/ThemeContext";
 
 // Lazy-load the Typst highlighting controller on first editor mount. The
-// `initial` theme is only the controller's starting state — the editor calls
+// `initial` theme is only the controller's starting state, the editor calls
 // `controller.setTheme(view, theme())` on mount and on every theme change.
 let highlightingPromise: ReturnType<typeof createTypstHighlighting> | undefined;
 export const getHighlighting = (initial: Theme) => {
@@ -103,7 +103,7 @@ export const popupTheme = EditorView.theme({
 
   // Shiki-rendered code. Since @vedivad/codemirror-typst@0.12, the wrapper
   // class lives directly on shiki's <pre> and its inline background-color is
-  // stripped — we own the bg here.
+  // stripped, we own the bg here.
   ".cm-typst-hover-code": {
     margin: "0",
     padding: "6px 8px",
@@ -133,7 +133,7 @@ export const popupTheme = EditorView.theme({
   },
   ".cm-typst-hover-open-docs:hover": { textDecoration: "underline" },
 
-  // Collapsible sections — visible toggle with rotating chevron.
+  // Collapsible sections, visible toggle with rotating chevron.
   ".cm-typst-hover-section": {
     borderTop: "1px solid color-mix(in oklch, var(--border) 60%, transparent)",
   },

@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   customType,
   index,
+  integer,
   pgEnum,
   pgTable,
   primaryKey,
@@ -101,6 +102,25 @@ export const collabDocument = pgTable(
   (table) => [index("collab_document_updated_at_idx").on(table.updatedAt)]
 );
 
+export const projectBlob = pgTable(
+  "project_blob",
+  {
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    // Server-generated per upload. Identity for the blob in the assets Y.Map.
+    // Two uploads of the same content produce two rows with different ids.
+    blobId: text("blob_id")
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    mime: text("mime").notNull(),
+    size: integer("size").notNull(),
+    bytes: bytea("bytes").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.projectId, table.blobId] })]
+);
+
 export const projectRelations = relations(project, ({ one, many }) => ({
   owner: one(user, {
     fields: [project.ownerUserId],
@@ -147,4 +167,6 @@ export type NewProjectMember = typeof projectMember.$inferInsert;
 export type ProjectInvite = typeof projectInvite.$inferSelect;
 export type NewProjectInvite = typeof projectInvite.$inferInsert;
 export type CollabDocument = typeof collabDocument.$inferSelect;
+export type ProjectBlob = typeof projectBlob.$inferSelect;
+export type NewProjectBlob = typeof projectBlob.$inferInsert;
 export type NewCollabDocument = typeof collabDocument.$inferInsert;

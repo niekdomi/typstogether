@@ -11,6 +11,7 @@ import { cx } from "../../components/ui/cva";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import UserMenu from "../../components/UserMenu";
+import AssetPreview from "./AssetPreview";
 import CodeMirrorEditor from "./CodeMirrorEditor";
 import DiagnosticsPanel from "./DiagnosticsPanel";
 import EditorToolbar from "./EditorToolbar";
@@ -197,9 +198,13 @@ function ProjectView() {
               </WorkspacePanel>
               <main class="grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x divide-border/60">
                 <div class="flex min-w-0 flex-col">
-                  <EditorToolbar />
+                  <Show when={!ctx.activeIsAsset()}>
+                    <EditorToolbar />
+                  </Show>
                   <div class="min-h-0 flex-1">
-                    <CodeMirrorEditor />
+                    <Show when={ctx.activeIsAsset()} fallback={<CodeMirrorEditor />}>
+                      <AssetPreview />
+                    </Show>
                   </div>
                 </div>
                 <div class="min-w-0">

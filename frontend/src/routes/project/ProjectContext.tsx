@@ -13,6 +13,7 @@ import {
 } from "solid-js";
 import type * as Y from "yjs";
 
+import { useAssetsSync } from "../../lib/assets/use-assets-sync";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { MAIN_PATH } from "../../lib/paths";
 import { useProject } from "../../lib/projects/use-project";
@@ -20,6 +21,7 @@ import { useTypstProject } from "../../lib/typst/use-typst-project";
 
 export interface Ready {
   files: Y.Map<Y.Text>;
+  assets: Y.Map<string>;
   typstProject: TypstProject;
 }
 
@@ -31,6 +33,7 @@ interface ProjectContextValue {
 
   ready: Accessor<Ready | null>;
   activeFile: Accessor<string>;
+  activeIsAsset: Accessor<boolean>;
   setActiveFile: (path: string) => void;
   isReadOnly: Accessor<boolean>;
 
@@ -50,6 +53,11 @@ export function ProjectProvider(props: { children: JSX.Element }) {
   const membership = useProject(projectId);
   const collab = useCollabDoc(projectId);
   const typst = useTypstProject(() => collab.files);
+  useAssetsSync(
+    projectId,
+    () => typst.project,
+    () => collab.assets
+  );
 
   const [requestedFile, setRequestedFile] = createSignal(MAIN_PATH);
   const [editorView, setEditorView] = createSignal<EditorView | null>(null);
@@ -62,19 +70,22 @@ export function ProjectProvider(props: { children: JSX.Element }) {
 
   const ready = createMemo<Ready | null>(() => {
     const files = collab.files;
+    const assets = collab.assets;
     const typstProject = typst.project;
-    return files && typstProject ? { files, typstProject } : null;
+    return files && assets && typstProject ? { files, assets, typstProject } : null;
   });
 
   // Active file falls back to the first available if the requested one was
-  // deleted (or never existed).
+  // deleted (or never existed). Assets and files share the same path namespace.
   const activeFile = createMemo(() => {
     const r = ready();
     if (!r) return MAIN_PATH;
     const requested = requestedFile();
-    if (r.files.has(requested)) return requested;
+    if (r.files.has(requested) || r.assets.has(requested)) return requested;
     return [...r.files.keys()][0] ?? MAIN_PATH;
   });
+
+  const activeIsAsset = createMemo(() => ready()?.assets.has(activeFile()) ?? false);
 
   // Keep `requestedFile` in sync with `activeFile` so the sidebar's selection
   // reflects fallbacks (e.g. when the requested file is deleted).
@@ -103,6 +114,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     typst,
     ready,
     activeFile,
+    activeIsAsset,
     setActiveFile: setRequestedFile,
     isReadOnly,
     editorView,

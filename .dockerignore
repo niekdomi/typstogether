@@ -16,7 +16,7 @@ backend/dist/
 **/*.test.ts
 **/test/
 
-# Files unrelated to image builds — excluded for cache stability.
+# Files unrelated to image builds, excluded for cache stability.
 *.md
 LICENSE
 .codebook.toml
