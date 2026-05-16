@@ -9,7 +9,7 @@ export const ALLOWED_MIME_TYPES = [
   "application/pdf",
 ] as const;
 
-export const MAX_BLOB_SIZE = "10m";
+export const MAX_BLOB_SIZE = "10m" // 10MB;
 
 export const blobUploadModel = t.Object({
   file: t.File({ type: [...ALLOWED_MIME_TYPES], maxSize: MAX_BLOB_SIZE }),
