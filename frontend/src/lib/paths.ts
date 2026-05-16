@@ -25,22 +25,31 @@ export function joinPath(dir: string, leaf: string): string {
 function resolvePath(path: string): string {
   const segments: string[] = [];
   for (const seg of path.split("/")) {
-    if (seg === "" || seg === ".") continue;
+    if (seg === "" || seg === ".") {
+      continue;
+    }
+
     if (seg === "..") {
       segments.pop(); // no-op on empty array - clamps at root
     } else {
       segments.push(seg);
     }
   }
+
   return "/" + segments.join("/");
 }
 
 /** Normalize a user-entered file name into a Typst VFS path under `dir`.
  * Supports relative jumping: "../../other.typ" resolves from `dir`. */
-export function normalizeFile(input: string, dir = ""): string {
-  let name = input.trim();
-  if (!name) return "";
-  if (!name.endsWith(".typ")) name += ".typ";
+export function normalizeFile(input: string, dir: string): string {
+  let name = input.trim().replace(/\/+$/, "");
+  if (!name) {
+    return "";
+  }
+  if (!name.endsWith(".typ")) {
+    name += ".typ";
+  }
+
   const raw = name.startsWith("/") ? name : joinPath(dir, name);
   return resolvePath(raw);
 }
@@ -48,9 +57,12 @@ export function normalizeFile(input: string, dir = ""): string {
 /** Normalize a user-entered folder name into a folder path under `dir`.
  * Supports relative jumping: "../sibling" resolves from `dir`.
  * Returns "" if the input is empty or resolves to root. */
-export function normalizeFolder(input: string, dir = ""): string {
+export function normalizeFolder(input: string, dir: string): string {
   const name = input.trim().replace(/\/+$/, "");
-  if (!name) return "";
+  if (!name) {
+    return "";
+  }
+
   const raw = name.startsWith("/") ? name : joinPath(dir, name);
   const resolved = resolvePath(raw);
   return resolved === "/" ? "" : resolved;

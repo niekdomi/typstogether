@@ -140,16 +140,33 @@ export function useFileSidebar() {
   // dialog stays open) or `undefined` (success - PromptDialog closes itself).
 
   const handleNewFile = (dir: string, rawName: string): string | undefined => {
+    if (rawName.trimEnd().endsWith("/")) {
+      return "File name cannot end with /";
+    }
+
     const path = normalizeFile(rawName, dir);
-    if (!path) return undefined;
-    if (has(path)) return existsMsg(path);
+    if (!path) {
+      return undefined;
+    }
+    if (has(path)) {
+      return existsMsg(path);
+    }
+
     files.set(path, new Y.Text());
     ctx.setActiveFile(path);
+
     return undefined;
   };
 
   const handleRenameFile = (oldPath: string, rawName: string): string | undefined => {
-    if (isLocked(oldPath)) return undefined;
+    if (isLocked(oldPath)) {
+      return undefined;
+    }
+
+    if (rawName.trimEnd().endsWith("/")) {
+      return "File name cannot end with /";
+    }
+
     const newPath = normalizeFile(rawName, dirOf(oldPath));
     if (newPath === oldPath) {
       return undefined;
@@ -168,11 +185,23 @@ export function useFileSidebar() {
   };
 
   const handleDuplicateFile = (sourcePath: string, rawName: string): string | undefined => {
+    if (rawName.trimEnd().endsWith("/")) {
+      return "File name cannot end with /";
+    }
+
     const newPath = normalizeFile(rawName, dirOf(sourcePath));
-    if (!newPath) return undefined;
-    if (has(newPath)) return existsMsg(newPath);
+    if (!newPath) {
+      return undefined;
+    }
+    if (has(newPath)) {
+      return existsMsg(newPath);
+    }
+
     const source = files.get(sourcePath);
-    if (!source) return undefined;
+    if (!source) {
+      return undefined;
+    }
+
     files.set(newPath, copyText(source));
     return undefined;
   };
@@ -182,10 +211,14 @@ export function useFileSidebar() {
       close();
       return;
     }
+
     files.delete(path);
+
     if (ctx.activeFile() === path) {
       const next = [...files.keys()][0];
-      if (next) ctx.setActiveFile(next);
+      if (next) {
+        ctx.setActiveFile(next);
+      }
     }
     close();
   };
@@ -194,17 +227,24 @@ export function useFileSidebar() {
 
   const handleNewFolder = (dir: string, rawName: string): string | undefined => {
     const folder = normalizeFolder(rawName, dir);
-    if (!folder) return undefined;
+    if (!folder) {
+      return "Invalid folder name";
+    }
+
     if (pendingFolders().has(folder) || folderHasFiles(folder) || has(folder)) {
       return existsMsg(folder);
     }
     setPendingFolders((prev) => new Set([...prev, folder]));
+
     return undefined;
   };
 
   const handleRenameFolder = (oldFolder: string, rawName: string): string | undefined => {
     const newFolder = normalizeFolder(rawName, dirOf(oldFolder));
-    if (!newFolder || newFolder === oldFolder) {
+    if (!newFolder) {
+      return "Invalid folder name";
+    }
+    if (newFolder === oldFolder) {
       return undefined;
     }
 
@@ -264,11 +304,20 @@ export function useFileSidebar() {
     e.preventDefault();
     const src = e.dataTransfer?.getData("text/plain");
     setDrag({ source: null, over: null });
-    if (!src || isLocked(src)) return;
+
+    if (!src || isLocked(src)) {
+      return;
+    }
+
     const dest = destFor(src);
-    if (dest === src || has(dest)) return;
+    if (dest === src || has(dest)) {
+      return;
+    }
+
     movePath(src, dest);
-    if (ctx.activeFile() === src) ctx.setActiveFile(dest);
+    if (ctx.activeFile() === src) {
+      ctx.setActiveFile(dest);
+    }
   };
 
   const onFileDragStart = (e: DragEvent, path: string) => {
@@ -276,33 +325,49 @@ export function useFileSidebar() {
       e.preventDefault();
       return;
     }
+
     e.dataTransfer?.setData("text/plain", path);
     setDrag({ source: path, over: null });
   };
+
   const onDragEnd = () => {
     setDrag({ source: null, over: null });
   };
+
   const onFolderDragOver = (e: DragEvent, folder: string) => {
-    if (!drag.source) return;
+    if (!drag.source) {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
+
     setDrag("over", folder);
   };
+
   const onFolderDrop = (e: DragEvent, folder: string) => {
     e.stopPropagation();
     completeDrop(e, (src) => joinPath(folder, leafOf(src)));
   };
+
   const onRootDragOver = (e: DragEvent) => {
-    if (!drag.source) return;
+    if (!drag.source) {
+      return;
+    }
     e.preventDefault();
     setDrag("over", "");
   };
+
   const onRootDragLeave = (e: DragEvent) => {
-    if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) setDrag("over", null);
+    if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) {
+      setDrag("over", null);
+    }
   };
+
   const clearDragOver = () => {
     setDrag("over", null);
   };
+
   const onRootDrop = (e: DragEvent) => {
     completeDrop(e, (src) => `/${leafOf(src)}`);
   };
