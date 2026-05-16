@@ -93,7 +93,7 @@ describe("blobGcExtension", () => {
 
     await loadDocument(projectId, doc);
 
-    // Brand-new key, oldValue is undefined → action is "add"
+    // Brand-new key, oldValue is undefined -> action is "add"
     assets.set("/a.png", meta.id);
     await drain();
 

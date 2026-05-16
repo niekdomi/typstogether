@@ -160,7 +160,7 @@ export function useFileSidebar() {
 
   // File operations ────────────────────────────────────────────────────────
   // All file/folder ops return `string` (inline error to show in the dialog,
-  // dialog stays open) or `undefined` (success — PromptDialog closes itself).
+  // dialog stays open) or `undefined` (success -> PromptDialog closes itself).
 
   const handleNewFile = (dir: string, rawName: string): string | undefined => {
     const path = normalizeFile(rawName, dir);

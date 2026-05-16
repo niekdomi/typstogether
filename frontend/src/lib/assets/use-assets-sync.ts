@@ -4,7 +4,7 @@ import type * as Y from "yjs";
 
 import { assetBlobUrl } from "./upload";
 
-// Observes the `assets` Y.Map (path → blob_id) and keeps the Typst project's
+// Observes the `assets` Y.Map (path -> blob_id) and keeps the Typst project's
 // virtual filesystem in sync by fetching binary blobs from the backend and
 // calling `setBinary`. The blob_id is the cache key; we never refetch for a
 // path unless its id changes.

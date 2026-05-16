@@ -55,7 +55,7 @@ export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
 
         // Plugin types `files` as `Y.Map<Y.Text | Uint8Array>` but we only
         // store `Y.Text` values. Y.Map is invariant in TS strict mode, so the
-        // narrow→wide assignment fails. Cast through `unknown` to bypass.
+        // narrow -> wide assignment fails. Cast through `unknown` to bypass.
         const widenedFiles = f as unknown as Y.Map<Y.Text | Uint8Array>;
         sync = syncYMapToTypstProject({
           project: project,

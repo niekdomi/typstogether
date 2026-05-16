@@ -6,15 +6,6 @@ import { blobService } from "../blobs/service";
 // Must match the frontend's ASSETS_KEY (see frontend/src/lib/paths.ts).
 const ASSETS_KEY = "assets";
 
-// Hocuspocus extension that deletes a `project_blob` row immediately when its
-// `blob_id` is removed from the `assets` Y.Map (delete or overwrite). Safe
-// because each upload produces a unique `blob_id` — no other path can
-// possibly reference it, so an orphaned id is unambiguously deletable.
-//
-// Failed mid-flight uploads (client crashed before committing
-// `assets.set(path, id)`) leak one row per occurrence. Acceptable for our
-// scale; can be cleaned up later with a one-shot script if it becomes a
-// real cost.
 const observers = new WeakMap<Y.Doc, (event: Y.YMapEvent<string>) => void>();
 
 export const blobGcExtension: Extension = {

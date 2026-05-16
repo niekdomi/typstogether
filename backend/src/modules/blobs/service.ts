@@ -31,7 +31,7 @@ export class BlobService {
     return row;
   }
 
-  // Idempotent — no-op if the row was already deleted (or never existed).
+  // Idempotent, no-op if the row was already deleted (or never existed).
   async deleteBlob(projectId: string, blobId: string): Promise<void> {
     await currentDb()
       .delete(projectBlob)
