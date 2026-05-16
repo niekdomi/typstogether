@@ -15,11 +15,40 @@ import {
 
 // ─── Mock ────────────────────────────────────────────────────────────────────
 
-function mockView(docStr: string, from: number, to = from): EditorView {
+/** Creates a mock EditorView from a marked string. ˅ markers come in pairs:
+ * ˅˅ at the same position is a cursor, ˅text˅ is a selection range. Multiple
+ * pairs create multiple cursors/selections; the last pair is the main selection.
+ * A lone trailing ˅ is shorthand for a single cursor. */
+function mockView(marked: string): EditorView {
+  const ranges = [];
+  let doc = "";
+  let open: number | null = null;
+
+  for (const ch of marked) {
+    if (ch === "˅") {
+      if (open === null) {
+        open = doc.length;
+      } else {
+        ranges.push(EditorSelection.range(open, doc.length));
+        open = null;
+      }
+    } else {
+      doc += ch;
+    }
+  }
+
+  if (open !== null) {
+    ranges.push(EditorSelection.cursor(open));
+  }
+  if (ranges.length === 0) {
+    ranges.push(EditorSelection.cursor(0));
+  }
+
   let state = EditorState.create({
-    doc: docStr,
-    selection: EditorSelection.range(from, to),
+    doc,
+    selection: EditorSelection.create(ranges, ranges.length - 1),
   });
+
   return {
     get state() {
       return state;
@@ -32,55 +61,66 @@ function mockView(docStr: string, from: number, to = from): EditorView {
     focus() {
       return;
     },
-  } as unknown as EditorView;
+  } as EditorView;
 }
 
 const docOf = (v: EditorView) => v.state.doc.toString();
-const selOf = (v: EditorView) => {
-  const { from, to } = v.state.selection.main;
-  return { from, to };
-};
+
+/** Returns the current doc with ˅ markers reinserted at all selection positions,
+ * mirroring the input convention of {@link mockView}. Cursors appear as ˅˅,
+ * selections as ˅text˅. */
+function markDoc(v: EditorView): string {
+  const doc = v.state.doc.toString();
+  const marks: number[] = [];
+  for (const range of v.state.selection.ranges) {
+    marks.push(range.from, range.to);
+  }
+  marks.sort((a, b) => a - b);
+
+  let result = "";
+  let last = 0;
+  for (const pos of marks) {
+    result += doc.slice(last, pos) + "˅";
+    last = pos;
+  }
+  return result + doc.slice(last);
+}
 
 // ─── wrapSelection ───────────────────────────────────────────────────────────
 
 describe("wrapSelection", () => {
   test("empty cursor inserts marker pair and places cursor inside", () => {
-    const v = mockView("into", 2);
+    const v = mockView("in˅˅to");
     wrapSelection(v, "*");
-    expect(docOf(v)).toBe("in**to");
-    expect(selOf(v)).toEqual({ from: 3, to: 3 });
+    expect(markDoc(v)).toBe("in*˅˅*to");
   });
 
   test("selection wraps text in markers", () => {
-    const v = mockView("hello", 1, 4);
+    const v = mockView("h˅ell˅o");
     wrapSelection(v, "*");
-    expect(docOf(v)).toBe("h*ell*o");
-    expect(selOf(v)).toEqual({ from: 2, to: 5 });
+    expect(markDoc(v)).toBe("h*˅ell˅*o");
   });
 
   test("selection spanning full wrapped text strips markers", () => {
-    const v = mockView("*bold*", 0, 6);
+    const v = mockView("˅*bold*˅");
     wrapSelection(v, "*");
-    expect(docOf(v)).toBe("bold");
-    expect(selOf(v)).toEqual({ from: 0, to: 4 });
+    expect(markDoc(v)).toBe("˅bold˅");
   });
 
   test("cursor inside wrapped text strips markers", () => {
-    const v = mockView("*bold*", 3);
+    const v = mockView("*bo˅˅ld*");
     wrapSelection(v, "*");
-    expect(docOf(v)).toBe("bold");
-    expect(selOf(v)).toEqual({ from: 2, to: 2 });
+    expect(markDoc(v)).toBe("bo˅˅ld");
   });
 
   test("asymmetric wrap applies to selected text", () => {
-    const v = mockView("hello", 0, 5);
+    const v = mockView("˅hello˅");
     wrapSelection(v, "#strike[", "]");
-    expect(docOf(v)).toBe("#strike[hello]");
-    expect(selOf(v)).toEqual({ from: 8, to: 13 });
+    expect(markDoc(v)).toBe("#strike[˅hello˅]");
   });
 
   test("cursor inside asymmetric pair strips markers", () => {
-    const v = mockView("#strike[hello]", 10);
+    const v = mockView("#strike[hel˅˅lo]");
     wrapSelection(v, "#strike[", "]");
     expect(docOf(v)).toBe("hello");
   });
@@ -90,46 +130,55 @@ describe("wrapSelection", () => {
 
 describe("togglePrefix", () => {
   test("adds prefix to plain line and shifts cursor", () => {
-    const v = mockView("hello", 3);
+    const v = mockView("hel˅˅lo");
     togglePrefix(v, "- ", LIST_GROUP);
-    expect(docOf(v)).toBe("- hello");
-    expect(selOf(v)).toEqual({ from: 5, to: 5 });
+    expect(markDoc(v)).toBe("- hel˅˅lo");
   });
 
   test("removes prefix from prefixed line and shifts cursor", () => {
-    const v = mockView("- hello", 5);
+    const v = mockView("- hel˅˅lo");
     togglePrefix(v, "- ", LIST_GROUP);
-    expect(docOf(v)).toBe("hello");
-    expect(selOf(v)).toEqual({ from: 3, to: 3 });
+    expect(markDoc(v)).toBe("hel˅˅lo");
   });
 
   test("indent cursor on empty line when toggling list", () => {
-    const v = mockView("", 0);
+    const v = mockView("˅˅");
     togglePrefix(v, "- ", LIST_GROUP);
-    expect(docOf(v)).toBe("- ");
-    expect(selOf(v)).toEqual({ from: 2, to: 2 });
+    expect(markDoc(v)).toBe("- ˅˅");
   });
 
   test("adds prefix to all lines when none are prefixed", () => {
-    const v = mockView("foo\nbar", 0, 7);
+    const v = mockView(
+      `˅foo
+bar˅`
+    );
     togglePrefix(v, "- ", LIST_GROUP);
-    expect(docOf(v)).toBe("- foo\n- bar");
+    expect(docOf(v)).toBe(
+      `- foo
+- bar`
+    );
   });
 
   test("removes prefix from all lines when all are prefixed", () => {
-    const v = mockView("- foo\n- bar", 0, 11);
+    const v = mockView(
+      `˅- foo
+- bar˅`
+    );
     togglePrefix(v, "- ", LIST_GROUP);
-    expect(docOf(v)).toBe("foo\nbar");
+    expect(docOf(v)).toBe(
+      `foo
+bar`
+    );
   });
 
   test("replaces sibling list prefix with target", () => {
-    const v = mockView("- item", 4);
+    const v = mockView("- it˅˅em");
     togglePrefix(v, "+ ", LIST_GROUP);
     expect(docOf(v)).toBe("+ item");
   });
 
   test("replaces sibling heading prefix with deeper heading", () => {
-    const v = mockView("= Title", 4);
+    const v = mockView("= Ti˅˅tle");
     togglePrefix(v, "== ", HEADING_GROUP);
     expect(docOf(v)).toBe("== Title");
   });
@@ -139,18 +188,15 @@ describe("togglePrefix", () => {
 
 describe("insertLink", () => {
   test("empty selection inserts template with cursor in URL slot", () => {
-    const v = mockView("", 0);
+    const v = mockView("˅˅");
     insertLink(v);
-    expect(docOf(v)).toBe('#link("https://")[]');
-    // cursor lands after '#link("https://' (7 + 8 = 15)
-    expect(selOf(v)).toEqual({ from: 15, to: 15 });
+    expect(markDoc(v)).toBe('#link("https://˅˅")[]');
   });
 
   test("selected text becomes link label, cursor placed in URL slot", () => {
-    const v = mockView("example", 0, 7);
+    const v = mockView("˅example˅");
     insertLink(v);
-    expect(docOf(v)).toBe('#link("https://")[example]');
-    expect(selOf(v)).toEqual({ from: 15, to: 15 });
+    expect(markDoc(v)).toBe('#link("https://˅˅")[example]');
   });
 });
 
@@ -158,45 +204,55 @@ describe("insertLink", () => {
 
 describe("toggleCode", () => {
   test("empty cursor inserts inline code pair", () => {
-    const v = mockView("", 0);
+    const v = mockView("˅˅");
     toggleCode(v);
-    expect(docOf(v)).toBe("``");
-    expect(selOf(v)).toEqual({ from: 1, to: 1 });
+    expect(markDoc(v)).toBe("`˅˅`");
   });
 
   test("selection wraps text in inline code", () => {
-    const v = mockView("hello", 0, 5);
+    const v = mockView("˅hello˅");
     toggleCode(v);
-    expect(docOf(v)).toBe("`hello`");
-    expect(selOf(v)).toEqual({ from: 1, to: 6 });
+    expect(markDoc(v)).toBe("`˅hello˅`");
   });
 
   test("inline code selection upgrades to code block", () => {
-    const v = mockView("`hello`", 0, 7);
+    const v = mockView("˅`hello`˅");
     toggleCode(v);
-    expect(docOf(v)).toBe("```\nhello\n```");
-    expect(selOf(v)).toEqual({ from: 4, to: 9 });
+    expect(markDoc(v)).toBe(
+      `\`\`\`
+˅hello˅
+\`\`\``
+    );
   });
 
   test("cursor inside inline code upgrades to code block", () => {
-    const v = mockView("`hello`", 3);
+    const v = mockView("`he˅˅llo`");
     toggleCode(v);
-    expect(docOf(v)).toBe("```\nhello\n```");
-    expect(selOf(v)).toEqual({ from: 6, to: 6 });
+    expect(markDoc(v)).toBe(
+      `\`\`\`
+hel˅˅lo
+\`\`\``
+    );
   });
 
   test("code block selection strips to plain text", () => {
-    const v = mockView("```\nhello\n```", 0, 13);
+    const v = mockView(
+      `˅\`\`\`
+hello
+\`\`\`˅`
+    );
     toggleCode(v);
-    expect(docOf(v)).toBe("hello");
-    expect(selOf(v)).toEqual({ from: 0, to: 5 });
+    expect(markDoc(v)).toBe("˅hello˅");
   });
 
   test("cursor inside code block strips markers", () => {
-    const v = mockView("```\nhello\n```", 6);
+    const v = mockView(
+      `\`\`\`
+hel˅˅lo
+\`\`\``
+    );
     toggleCode(v);
-    expect(docOf(v)).toBe("hello");
-    expect(selOf(v)).toEqual({ from: 2, to: 2 });
+    expect(markDoc(v)).toBe("he˅˅llo");
   });
 });
 
@@ -204,45 +260,38 @@ describe("toggleCode", () => {
 
 describe("toggleMath", () => {
   test("empty cursor inserts inline math pair", () => {
-    const v = mockView("", 0);
+    const v = mockView("˅˅");
     toggleMath(v);
-    expect(docOf(v)).toBe("$$");
-    expect(selOf(v)).toEqual({ from: 1, to: 1 });
+    expect(markDoc(v)).toBe("$˅˅$");
   });
 
   test("selection wraps text in inline math", () => {
-    const v = mockView("x", 0, 1);
+    const v = mockView("˅x˅");
     toggleMath(v);
-    expect(docOf(v)).toBe("$x$");
-    expect(selOf(v)).toEqual({ from: 1, to: 2 });
+    expect(markDoc(v)).toBe("$˅x˅$");
   });
 
   test("inline math selection upgrades to display math", () => {
-    const v = mockView("$x$", 0, 3);
+    const v = mockView("˅$x$˅");
     toggleMath(v);
-    expect(docOf(v)).toBe("$ x $");
-    expect(selOf(v)).toEqual({ from: 2, to: 3 });
+    expect(markDoc(v)).toBe("$ ˅x˅ $");
   });
 
   test("display math selection strips to plain text", () => {
-    const v = mockView("$ x $", 0, 5);
+    const v = mockView("˅$ x $˅");
     toggleMath(v);
-    expect(docOf(v)).toBe("x");
-    expect(selOf(v)).toEqual({ from: 0, to: 1 });
+    expect(markDoc(v)).toBe("˅x˅");
   });
 
   test("cursor inside inline math upgrades to display math", () => {
-    const v = mockView("$x$", 1);
+    const v = mockView("$˅˅x$");
     toggleMath(v);
-    expect(docOf(v)).toBe("$ x $");
-    expect(selOf(v)).toEqual({ from: 2, to: 2 });
+    expect(markDoc(v)).toBe("$ ˅˅x $");
   });
 
   test("cursor inside display math strips markers", () => {
-    // "$ x $" - cursor on 'x' at position 2
-    const v = mockView("$ x $", 2);
+    const v = mockView("$ ˅˅x $");
     toggleMath(v);
-    expect(docOf(v)).toBe("x");
-    expect(selOf(v)).toEqual({ from: 0, to: 0 });
+    expect(markDoc(v)).toBe("˅˅x");
   });
 });
