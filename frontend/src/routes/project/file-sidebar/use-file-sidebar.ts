@@ -2,11 +2,13 @@ import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
 import * as Y from "yjs";
 
+import { uploadAsset } from "../../../lib/assets/upload";
 import {
   dirOf,
   joinPath,
   leafOf,
   MAIN_PATH,
+  normalizeAsset,
   normalizeFile,
   normalizeFolder,
 } from "../../../lib/paths";
@@ -23,14 +25,18 @@ const copyText = (src: Y.Text): Y.Text => {
   return copy;
 };
 
+const isLocked = (path: string) => path === MAIN_PATH;
+
 /**
  * Owns all reactive state and operations for the file sidebar. Returns plain
  * accessors and handlers - the JSX layer is pure rendering.
  */
 export function useFileSidebar() {
   const ctx = useProjectContext();
-  // Sidebar only mounts inside `ctx.ready()`, so `files` is non-null.
+  // Sidebar only mounts inside `ctx.ready()`, so both maps are non-null.
   const files = ctx.collab.files!;
+  const assets = ctx.collab.assets!;
+  const projectId = ctx.projectId;
   const [paths, setPaths] = createSignal<string[]>([]);
   const [collapsed, setCollapsed] = createSignal(new Set<string>());
   // Folders the user created via "New folder" that don't yet contain any file.
@@ -43,14 +49,16 @@ export function useFileSidebar() {
     over: null,
   });
 
-  // Mirror Y.Map keys into a Solid signal so the list re-renders on any
-  // mutation (local or remote).
+  // Mirror Y.Map keys from both maps into a Solid signal so the list re-renders
+  // on any mutation (local or remote).
   createEffect(() => {
-    const refresh = () => setPaths([...files.keys()]);
+    const refresh = () => setPaths([...files.keys(), ...assets.keys()]);
     refresh();
     files.observe(refresh);
+    assets.observe(refresh);
     onCleanup(() => {
       files.unobserve(refresh);
+      assets.unobserve(refresh);
     });
   });
 
@@ -66,9 +74,10 @@ export function useFileSidebar() {
   const tree = createMemo(() => buildTree(paths(), pendingFolders(), collapsed()));
 
   const close = () => setDialog(null);
-  const has = (path: string) => files.has(path);
+  const has = (path: string) => files.has(path) || assets.has(path);
+  const isAsset = (path: string) => assets.has(path);
   const folderHasFiles = (folder: string) => paths().some((p) => p.startsWith(folder + "/"));
-  const isLocked = (path: string) => path === MAIN_PATH;
+  const totalCount = () => files.size + assets.size;
 
   // Narrow the dialog union for type-safe rendering.
   const dialogOf =
@@ -93,18 +102,24 @@ export function useFileSidebar() {
   };
 
   // Path moves ────────────────────────────────────────────────────────────
-  // Y.Text instances can't be transferred between Y.Map keys, so we copy
-  // content and delete the old key.
+  // Text values: Y.Text instances can't be transferred between Y.Map keys, so
+  // we copy content and delete the old key. Asset values: the blob_id string is
+  // a primitive, so a plain set/delete is enough.
 
   const movePath = (oldPath: string, newPath: string) => {
-    const text = files.get(oldPath);
-    if (!text) {
-      return;
-    }
-
     files.doc?.transact(() => {
-      files.set(newPath, copyText(text));
-      files.delete(oldPath);
+      const text = files.get(oldPath);
+      if (text) {
+        files.set(newPath, copyText(text));
+        files.delete(oldPath);
+        return;
+      }
+
+      const sha = assets.get(oldPath);
+      if (sha) {
+        assets.set(newPath, sha);
+        assets.delete(oldPath);
+      }
     });
   };
 
@@ -115,16 +130,26 @@ export function useFileSidebar() {
         moves.push([path, newFolder + path.slice(oldFolder.length)]);
       }
     }
+    for (const path of assets.keys()) {
+      if (path.startsWith(oldFolder + "/")) {
+        moves.push([path, newFolder + path.slice(oldFolder.length)]);
+      }
+    }
 
     files.doc?.transact(() => {
       for (const [from, to] of moves) {
         const text = files.get(from);
-        if (!text) {
+        if (text) {
+          files.set(to, copyText(text));
+          files.delete(from);
           continue;
         }
 
-        files.set(to, copyText(text));
-        files.delete(from);
+        const sha = assets.get(from);
+        if (sha) {
+          assets.set(to, sha);
+          assets.delete(from);
+        }
       }
     });
 
@@ -137,7 +162,7 @@ export function useFileSidebar() {
 
   // File operations ────────────────────────────────────────────────────────
   // All file/folder ops return `string` (inline error to show in the dialog,
-  // dialog stays open) or `undefined` (success - PromptDialog closes itself).
+  // dialog stays open) or `undefined` (success -> PromptDialog closes itself).
 
   const handleNewFile = (dir: string, rawName: string): string | undefined => {
     if (rawName.trimEnd().endsWith("/")) {
@@ -158,6 +183,11 @@ export function useFileSidebar() {
     return undefined;
   };
 
+  // Pick the right path normalizer: text files force `.typ`; assets preserve
+  // their original extension.
+  const normalizeForPath = (path: string, rawName: string, dir: string): string =>
+    isAsset(path) ? normalizeAsset(rawName, dir) : normalizeFile(rawName, dir);
+
   const handleRenameFile = (oldPath: string, rawName: string): string | undefined => {
     if (isLocked(oldPath)) {
       return undefined;
@@ -167,16 +197,15 @@ export function useFileSidebar() {
       return "File name cannot end with /";
     }
 
-    const newPath = normalizeFile(rawName, dirOf(oldPath));
+    const newPath = normalizeForPath(oldPath, rawName, dirOf(oldPath));
     if (newPath === oldPath) {
       return undefined;
     }
-
     if (has(newPath)) {
       return existsMsg(newPath);
     }
-
     movePath(oldPath, newPath);
+
     if (ctx.activeFile() === oldPath) {
       ctx.setActiveFile(newPath);
     }
@@ -189,12 +218,19 @@ export function useFileSidebar() {
       return "File name cannot end with /";
     }
 
-    const newPath = normalizeFile(rawName, dirOf(sourcePath));
+    const newPath = normalizeForPath(sourcePath, rawName, dirOf(sourcePath));
     if (!newPath) {
       return undefined;
     }
     if (has(newPath)) {
       return existsMsg(newPath);
+    }
+
+    const sha = assets.get(sourcePath);
+    if (sha) {
+      // Asset duplicate is free: same blob, two paths.
+      assets.set(newPath, sha);
+      return undefined;
     }
 
     const source = files.get(sourcePath);
@@ -207,20 +243,41 @@ export function useFileSidebar() {
   };
 
   const handleDeleteFile = (path: string) => {
-    if (isLocked(path) || files.size <= 1) {
+    if (isLocked(path) || totalCount() <= 1) {
       close();
       return;
     }
 
-    files.delete(path);
+    if (assets.has(path)) {
+      assets.delete(path);
+    } else {
+      files.delete(path);
+    }
 
     if (ctx.activeFile() === path) {
-      const next = [...files.keys()][0];
+      const next = [...files.keys()][0] ?? [...assets.keys()][0];
       if (next) {
         ctx.setActiveFile(next);
       }
     }
+
     close();
+  };
+
+  // Asset uploads ──────────────────────────────────────────────────────────
+
+  const handleUploadAsset = async (dir: string, file: File): Promise<string | undefined> => {
+    const path = normalizeAsset(file.name, dir);
+    if (!path) return "Invalid file name.";
+    if (has(path)) return existsMsg(path);
+    try {
+      const { id } = await uploadAsset(projectId(), file);
+      assets.set(path, id);
+      ctx.setActiveFile(path);
+      return undefined;
+    } catch (error) {
+      return error instanceof Error ? error.message : "Upload failed.";
+    }
   };
 
   // Folder operations ──────────────────────────────────────────────────────
@@ -269,8 +326,10 @@ export function useFileSidebar() {
   };
 
   const handleDeleteFolder = (folder: string) => {
-    const toDelete = [...files.keys()].filter((p) => p.startsWith(folder + "/"));
-    if (toDelete.length === files.size) {
+    const textKeys = [...files.keys()].filter((p) => p.startsWith(folder + "/"));
+    const assetKeys = [...assets.keys()].filter((p) => p.startsWith(folder + "/"));
+    const toDelete = [...textKeys, ...assetKeys];
+    if (toDelete.length === totalCount()) {
       close();
       return;
     }
@@ -282,13 +341,12 @@ export function useFileSidebar() {
 
     if (toDelete.length > 0) {
       files.doc?.transact(() => {
-        for (const p of toDelete) {
-          files.delete(p);
-        }
+        for (const p of textKeys) files.delete(p);
+        for (const p of assetKeys) assets.delete(p);
       });
 
       if (toDelete.includes(ctx.activeFile())) {
-        const next = [...files.keys()][0];
+        const next = [...files.keys()][0] ?? [...assets.keys()][0];
         if (next) {
           ctx.setActiveFile(next);
         }
@@ -380,8 +438,9 @@ export function useFileSidebar() {
     dialogOf,
     drag,
     activeFile: ctx.activeFile,
-    canDeleteFile: (path: string) => !isLocked(path) && files.size > 1,
+    canDeleteFile: (path: string) => !isLocked(path) && totalCount() > 1,
     isLocked,
+    isAsset,
     onSelectFile: ctx.setActiveFile,
     toggleCollapsed,
     handleNewFile,
@@ -391,6 +450,7 @@ export function useFileSidebar() {
     handleNewFolder,
     handleRenameFolder,
     handleDeleteFolder,
+    handleUploadAsset,
     onFileDragStart,
     onDragEnd,
     onFolderDragOver,

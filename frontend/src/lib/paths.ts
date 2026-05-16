@@ -2,6 +2,7 @@
 // `@vedivad/typst-web-service`). The Y.Map of files uses these paths as keys.
 export const MAIN_PATH = "/main.typ";
 export const FILES_KEY = "files";
+export const ASSETS_KEY = "assets";
 
 /** The directory part of a path. Returns "" for root-level paths, which is falsy and acts as the loop terminator when walking ancestors. */
 export function dirOf(path: string): string {
@@ -54,9 +55,15 @@ export function normalizeFile(input: string, dir: string): string {
   return resolvePath(raw);
 }
 
-/** Normalize a user-entered folder name into a folder path under `dir`.
- * Supports relative jumping: "../sibling" resolves from `dir`.
- * Returns "" if the input is empty or resolves to root. */
+/** Normalize an asset name into a Typst VFS path under `dir`, preserving its extension. */
+export function normalizeAsset(input: string, dir: string): string {
+  const name = input.trim();
+  if (!name) return "";
+  if (name.startsWith("/")) return name;
+  return joinPath(dir, name);
+}
+
+/** Normalize a user-entered folder name into a folder path under `dir`. */
 export function normalizeFolder(input: string, dir: string): string {
   const name = input.trim().replace(/\/+$/, "");
   if (!name) {

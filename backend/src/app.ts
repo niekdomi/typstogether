@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import { frontendUrl } from "./env";
 import { HttpError } from "./errors";
 import { authRoutes } from "./modules/auth";
+import { blobRoutes } from "./modules/blobs";
 import { collabRoutes } from "./modules/collab";
 import { inviteRoutes } from "./modules/invites";
 import { memberRoutes } from "./modules/members";
@@ -22,6 +23,7 @@ export function buildApp() {
     .use(memberRoutes)
     .use(inviteRoutes)
     .use(templateRoutes)
+    .use(blobRoutes)
     .use(collabRoutes);
 }
 
