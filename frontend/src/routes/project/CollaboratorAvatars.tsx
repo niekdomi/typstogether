@@ -2,46 +2,68 @@ import { For, Show } from "solid-js";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
+import { userColor } from "../../lib/collab/awareness-colors";
 import { useRemoteAwareness } from "../../lib/collab/use-awareness";
+import { useCurrentUser } from "../../lib/CurrentUserContext";
 import { userInitial } from "../../lib/format";
 import { useProjectContext } from "./ProjectContext";
 
-const MAX_VISIBLE = 3;
+const MAX_REMOTE = 4;
+
+function AvatarItem(props: {
+  name: string;
+  image: string | null | undefined;
+  color: string;
+  label: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        as="span"
+        class="-ml-1.5 block rounded-full ring-2 ring-background first:ml-0"
+      >
+        <Avatar class="size-8">
+          <AvatarImage src={props.image ?? undefined} alt={props.name} />
+          <AvatarFallback
+            class="text-[11px] text-white"
+            style={{ "background-color": props.color }}
+          >
+            {userInitial(props.name)}
+          </AvatarFallback>
+        </Avatar>
+      </TooltipTrigger>
+      <TooltipContent>{props.label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 export default function CollaboratorAvatars() {
   const ctx = useProjectContext();
+  const { user } = useCurrentUser();
   const remoteUsers = useRemoteAwareness(() => ctx.collab.awareness);
+  const { color: selfColor } = userColor(user.id);
+
+  const visibleRemote = () => remoteUsers().slice(0, MAX_REMOTE);
+  const overflow = () => remoteUsers().length - MAX_REMOTE;
 
   return (
-    <Show when={remoteUsers().length > 0}>
-      <div class="flex items-center">
-        <For each={remoteUsers().slice(0, MAX_VISIBLE)}>
-          {(user) => (
-            <Tooltip>
-              <TooltipTrigger
-                as="span"
-                class="-ml-1.5 first:ml-0 block rounded-full ring-2 ring-background"
-              >
-                <Avatar class="size-7">
-                  <AvatarImage src={user.image ?? undefined} alt={user.name} />
-                  <AvatarFallback
-                    class="text-[11px] text-white"
-                    style={{ "background-color": user.color }}
-                  >
-                    {userInitial(user.name)}
-                  </AvatarFallback>
-                </Avatar>
-              </TooltipTrigger>
-              <TooltipContent>{user.name}</TooltipContent>
-            </Tooltip>
-          )}
-        </For>
-        <Show when={remoteUsers().length > MAX_VISIBLE}>
-          <span class="-ml-1.5 flex size-7 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground ring-2 ring-background">
-            +{remoteUsers().length - MAX_VISIBLE}
-          </span>
-        </Show>
-      </div>
-    </Show>
+    <div class="flex items-center">
+      <For each={visibleRemote()}>
+        {(u) => <AvatarItem name={u.name} image={u.image} color={u.color} label={u.name} />}
+      </For>
+      <Show when={overflow() > 0}>
+        <span class="-ml-1.5 flex size-8 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground ring-2 ring-background">
+          +{overflow()}
+        </span>
+      </Show>
+      <Show when={remoteUsers().length > 0}>
+        <AvatarItem
+          name={user.name}
+          image={user.image}
+          color={selfColor}
+          label={`${user.name} (you)`}
+        />
+      </Show>
+    </div>
   );
 }

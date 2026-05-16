@@ -177,6 +177,13 @@ export const popupTheme = EditorView.theme({
     backgroundColor: "var(--muted)",
   },
 
+  ".cm-ySelectionInfo": {
+    fontFamily: "var(--sans)",
+    fontWeight: "500",
+    borderRadius: "3px",
+    padding: "1px 5px",
+  },
+
   ".cm-diagnostic": {
     padding: "8px 10px",
     borderLeft: "3px solid var(--border)",

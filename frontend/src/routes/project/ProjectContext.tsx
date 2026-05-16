@@ -68,6 +68,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
       image: user.image ?? null,
     });
   });
+
   const typst = useTypstProject(() => collab.files);
   useAssetsSync(
     projectId,
