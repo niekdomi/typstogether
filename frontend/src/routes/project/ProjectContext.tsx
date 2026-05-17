@@ -58,7 +58,10 @@ export function ProjectProvider(props: { children: JSX.Element }) {
 
   createEffect(() => {
     const awareness = collab.awareness;
-    if (!awareness) return;
+    if (!awareness) {
+      return;
+    }
+
     const { color, colorLight } = userColor(user.id);
     awareness.setLocalStateField("user", {
       userId: user.id,
