@@ -38,10 +38,10 @@ export default function Dashboard() {
   });
 
   return (
-    <div class="flex min-h-screen flex-col bg-background">
+    <div class="bg-background flex min-h-screen flex-col">
       <TopBar query={query()} onQuery={setQuery} />
       <main class="mx-auto flex w-full max-w-310 flex-1 flex-col px-8 py-10">
-        <h1 class="mb-8 mt-2 text-[44px] font-medium tracking-[-0.02em]">Projects</h1>
+        <h1 class="mt-2 mb-8 text-[44px] font-medium tracking-[-0.02em]">Projects</h1>
         <TabsBar
           tab={tab()}
           onTab={setTab}
@@ -82,15 +82,15 @@ export default function Dashboard() {
             </Alert>
           </Match>
           <Match when={list().length === 0}>
-            <p class="mt-6 py-16 text-center italic text-muted-foreground">No matching projects.</p>
+            <p class="text-muted-foreground mt-6 py-16 text-center italic">No matching projects.</p>
           </Match>
         </Switch>
-        <footer class="mt-auto flex justify-end border-t border-border/60 pt-6">
+        <footer class="border-border/60 mt-auto flex justify-end border-t pt-6">
           <a
             href="https://github.com/niekdomi/typstogether"
             target="_blank"
             rel="noreferrer noopener"
-            class="inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+            class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 font-mono text-[11px] transition-colors"
           >
             <SiGithub size={20} />
             GitHub

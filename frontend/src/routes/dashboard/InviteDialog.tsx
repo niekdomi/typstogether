@@ -134,7 +134,7 @@ export default function InviteDialog(props: InviteDialogProps) {
                     <AvatarImage src={m.user.image ?? undefined} alt="" />
                     <AvatarFallback class="text-[10px]">{userInitial(m.user.name)}</AvatarFallback>
                   </Avatar>
-                  <span class="flex-1 text-foreground">{m.user.name}</span>
+                  <span class="text-foreground flex-1">{m.user.name}</span>
                   <Badge variant="outline">{m.member.role}</Badge>
                 </li>
               )}
@@ -147,7 +147,7 @@ export default function InviteDialog(props: InviteDialogProps) {
         <div class="flex flex-col gap-3">
           <div class="flex items-baseline justify-between gap-2">
             <div class="text-sm font-medium">Invite via link</div>
-            <div class="text-xs text-muted-foreground">Expires in 7 days</div>
+            <div class="text-muted-foreground text-xs">Expires in 7 days</div>
           </div>
           <Show
             when={link.token}
@@ -169,10 +169,10 @@ export default function InviteDialog(props: InviteDialogProps) {
               </div>
             }
           >
-            <div class="flex items-center gap-2 rounded-md border border-border bg-muted/40 py-1 pl-3 pr-1">
-              <TbOutlineLink size={14} class="shrink-0 text-muted-foreground" />
+            <div class="border-border bg-muted/40 flex items-center gap-2 rounded-md border py-1 pr-1 pl-3">
+              <TbOutlineLink size={14} class="text-muted-foreground shrink-0" />
               <input
-                class="min-w-0 flex-1 border-0 bg-transparent font-mono text-xs text-foreground outline-none"
+                class="text-foreground min-w-0 flex-1 border-0 bg-transparent font-mono text-xs outline-none"
                 readonly
                 value={linkUrl()}
               />
@@ -202,7 +202,7 @@ export default function InviteDialog(props: InviteDialogProps) {
               as={Button<"button">}
               variant="ghost"
               size="sm"
-              class="group -ml-2 self-start gap-1.5 text-muted-foreground hover:text-foreground"
+              class="group text-muted-foreground hover:text-foreground -ml-2 gap-1.5 self-start"
             >
               <TbOutlineChevronRight
                 size={14}
@@ -217,7 +217,7 @@ export default function InviteDialog(props: InviteDialogProps) {
                   {(inv) => (
                     <li class="flex items-center gap-3 text-xs">
                       <Badge variant="outline">{inv.role}</Badge>
-                      <span class="flex-1 font-mono text-muted-foreground">
+                      <span class="text-muted-foreground flex-1 font-mono">
                         {expiresLabel(inv.expiresAt)} · created {formatDate(inv.createdAt)}
                       </span>
                       <Button variant="ghost" size="sm" onClick={() => void revoke(inv.id)}>

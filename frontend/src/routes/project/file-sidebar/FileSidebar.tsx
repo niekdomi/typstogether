@@ -57,7 +57,7 @@ function FileRow(props: { node: FileNode }) {
           </Show>
           <span>{props.node.name}</span>
           <Show when={sb.isLocked(path())}>
-            <span class="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
+            <span class="text-muted-foreground ml-auto text-[10px] tracking-wide uppercase">
               entry
             </span>
           </Show>
@@ -281,7 +281,7 @@ function FileSidebarBody() {
               <span>Files</span>
               <button
                 type="button"
-                class="rounded p-1 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                class="text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded p-1"
                 title="Upload asset"
                 aria-label="Upload asset"
                 onClick={() => {

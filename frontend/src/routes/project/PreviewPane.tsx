@@ -153,7 +153,7 @@ export default function PreviewPane() {
 
   return (
     <div class="flex h-full w-full flex-col">
-      <div class="flex shrink-0 items-center gap-1 border-b border-border/60 px-2 py-1">
+      <div class="border-border/60 flex shrink-0 items-center gap-1 border-b px-2 py-1">
         <Button
           variant="ghost"
           size="icon-sm"
@@ -216,12 +216,12 @@ export default function PreviewPane() {
           scroller = el;
         }}
         tabindex={-1}
-        class="min-h-0 flex-1 cursor-grab overflow-auto bg-muted/40 p-3 outline-none"
+        class="bg-muted/40 min-h-0 flex-1 cursor-grab overflow-auto p-3 outline-none"
         classList={{ "!cursor-grabbing select-none": panning() }}
         onWheel={onWheel}
         onMouseDown={onMouseDown}
       >
-        <Switch fallback={<p class="text-sm text-muted-foreground">Compiling…</p>}>
+        <Switch fallback={<p class="text-muted-foreground text-sm">Compiling…</p>}>
           <Match when={render.pages}>
             {(p) => (
               <div
@@ -244,7 +244,7 @@ export default function PreviewPane() {
           </Match>
           <Match when={render.error}>
             {(reason) => (
-              <pre class="whitespace-pre-wrap font-mono text-sm text-destructive">{reason()}</pre>
+              <pre class="text-destructive font-mono text-sm whitespace-pre-wrap">{reason()}</pre>
             )}
           </Match>
         </Switch>

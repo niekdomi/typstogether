@@ -17,10 +17,10 @@ export default function AssetPreview() {
   const isPdf = createMemo(() => ctx.activeFile().toLowerCase().endsWith(".pdf"));
 
   return (
-    <div class="flex h-full w-full items-center justify-center overflow-auto bg-muted/30 p-6">
+    <div class="bg-muted/30 flex h-full w-full items-center justify-center overflow-auto p-6">
       <Show
         when={url()}
-        fallback={<span class="text-sm text-muted-foreground">No preview available</span>}
+        fallback={<span class="text-muted-foreground text-sm">No preview available</span>}
       >
         {(src) => (
           <Switch>

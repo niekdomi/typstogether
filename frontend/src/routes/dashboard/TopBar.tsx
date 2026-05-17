@@ -12,15 +12,15 @@ interface TopBarProps {
 
 export default function TopBar(props: TopBarProps) {
   return (
-    <header class="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-8 py-4.5">
+    <header class="border-border bg-background sticky top-0 z-10 flex items-center justify-between border-b px-8 py-4.5">
       <Logo size={20} />
       <div class="flex items-center gap-4.5">
         <TextField value={props.query} onChange={props.onQuery} class="relative block w-70 gap-0">
           <TbOutlineSearch
             size={14}
-            class="pointer-events-none absolute left-3 top-1/2 z-1 -translate-y-1/2 text-muted-foreground"
+            class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 z-1 -translate-y-1/2"
           />
-          <TextFieldInput type="text" placeholder="Find a project…" class="pl-9 w-full" />
+          <TextFieldInput type="text" placeholder="Find a project…" class="w-full pl-9" />
         </TextField>
         <ThemeToggle />
         <UserMenu />

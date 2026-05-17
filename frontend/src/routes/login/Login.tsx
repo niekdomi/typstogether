@@ -37,14 +37,14 @@ export default function Login() {
   return (
     <Switch
       fallback={
-        <div class="grid min-h-screen grid-cols-1 bg-background lg:grid-cols-[1.05fr_1fr]">
-          <aside class="hidden flex-col gap-6 overflow-hidden border-r border-border bg-muted px-12 py-8 lg:flex">
+        <div class="bg-background grid min-h-screen grid-cols-1 lg:grid-cols-[1.05fr_1fr]">
+          <aside class="border-border bg-muted hidden flex-col gap-6 overflow-hidden border-r px-12 py-8 lg:flex">
             <Logo size={20} />
             <div class="my-auto max-w-130">
-              <h1 class="mb-4.5 text-[54px] font-medium leading-[1.02] tracking-tight">
-                Typst, but <span class="italic text-brand">together.</span>
+              <h1 class="mb-4.5 text-[54px] leading-[1.02] font-medium tracking-tight">
+                Typst, but <span class="text-brand italic">together.</span>
               </h1>
-              <p class="max-w-115 text-base leading-normal text-foreground/75">
+              <p class="text-foreground/75 max-w-115 text-base leading-normal">
                 A collaborative editor for Typst documents.
               </p>
             </div>
@@ -56,14 +56,14 @@ export default function Login() {
 
               <Show
                 when={!providers.loading}
-                fallback={<p class="text-sm text-muted-foreground">Loading providers…</p>}
+                fallback={<p class="text-muted-foreground text-sm">Loading providers…</p>}
               >
                 <div class="grid gap-2.5">
                   <For each={providers() ?? []}>
                     {(p) => (
                       <Button
                         variant="outline"
-                        class="justify-start gap-3.5 px-4.5 py-3.5 text-[15px] h-auto disabled:opacity-70 disabled:cursor-not-allowed"
+                        class="h-auto justify-start gap-3.5 px-4.5 py-3.5 text-[15px] disabled:cursor-not-allowed disabled:opacity-70"
                         onClick={() => void signIn(p.id)}
                         disabled={submitting() !== null}
                       >
@@ -71,7 +71,7 @@ export default function Login() {
                         <span class="flex-1 text-left">
                           {submitting() === p.id ? "Authenticating…" : `Continue with ${p.name}`}
                         </span>
-                        <span class="mono text-xs text-muted-foreground">oauth</span>
+                        <span class="mono text-muted-foreground text-xs">oauth</span>
                       </Button>
                     )}
                   </For>
@@ -83,7 +83,7 @@ export default function Login() {
       }
     >
       <Match when={session().isPending}>
-        <p class="text-sm text-muted-foreground">Loading…</p>
+        <p class="text-muted-foreground text-sm">Loading…</p>
       </Match>
       <Match when={session().data?.user}>
         <Navigate href={safeNext()} />

@@ -48,7 +48,7 @@ function RailButton(props: RailButtonProps) {
       {props.icon}
       <Show when={props.badge}>
         {(n) => (
-          <span class="absolute -bottom-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium leading-none text-white">
+          <span class="bg-destructive absolute -right-1 -bottom-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-medium text-white">
             {n() > 99 ? "99+" : n()}
           </span>
         )}
@@ -85,8 +85,8 @@ function ProjectView() {
     ctx.collab.files ? "Booting Typst compiler…" : "Connecting to collab session…";
 
   return (
-    <div class="flex h-screen flex-col bg-background">
-      <header class="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-border bg-background px-8 py-4.5">
+    <div class="bg-background flex h-screen flex-col">
+      <header class="border-border bg-background sticky top-0 z-10 flex shrink-0 items-center justify-between border-b px-8 py-4.5">
         <div class="flex items-center gap-4">
           <A
             href="/dashboard"
@@ -95,7 +95,7 @@ function ProjectView() {
           >
             <FaSolidChevronLeft />
           </A>
-          <span class="h-6 w-px bg-border/60" />
+          <span class="bg-border/60 h-6 w-px" />
           <Switch>
             <Match when={ctx.membership.loading}>
               <Skeleton class="h-5 w-48" />
@@ -128,7 +128,7 @@ function ProjectView() {
 
       <div class="flex min-h-0 flex-1">
         <nav
-          class="flex w-10 shrink-0 flex-col items-center gap-1 border-r border-sidebar-border bg-sidebar py-2"
+          class="border-sidebar-border bg-sidebar flex w-10 shrink-0 flex-col items-center gap-1 border-r py-2"
           aria-label="Workspace"
         >
           <RailButton
@@ -157,7 +157,7 @@ function ProjectView() {
         <Switch
           fallback={
             <div class="flex flex-1 items-center justify-center">
-              <p class="text-sm text-muted-foreground">{loadingLabel()}</p>
+              <p class="text-muted-foreground text-sm">{loadingLabel()}</p>
             </div>
           }
         >
@@ -196,7 +196,7 @@ function ProjectView() {
                   <DiagnosticsPanel />
                 </div>
               </WorkspacePanel>
-              <main class="grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x divide-border/60">
+              <main class="divide-border/60 grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x">
                 <div class="flex min-w-0 flex-col">
                   <Show when={!ctx.activeIsAsset()}>
                     <EditorToolbar />
