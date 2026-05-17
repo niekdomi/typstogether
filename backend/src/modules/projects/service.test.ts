@@ -1,12 +1,31 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+
+import * as Y from "yjs";
 
 import { projectFactory, userFactory } from "../../../test/factories";
 import { cleanDb, expectThrows } from "../../../test/helpers";
+import { buildTarGz, type TarEntry } from "../../../test/template-tar";
+import { project as projectTable } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
+import { currentDb } from "../../transaction";
+import { fetchDocument } from "../collab/persistence";
 import { memberService } from "../members/service";
 import { projectService } from "./service";
 
 afterEach(cleanDb);
+
+const FILES_KEY = "files";
+
+function mockTemplateTarball(entries: TarEntry[]) {
+  const body = buildTarGz(entries);
+  globalThis.fetch = mock(() => Promise.resolve(new Response(body))) as unknown as typeof fetch;
+}
+
+function mockTemplateFetchFailure(status = 404) {
+  globalThis.fetch = mock(() =>
+    Promise.resolve(new Response("nope", { status }))
+  ) as unknown as typeof fetch;
+}
 
 describe("ProjectService.list", () => {
   test("returns empty when the user has no projects", async () => {
@@ -141,6 +160,14 @@ describe("ProjectService.getMembership", () => {
 });
 
 describe("ProjectService.create", () => {
+  let originalFetch: typeof globalThis.fetch;
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+  });
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
   test("creates a project owned by the given user", async () => {
     const owner = await userFactory.create();
 
@@ -149,6 +176,52 @@ describe("ProjectService.create", () => {
     expect(result.name).toBe("My Project");
     expect(result.ownerUserId).toBe(owner.id);
     expect(result.deletedAt).toBeNull();
+  });
+
+  test("does not seed a collab_document when no template is given", async () => {
+    const owner = await userFactory.create();
+
+    const created = await projectService.create(owner.id, { name: "Blank" });
+
+    expect(await fetchDocument(created.id)).toBeNull();
+  });
+
+  test("seeds the collab_document with the template's text files", async () => {
+    const owner = await userFactory.create();
+    mockTemplateTarball([
+      { name: "template/main.typ", content: "= Hello from template" },
+      { name: "template/refs.bib", content: "@book{x, title={y}}" },
+    ]);
+
+    const created = await projectService.create(owner.id, {
+      name: "Templated",
+      template: { id: "foo", version: "1.0.0" },
+    });
+
+    const state = await fetchDocument(created.id);
+    expect(state).not.toBeNull();
+    const doc = new Y.Doc();
+    Y.applyUpdate(doc, state!);
+    const files = doc.getMap<Y.Text>(FILES_KEY);
+    expect([...files.keys()].toSorted()).toEqual(["/main.typ", "/refs.bib"]);
+    expect(files.get("/main.typ")?.toJSON()).toBe("= Hello from template");
+  });
+
+  test("fails the create when the template tarball can't be fetched, leaving no project row", async () => {
+    const owner = await userFactory.create();
+    mockTemplateFetchFailure();
+
+    await expectThrows(
+      () =>
+        projectService.create(owner.id, {
+          name: "Should not exist",
+          template: { id: "missing", version: "1.0.0" },
+        }),
+      Error
+    );
+
+    const projects = await currentDb().select().from(projectTable);
+    expect(projects).toHaveLength(0);
   });
 });
 

@@ -34,8 +34,11 @@ export function useProjects() {
   const remove = (id: string) =>
     mutate(() => api.projects({ id }).delete(), "Could not delete project.");
 
-  const create = (name: string, onSuccess?: () => void) =>
-    mutate(() => api.projects.post({ name }), "Could not create project.", onSuccess);
+  const create = (
+    name: string,
+    template: { id: string; version: string } | undefined,
+    onSuccess?: () => void
+  ) => mutate(() => api.projects.post({ name, template }), "Could not create project.", onSuccess);
 
   return { projects, rename, remove, create };
 }

@@ -30,7 +30,7 @@ import { api } from "../../lib/api";
 interface NewProjectModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (name: string) => void;
+  onSubmit: (name: string, template: { id: string; version: string } | undefined) => void;
 }
 
 type Template = NonNullable<Awaited<ReturnType<typeof api.templates.get>>["data"]>[number];
@@ -149,7 +149,12 @@ export default function NewProjectModal(props: NewProjectModalProps) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (trimmedName()) props.onSubmit(trimmedName());
+            if (!trimmedName()) return;
+            const id = template();
+            const chosen =
+              id === BLANK_ID ? undefined : (templates() ?? []).find((t) => t.id === id);
+            const payload = chosen ? { id: chosen.id, version: chosen.version } : undefined;
+            props.onSubmit(trimmedName(), payload);
           }}
           class="flex flex-col gap-4"
         >

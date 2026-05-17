@@ -1,9 +1,15 @@
 import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
+import * as Y from "yjs";
 
 import { type Project, project, projectMember } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import { currentDb } from "../../transaction";
+import { storeDocument } from "../collab/persistence";
+import { fetchTemplateFiles } from "../templates/files";
 import type { CreateProjectInput, UpdateProjectInput } from "./model";
+
+// Must match the frontend's FILES_KEY (see frontend/src/lib/paths.ts).
+const FILES_KEY = "files";
 
 export type ProjectRole = "owner" | "editor" | "viewer";
 
@@ -66,12 +72,30 @@ export class ProjectService {
   }
 
   async create(userId: string, input: CreateProjectInput): Promise<Project> {
+    // If a template is requested, fetch its files *before* the insert so that a
+    // network failure surfaces as an error rather than an orphan empty project.
+    const templateFiles = input.template
+      ? await fetchTemplateFiles(input.template.id, input.template.version)
+      : null;
+
     const [created] = await currentDb()
       .insert(project)
       .values({ name: input.name, ownerUserId: userId })
       .returning();
 
     if (!created) throw new Error("Failed to create project");
+
+    if (templateFiles && templateFiles.files.size > 0) {
+      const doc = new Y.Doc();
+      const filesMap = doc.getMap<Y.Text>(FILES_KEY);
+      doc.transact(() => {
+        for (const [path, content] of templateFiles.files) {
+          filesMap.set(path, new Y.Text(content));
+        }
+      });
+      await storeDocument(created.id, Y.encodeStateAsUpdate(doc));
+    }
+
     return created;
   }
 
