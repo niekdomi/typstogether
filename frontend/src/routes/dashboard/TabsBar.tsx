@@ -15,7 +15,7 @@ interface TabsBarProps {
 
 export default function TabsBar(props: TabsBarProps) {
   return (
-    <div class="flex items-center justify-between border-b border-border/60 pb-6">
+    <div class="border-border/60 flex items-center justify-between border-b pb-6">
       <Tabs
         value={props.tab}
         onChange={(v) => {
@@ -24,10 +24,10 @@ export default function TabsBar(props: TabsBarProps) {
       >
         <TabsList>
           <TabsTrigger value="owned">
-            Yours <span class="ml-1.5 text-muted-foreground">{props.ownedCount}</span>
+            Yours <span class="text-muted-foreground ml-1.5">{props.ownedCount}</span>
           </TabsTrigger>
           <TabsTrigger value="shared">
-            Shared with you <span class="ml-1.5 text-muted-foreground">{props.sharedCount}</span>
+            Shared with you <span class="text-muted-foreground ml-1.5">{props.sharedCount}</span>
           </TabsTrigger>
           <TabsIndicator />
         </TabsList>

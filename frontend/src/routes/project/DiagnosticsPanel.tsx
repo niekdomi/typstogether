@@ -14,12 +14,12 @@ const SEVERITY_RANK: Record<DiagnosticMessage["severity"], number> = {
 
 function SeverityIcon(props: { severity: DiagnosticMessage["severity"] }) {
   if (props.severity === "Error") {
-    return <TbOutlineAlertCircle class="mt-0.5 size-4 shrink-0 text-destructive" />;
+    return <TbOutlineAlertCircle class="text-destructive mt-0.5 size-4 shrink-0" />;
   }
   if (props.severity === "Warning") {
     return <TbOutlineAlertTriangle class="mt-0.5 size-4 shrink-0 text-yellow-500" />;
   }
-  return <TbOutlineInfoCircle class="mt-0.5 size-4 shrink-0 text-muted-foreground" />;
+  return <TbOutlineInfoCircle class="text-muted-foreground mt-0.5 size-4 shrink-0" />;
 }
 
 export default function DiagnosticsPanel() {
@@ -69,13 +69,13 @@ export default function DiagnosticsPanel() {
         <Show
           when={ctx.diagnostics().length > 0}
           fallback={
-            <p class="px-3 py-2 text-sm italic text-muted-foreground">No problems detected.</p>
+            <p class="text-muted-foreground px-3 py-2 text-sm italic">No problems detected.</p>
           }
         >
           <For each={byFile()}>
             {([path, list]) => (
               <div class="py-1">
-                <div class="truncate px-3 py-1 text-xs font-medium text-muted-foreground">
+                <div class="text-muted-foreground truncate px-3 py-1 text-xs font-medium">
                   {path}
                 </div>
                 <For each={list}>
@@ -85,12 +85,12 @@ export default function DiagnosticsPanel() {
                       onClick={() => {
                         jumpTo(d);
                       }}
-                      class="flex w-full items-start gap-2 px-3 py-1.5 text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-start gap-2 px-3 py-1.5 text-left text-sm"
                     >
                       <SeverityIcon severity={d.severity} />
                       <div class="min-w-0 flex-1">
                         <div class="line-clamp-2 leading-snug">{d.message}</div>
-                        <div class="mt-0.5 text-xs text-muted-foreground">
+                        <div class="text-muted-foreground mt-0.5 text-xs">
                           Line {d.range.startLine + 1}, col {d.range.startCol + 1}
                         </div>
                       </div>

@@ -87,7 +87,7 @@ const Sidebar: Component<SidebarProps> = (props) => {
       )}
       {...others}
     >
-      <div data-sidebar="sidebar" class="w-(--sidebar-width) flex h-full flex-col bg-sidebar">
+      <div data-sidebar="sidebar" class="bg-sidebar flex h-full w-(--sidebar-width) flex-col">
         {local.children}
       </div>
     </div>

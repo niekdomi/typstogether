@@ -35,7 +35,7 @@ export default function ConfirmDialog(props: ConfirmDialogProps) {
         <AlertDialogFooter>
           <AlertDialogCancel onClick={props.onClose}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            class={props.danger ? "bg-destructive text-white hover:bg-destructive/90" : ""}
+            class={props.danger ? "bg-destructive hover:bg-destructive/90 text-white" : ""}
             onClick={() => {
               props.onConfirm();
               props.onClose();

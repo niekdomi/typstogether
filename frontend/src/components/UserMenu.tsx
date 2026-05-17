@@ -32,7 +32,7 @@ export default function UserMenu() {
         </Avatar>
         <TbOutlineChevronDown
           size={12}
-          class="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full bg-background border border-border p-px text-muted-foreground"
+          class="bg-background border-border text-muted-foreground absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border p-px"
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent class="min-w-56">
@@ -44,7 +44,7 @@ export default function UserMenu() {
           <div class="flex min-w-0 flex-col">
             <span class="truncate text-sm font-medium">{current.user.name}</span>
             <Show when={current.user.email}>
-              <span class="truncate text-xs text-muted-foreground">{current.user.email}</span>
+              <span class="text-muted-foreground truncate text-xs">{current.user.email}</span>
             </Show>
           </div>
         </div>
