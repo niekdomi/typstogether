@@ -112,7 +112,7 @@ function ProjectView() {
         </div>
         <div class="flex items-center gap-4.5">
           <CollaboratorAvatars />
-          <span class="h-5 w-px bg-border/60" />
+          <span class="bg-border/60 h-5 w-px" />
           <Tooltip>
             <TooltipTrigger as="span" class="flex items-center">
               <span
