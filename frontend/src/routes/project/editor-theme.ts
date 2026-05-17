@@ -20,6 +20,9 @@ export const fillHeight = EditorView.theme({
   "&": { height: "100%" },
   "&.cm-focused": { outline: "none" },
   ".cm-scroller": { overflow: "auto" },
+  // Without this, the label on the first visible line is
+  // clipped by the scroller's overflow.
+  ".cm-content": { paddingTop: "0.75em" },
 });
 
 // Unify autocomplete / hover / lint popups with the app's popover styling.
