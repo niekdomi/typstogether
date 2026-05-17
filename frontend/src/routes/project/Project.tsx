@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/too
 import UserMenu from "../../components/UserMenu";
 import AssetPreview from "./AssetPreview";
 import CodeMirrorEditor from "./CodeMirrorEditor";
+import CollaboratorAvatars from "./CollaboratorAvatars";
 import DiagnosticsPanel from "./DiagnosticsPanel";
 import EditorToolbar from "./EditorToolbar";
 import FileSidebar from "./file-sidebar/FileSidebar";
@@ -111,6 +112,7 @@ function ProjectView() {
           </Switch>
         </div>
         <div class="flex items-center gap-4.5">
+          <CollaboratorAvatars />
           <Tooltip>
             <TooltipTrigger as="span" class="flex items-center">
               <span
