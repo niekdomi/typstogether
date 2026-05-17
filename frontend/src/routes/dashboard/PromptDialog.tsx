@@ -71,7 +71,7 @@ export default function PromptDialog(props: PromptDialogProps) {
             <TextFieldLabel>{props.label}</TextFieldLabel>
             <TextFieldInput autofocus type="text" />
           </TextField>
-          <Show when={error()}>{(msg) => <p class="text-sm text-destructive">{msg()}</p>}</Show>
+          <Show when={error()}>{(msg) => <p class="text-destructive text-sm">{msg()}</p>}</Show>
           <DialogFooter>
             <Button variant="outline" onClick={props.onClose}>
               Cancel

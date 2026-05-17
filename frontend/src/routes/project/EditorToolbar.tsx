@@ -186,11 +186,11 @@ export default function EditorToolbar() {
   const disabled = () => !ctx.editorView() || ctx.isReadOnly();
 
   return (
-    <div class="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-border/60 px-2 py-1">
+    <div class="border-border/60 flex shrink-0 items-center gap-1 overflow-x-auto border-b px-2 py-1">
       <For each={groups}>
         {(group, i) => (
           <>
-            {i() > 0 && <div class="mx-1 h-5 w-px bg-border/60" />}
+            {i() > 0 && <div class="bg-border/60 mx-1 h-5 w-px" />}
             <For each={group.items}>
               {(action) => (
                 <Button

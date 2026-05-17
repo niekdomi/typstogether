@@ -68,11 +68,11 @@ function TemplateCard(props: TemplateCardProps) {
         }
       }}
     >
-      <div class="h-40 shrink-0 bg-muted/40 border-b border-border overflow-hidden">
+      <div class="bg-muted/40 border-border h-40 shrink-0 overflow-hidden border-b">
         <Show
           when={props.thumbnailUrl}
           fallback={
-            <div class="size-full flex items-center justify-center text-muted-foreground/50 text-[11px] font-mono">
+            <div class="text-muted-foreground/50 flex size-full items-center justify-center font-mono text-[11px]">
               {props.fallbackLabel}
             </div>
           }
@@ -88,9 +88,9 @@ function TemplateCard(props: TemplateCardProps) {
           />
         </Show>
       </div>
-      <div class="flex-1 min-h-0 px-3 py-2.5 flex flex-col gap-0.5 overflow-hidden">
-        <div class="font-sans text-sm font-medium text-foreground truncate">{props.name}</div>
-        <div class="font-mono text-[10px] text-muted-foreground leading-snug line-clamp-2">
+      <div class="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden px-3 py-2.5">
+        <div class="text-foreground truncate font-sans text-sm font-medium">{props.name}</div>
+        <div class="text-muted-foreground line-clamp-2 font-mono text-[10px] leading-snug">
           {props.description}
         </div>
       </div>
@@ -163,14 +163,14 @@ export default function NewProjectModal(props: NewProjectModalProps) {
               variant="outline"
               value={category()}
               onChange={(v) => setCategory(v ?? "all")}
-              class="flex flex-wrap gap-1.5 w-full"
+              class="flex w-full flex-wrap gap-1.5"
             >
               <For each={categories()}>
                 {(c) => (
                   <ToggleGroupItem
                     value={c}
                     size="sm"
-                    class="rounded-md! border-l! flex-none px-2.5"
+                    class="flex-none rounded-md! border-l! px-2.5"
                   >
                     {c}
                   </ToggleGroupItem>
@@ -185,7 +185,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
                 class="font-mono text-xs"
               />
             </TextField>
-            <div class="grid gap-2 h-96 overflow-y-auto p-0.5 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
+            <div class="grid h-96 grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-2 overflow-y-auto p-0.5">
               <TemplateCard
                 selected={template() === BLANK_ID}
                 onSelect={() => setTemplate(BLANK_ID)}
@@ -228,7 +228,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
               href="https://typst.app/universe"
               target="_blank"
               rel="noreferrer noopener"
-              class="mr-auto self-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+              class="text-muted-foreground hover:text-foreground mr-auto self-center text-xs transition-colors"
             >
               Browse Typst Universe ↗
             </a>

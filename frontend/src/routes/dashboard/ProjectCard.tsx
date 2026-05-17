@@ -29,7 +29,7 @@ export default function ProjectCard(props: ProjectCardProps) {
     <Card
       role="button"
       tabIndex={0}
-      class="cursor-pointer overflow-hidden gap-0 py-0 transition-colors hover:border-foreground"
+      class="hover:border-foreground cursor-pointer gap-0 overflow-hidden py-0 transition-colors"
       onClick={props.onOpen}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -38,27 +38,27 @@ export default function ProjectCard(props: ProjectCardProps) {
         }
       }}
     >
-      <div class="aspect-[1/1.1] bg-muted border-b border-border p-5 flex">
-        <div class="flex-1 flex items-center justify-center bg-card border border-border/60 px-4 py-3 overflow-hidden">
-          <span class="text-center text-[13px] leading-snug text-foreground/75 line-clamp-4">
+      <div class="bg-muted border-border flex aspect-[1/1.1] border-b p-5">
+        <div class="bg-card border-border/60 flex flex-1 items-center justify-center overflow-hidden border px-4 py-3">
+          <span class="text-foreground/75 line-clamp-4 text-center text-[13px] leading-snug">
             {props.project.name}
           </span>
         </div>
       </div>
-      <div class="px-5 py-4 flex items-start gap-3">
-        <div class="flex-1 min-w-0 flex flex-col gap-1.5">
-          <div class="text-xs text-muted-foreground">
+      <div class="flex items-start gap-3 px-5 py-4">
+        <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+          <div class="text-muted-foreground text-xs">
             {isShared() ? "shared" : `created ${formatDate(props.project.createdAt)}`}
           </div>
-          <div class="font-medium text-[15px] leading-tight truncate text-foreground">
+          <div class="text-foreground truncate text-[15px] leading-tight font-medium">
             {props.project.name}
           </div>
-          <div class="font-mono text-[11px] text-muted-foreground">
+          <div class="text-muted-foreground font-mono text-[11px]">
             last edited {formatRelative(props.project.updatedAt)}
           </div>
         </div>
         <div
-          class="shrink-0 -mr-2"
+          class="-mr-2 shrink-0"
           onClick={(e) => {
             e.stopPropagation();
           }}

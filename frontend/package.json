@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --bun vite",
     "build": "bun --bun vite build",
+    "dev": "bun --bun vite",
     "preview": "bun --bun vite preview"
   },
   "dependencies": {
