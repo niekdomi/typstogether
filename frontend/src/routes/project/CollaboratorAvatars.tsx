@@ -20,7 +20,7 @@ function AvatarItem(props: {
     <Tooltip>
       <TooltipTrigger
         as="span"
-        class="-ml-1.5 block rounded-full ring-2 ring-background first:ml-0"
+        class="ring-background -ml-1.5 block rounded-full ring-2 first:ml-0"
       >
         <Avatar class="size-8">
           <AvatarImage src={props.image ?? undefined} alt={props.name} />
@@ -49,10 +49,10 @@ export default function CollaboratorAvatars() {
   return (
     <div class="flex items-center">
       <For each={visibleRemote()}>
-        {(u) => <AvatarItem name={u.name} image={u.image} color={u.color} label={u.name} />}
+        {(u) => <AvatarItem name={u.name} image={u.avatar} color={u.color} label={u.name} />}
       </For>
       <Show when={overflow() > 0}>
-        <span class="-ml-1.5 flex size-8 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground ring-2 ring-background">
+        <span class="bg-muted text-muted-foreground ring-background -ml-1.5 flex size-8 items-center justify-center rounded-full text-[11px] font-medium ring-2">
           +{overflow()}
         </span>
       </Show>
