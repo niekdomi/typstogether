@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
-    "oxfmt": "^0.47.0",
+    "oxfmt": "^0.50.0",
     "oxlint": "^1.65.0",
     "oxlint-tsgolint": "^0.22.1",
     "typescript": "^6.0.3"
