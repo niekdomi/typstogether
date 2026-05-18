@@ -32,7 +32,7 @@ describe("fetchTemplateFiles", () => {
     expect(binary.size).toBe(0);
   });
 
-  test("honours a custom template path declared in typst.toml", async () => {
+  test("honors a custom template path declared in typst.toml", async () => {
     await mockFetchTarball([
       {
         name: "typst.toml",
