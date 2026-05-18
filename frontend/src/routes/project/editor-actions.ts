@@ -382,7 +382,6 @@ export const formatKeymap: Extension = (() => {
 // Supported formats are "png", "jpg", "gif", "svg", "pdf", "webp" as well as raw pixel data.
 const IMAGE_EXTENSIONS = new Set(["png", "jpg", "gif", "svg", "pdf", "webp"]);
 
-/** Wrap a Typst VFS path in the right directive for its extension. */
 export function formatPathForDrop(path: string): string {
   const extension = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
 
