@@ -1,23 +1,25 @@
 import { type Accessor, createEffect, createSignal, onCleanup } from "solid-js";
 import type { Awareness } from "y-protocols/awareness";
 
-export interface RemoteUser {
+interface RemoteUser {
   clientId: number;
   userId: string;
   name: string;
   color: string;
-  image: string | null;
+  image: string;
 }
 
 /**
  * Reactive list of remote collaborators connected via Yjs awareness. Excludes
  * the local client and dedupes by userId so multiple tabs collapse to one entry.
  */
-export function useRemoteAwareness(accessor: Accessor<Awareness | null>): Accessor<RemoteUser[]> {
+export function useRemoteAwareness(
+  getAwareness: Accessor<Awareness | null>
+): Accessor<RemoteUser[]> {
   const [users, setUsers] = createSignal<RemoteUser[]>([]);
 
   createEffect(() => {
-    const awareness = accessor();
+    const awareness = getAwareness();
     if (!awareness) {
       setUsers([]);
       return;
@@ -25,18 +27,16 @@ export function useRemoteAwareness(accessor: Accessor<Awareness | null>): Access
 
     const sync = () => {
       const byUserId = new Map<string, RemoteUser>();
+
       for (const [clientId, state] of awareness.getStates()) {
         if (clientId === awareness.clientID) continue;
-        const user = state["user"] as Partial<Omit<RemoteUser, "clientId">> | undefined;
+
+        const user = state["user"] as Omit<RemoteUser, "clientId"> | undefined;
         if (!user || typeof user.userId !== "string") continue;
-        if (byUserId.has(user.userId)) continue;
-        byUserId.set(user.userId, {
-          clientId,
-          userId: user.userId,
-          name: user.name ?? "",
-          color: user.color ?? "",
-          image: user.image ?? null,
-        });
+
+        if (!byUserId.has(user.userId)) {
+          byUserId.set(user.userId, { clientId, ...user });
+        }
       }
       setUsers([...byUserId.values()]);
     };

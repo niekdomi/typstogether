@@ -61,7 +61,10 @@ export function ProjectProvider(props: { children: JSX.Element }) {
   // Re-runs when the provider (and its awareness) is recreated on project switch.
   createEffect(() => {
     const awareness = collab.awareness;
-    if (!awareness) return;
+    if (!awareness) {
+      return;
+    }
+
     const { color, colorLight } = userColor(user.id);
     awareness.setLocalStateField("user", {
       userId: user.id,
