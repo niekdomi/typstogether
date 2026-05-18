@@ -13,20 +13,20 @@ export interface RemoteUser {
  * Reactive list of remote collaborators connected via Yjs awareness. Excludes
  * the local client and dedupes by userId so multiple tabs collapse to one entry.
  */
-export function useRemoteAwareness(awareness: Accessor<Awareness | null>): Accessor<RemoteUser[]> {
+export function useRemoteAwareness(accessor: Accessor<Awareness | null>): Accessor<RemoteUser[]> {
   const [users, setUsers] = createSignal<RemoteUser[]>([]);
 
   createEffect(() => {
-    const a = awareness();
-    if (!a) {
+    const awareness = accessor();
+    if (!awareness) {
       setUsers([]);
       return;
     }
 
     const sync = () => {
       const byUserId = new Map<string, RemoteUser>();
-      for (const [clientId, state] of a.getStates()) {
-        if (clientId === a.clientID) continue;
+      for (const [clientId, state] of awareness.getStates()) {
+        if (clientId === awareness.clientID) continue;
         const user = state["user"] as Partial<Omit<RemoteUser, "clientId">> | undefined;
         if (!user || typeof user.userId !== "string") continue;
         if (byUserId.has(user.userId)) continue;
@@ -42,9 +42,9 @@ export function useRemoteAwareness(awareness: Accessor<Awareness | null>): Acces
     };
 
     sync();
-    a.on("change", sync);
+    awareness.on("change", sync);
     onCleanup(() => {
-      a.off("change", sync);
+      awareness.off("change", sync);
     });
   });
 
