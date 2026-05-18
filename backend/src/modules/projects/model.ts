@@ -3,7 +3,15 @@ import { t } from "elysia";
 
 import { project } from "../../db/app-schema";
 
-export const createProjectModel = t.Object({ name: t.String({ minLength: 1 }) });
+export const createProjectModel = t.Object({
+  name: t.String({ minLength: 1 }),
+  template: t.Optional(
+    t.Object({
+      id: t.String({ minLength: 1 }),
+      version: t.String({ minLength: 1 }),
+    })
+  ),
+});
 export const updateProjectModel = t.Object({ name: t.String({ minLength: 1 }) });
 export const byIdProjectModel = t.Object({ id: t.String() });
 
