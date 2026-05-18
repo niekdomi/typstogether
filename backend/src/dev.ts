@@ -10,8 +10,13 @@ const db = drizzle({ client, schema });
 await migrate(db, { migrationsFolder: "./drizzle" });
 dbRegistry.set(db);
 
-const { startServer } = await import("./app");
-startServer();
+const { buildApp } = await import("./app");
+const { devRoutes } = await import("./modules/dev");
+buildApp()
+  .use(devRoutes)
+  .listen(3000, ({ port }) => {
+    console.log("Backend running on port", port);
+  });
 
 // HACK: Without the following line, bun won't produce a `.cpuprofile` when running with `--cpu-prof`.
 // This hack though has the issue that running `bun dev` no longer exists gracefully.

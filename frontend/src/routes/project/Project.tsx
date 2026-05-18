@@ -10,9 +10,9 @@ import { Badge } from "../../components/ui/badge";
 import { cx } from "../../components/ui/cva";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
-import UserMenu from "../../components/UserMenu";
 import AssetPreview from "./AssetPreview";
 import CodeMirrorEditor from "./CodeMirrorEditor";
+import CollaboratorAvatars from "./CollaboratorAvatars";
 import DiagnosticsPanel from "./DiagnosticsPanel";
 import EditorToolbar from "./EditorToolbar";
 import FileSidebar from "./file-sidebar/FileSidebar";
@@ -111,6 +111,8 @@ function ProjectView() {
           </Switch>
         </div>
         <div class="flex items-center gap-4.5">
+          <CollaboratorAvatars />
+          <span class="bg-border/60 h-5 w-px" />
           <Tooltip>
             <TooltipTrigger as="span" class="flex items-center">
               <span
@@ -122,7 +124,6 @@ function ProjectView() {
             </TooltipContent>
           </Tooltip>
           <ThemeToggle />
-          <UserMenu />
         </div>
       </header>
 
