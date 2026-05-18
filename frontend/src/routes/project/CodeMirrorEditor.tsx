@@ -1,12 +1,14 @@
 import { indentWithTab } from "@codemirror/commands";
 import { Compartment, type EditorSelection, EditorState, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
+import { vim } from "@replit/codemirror-vim";
 import { createTypstSetup, typstFilePath } from "@vedivad/codemirror-typst";
 import { basicSetup } from "codemirror";
 import { createEffect, getOwner, onCleanup, onMount, runWithOwner } from "solid-js";
 import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
+import { vimMode } from "../../lib/editor-prefs";
 import { useTheme } from "../../lib/ThemeContext";
 import { formatKeymap } from "./editor-actions";
 import { editorTheme, fillHeight, getHighlighting, popupTheme } from "./editor-theme";
@@ -33,6 +35,7 @@ export default function CodeMirrorEditor() {
 
       const readOnlyCompartment = new Compartment();
       const themeCompartment = new Compartment();
+      const vimCompartment = new Compartment();
       const setup = createTypstSetup({
         project: typstProject,
         sync: "external",
@@ -62,6 +65,8 @@ export default function CodeMirrorEditor() {
           doc,
           selection,
           extensions: [
+            // Vim must come before basicSetup so its keymap wins over the defaults.
+            vimCompartment.of(vimMode() ? vim() : []),
             basicSetup,
             keymap.of([indentWithTab, ...yUndoManagerKeymap]),
             Prec.high(formatKeymap),
@@ -97,6 +102,7 @@ export default function CodeMirrorEditor() {
           effects: [
             themeCompartment.reconfigure(editorTheme(theme())),
             readOnlyCompartment.reconfigure(EditorState.readOnly.of(ctx.isReadOnly())),
+            vimCompartment.reconfigure(vimMode() ? vim() : []),
           ],
         });
         controller.setTheme(view, theme());
@@ -131,9 +137,10 @@ export default function CodeMirrorEditor() {
         });
 
         createEffect(() => {
-          // Touch reactive deps (theme/readOnly) so reconfigure runs on change.
+          // Touch reactive deps (theme/readOnly/vim) so reconfigure runs on change.
           theme();
           ctx.isReadOnly();
+          vimMode();
           syncCompartments();
         });
 

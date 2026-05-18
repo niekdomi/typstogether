@@ -16,6 +16,7 @@
     "@elysiajs/eden": "^1.4.9",
     "@hocuspocus/provider": "^4.0.0",
     "@kobalte/core": "^0.13.11",
+    "@replit/codemirror-vim": "^6.3.0",
     "@solidjs/router": "^0.16.1",
     "@typstogether/backend": "workspace:*",
     "@uiw/codemirror-theme-github": "^4.25.9",
