@@ -1,3 +1,5 @@
+import { extname } from "node:path";
+
 import { TOML } from "bun";
 import { fileTypeFromBuffer } from "file-type";
 import { lookup as lookupMime } from "mime-types";
@@ -56,19 +58,12 @@ function readTemplatePath(entries: ParsedTarFileItem[]): string | null {
   return typeof path === "string" ? path : null;
 }
 
-function extOf(path: string): string {
-  const dot = path.lastIndexOf(".");
-  return dot === -1 ? "" : path.slice(dot).toLowerCase();
-}
-
 // Sniff first (trust the bytes), then fall back to the mime-db extension
 // table (covers text-shaped formats like SVG that have no magic number), then
 // give up and call it opaque.
-async function detectMime(bytes: Uint8Array, ext: string): Promise<string> {
+async function detectMime(bytes: Uint8Array, filename: string): Promise<string> {
   const sniffed = await fileTypeFromBuffer(bytes);
-  if (sniffed) return sniffed.mime;
-  const byExt = ext ? lookupMime(ext) : false;
-  return byExt || "application/octet-stream";
+  return sniffed?.mime ?? (lookupMime(filename) || "application/octet-stream");
 }
 
 /**
@@ -98,13 +93,12 @@ export async function fetchTemplateFiles(id: string, version: string): Promise<T
     const relPath = entry.name.slice(prefix.length);
     if (!relPath) continue;
     const path = `/${relPath}`;
-    const ext = extOf(relPath);
-    if (TEXT_EXTENSIONS.has(ext)) {
+    if (TEXT_EXTENSIONS.has(extname(relPath).toLowerCase())) {
       text.set(path, entry.text);
     } else {
       binary.set(path, {
         bytes: entry.data,
-        mime: await detectMime(entry.data, ext),
+        mime: await detectMime(entry.data, relPath),
       });
     }
   }
