@@ -211,12 +211,10 @@ describe("ProjectService.create", () => {
 
   test("seeds binary template entries as project blobs and wires them into the assets Y.Map", async () => {
     const owner = await userFactory.create();
-    const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-    const ttfBytes = new Uint8Array([0x00, 0x01, 0x00, 0x00, 0x00, 0xff]);
+    const svgBytes = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"/>');
     await mockTemplateTarball([
       { name: "template/main.typ", data: "= Hi" },
-      { name: "template/cover.png", data: pngBytes },
-      { name: "template/fonts/Body.ttf", data: ttfBytes },
+      { name: "template/logo.svg", data: svgBytes },
     ]);
 
     const created = await projectService.create(owner.id, {
@@ -231,20 +229,16 @@ describe("ProjectService.create", () => {
     const files = doc.getMap<Y.Text>(FILES_KEY);
     const assets = doc.getMap<string>(ASSETS_KEY);
     expect([...files.keys()]).toEqual(["/main.typ"]);
-    expect([...assets.keys()].toSorted()).toEqual(["/cover.png", "/fonts/Body.ttf"]);
+    expect([...assets.keys()]).toEqual(["/logo.svg"]);
 
     const blobs = await currentDb()
       .select()
       .from(projectBlob)
       .where(eq(projectBlob.projectId, created.id));
-    expect(blobs).toHaveLength(2);
-    const byId = new Map(blobs.map((b) => [b.blobId, b]));
-    const pngRow = byId.get(assets.get("/cover.png")!);
-    const ttfRow = byId.get(assets.get("/fonts/Body.ttf")!);
-    expect(pngRow?.mime).toBe("image/png");
-    expect(new Uint8Array(pngRow!.bytes)).toEqual(pngBytes);
-    expect(ttfRow?.mime).toBe("font/ttf");
-    expect(new Uint8Array(ttfRow!.bytes)).toEqual(ttfBytes);
+    expect(blobs).toHaveLength(1);
+    expect(blobs[0]!.blobId).toBe(assets.get("/logo.svg")!);
+    expect(blobs[0]!.mime).toBe("image/svg+xml");
+    expect(new Uint8Array(blobs[0]!.bytes)).toEqual(svgBytes);
   });
 
   test("fails the create when the template tarball can't be fetched, leaving no project row", async () => {

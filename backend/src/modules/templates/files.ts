@@ -1,3 +1,5 @@
+import { fileTypeFromBuffer } from "file-type";
+import { lookup as lookupMime } from "mime-types";
 import { parseTarGzip, type ParsedTarFileItem } from "nanotar";
 
 import { BadGatewayError } from "../../errors";
@@ -24,27 +26,6 @@ const TEXT_EXTENSIONS = new Set([
   ".sty",
 ]);
 
-const MIME_BY_EXTENSION: Record<string, string> = {
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".gif": "image/gif",
-  ".webp": "image/webp",
-  ".svg": "image/svg+xml",
-  ".pdf": "application/pdf",
-  ".ttf": "font/ttf",
-  ".otf": "font/otf",
-  ".woff": "font/woff",
-  ".woff2": "font/woff2",
-  ".eot": "application/vnd.ms-fontobject",
-  ".zip": "application/zip",
-  ".tar": "application/x-tar",
-  ".gz": "application/gzip",
-  ".tgz": "application/gzip",
-  ".bz2": "application/x-bzip2",
-  ".7z": "application/x-7z-compressed",
-};
-
 export interface BinaryTemplateFile {
   bytes: Uint8Array;
   mime: string;
@@ -53,7 +34,7 @@ export interface BinaryTemplateFile {
 export interface TemplateFiles {
   /** Path -> file content. Keyed by Typst VFS path (leading slash). */
   text: Map<string, string>;
-  /** Path -> raw bytes + best-effort MIME for the assets Y.Map / project_blob. */
+  /** Path -> raw bytes + sniffed MIME for the assets Y.Map / project_blob. */
   binary: Map<string, BinaryTemplateFile>;
 }
 
@@ -73,10 +54,21 @@ function extOf(path: string): string {
   return dot === -1 ? "" : path.slice(dot).toLowerCase();
 }
 
+// Sniff first (trust the bytes), then fall back to the mime-db extension
+// table (covers text-shaped formats like SVG that have no magic number), then
+// give up and call it opaque.
+async function detectMime(bytes: Uint8Array, ext: string): Promise<string> {
+  const sniffed = await fileTypeFromBuffer(bytes);
+  if (sniffed) return sniffed.mime;
+  const byExt = ext ? lookupMime(ext) : false;
+  return byExt || "application/octet-stream";
+}
+
 /**
  * Fetches a Typst Universe package and returns the contents of its template
  * subdirectory. Text-allowlisted files come back as strings; everything else
- * (images, fonts, archives, ...) comes back as bytes.
+ * (images, fonts, archives, ...) comes back as bytes with a MIME sniffed via
+ * `file-type` (falling back to the extension for text-shaped binaries like SVG).
  */
 export async function fetchTemplateFiles(id: string, version: string): Promise<TemplateFiles> {
   const pkg = await fetch(PACKAGE_URL(id, version));
@@ -105,7 +97,7 @@ export async function fetchTemplateFiles(id: string, version: string): Promise<T
     } else {
       binary.set(path, {
         bytes: entry.data,
-        mime: MIME_BY_EXTENSION[ext] ?? "application/octet-stream",
+        mime: await detectMime(entry.data, ext),
       });
     }
   }
