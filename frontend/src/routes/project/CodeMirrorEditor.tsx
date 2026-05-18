@@ -65,7 +65,7 @@ export default function CodeMirrorEditor() {
             basicSetup,
             keymap.of([indentWithTab, ...yUndoManagerKeymap]),
             Prec.high(formatKeymap),
-            Prec.high(fileDropHandler),
+            fileDropHandler,
             fillHeight,
             popupTheme,
             themeCompartment.of(editorTheme(theme())),

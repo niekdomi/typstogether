@@ -378,36 +378,44 @@ export const formatKeymap: Extension = (() => {
 
 // File-drop ───────────────────────────────────────────────────────────────────
 
-const IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"]);
+// REF: https://typst.app/docs/reference/visualize/image/ section "source":
+// Supported formats are "png", "jpg", "gif", "svg", "pdf", "webp" as well as raw pixel data.
+const IMAGE_EXTENSIONS = new Set(["png", "jpg", "gif", "svg", "pdf", "webp"]);
 
 /** Wrap a Typst VFS path in the right directive for its extension. */
 export function formatPathForDrop(path: string): string {
-  const dot = path.lastIndexOf(".");
-  const ext = dot === -1 ? "" : path.slice(dot).toLowerCase();
-  if (ext === ".typ") return `#include "${path}"`;
-  if (IMAGE_EXTS.has(ext)) return `#image("${path}")`;
+  const ext = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
+
+  if (ext === "typ") {
+    return `#include "${path}"`;
+  }
+
+  if (IMAGE_EXTENSIONS.has(ext)) {
+    return `#image("${path}")`;
+  }
+
   return `"${path}"`;
 }
 
-/**
- * Replace CodeMirror's default file-path paste on drop with a Typst directive.
- * The file sidebar puts the dragged file's VFS path (e.g. `/foo/bar.typ`) into
- * `text/plain`; we wrap it as `#include "..."` / `#image("...")` instead of
- * inserting the bare path.
- */
 export const fileDropHandler: Extension = EditorView.domEventHandlers({
   drop(event, view) {
     const data = event.dataTransfer?.getData("text/plain");
-    if (!data || !data.startsWith("/")) return false;
-    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-    if (pos === null) return false;
-    event.preventDefault();
+    if (!data || !data.startsWith("/")) {
+      return false;
+    }
+
+    const position = view.posAtCoords({ x: event.clientX, y: event.clientY });
+    if (position === null) {
+      return false;
+    }
+
     const text = formatPathForDrop(data);
     view.dispatch({
-      changes: { from: pos, insert: text },
-      selection: EditorSelection.cursor(pos + text.length),
+      changes: { from: position, insert: text },
+      selection: EditorSelection.cursor(position + text.length),
       userEvent: "input.drop",
     });
+
     view.focus();
     return true;
   },
