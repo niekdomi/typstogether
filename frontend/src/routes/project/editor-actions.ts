@@ -384,13 +384,13 @@ const IMAGE_EXTENSIONS = new Set(["png", "jpg", "gif", "svg", "pdf", "webp"]);
 
 /** Wrap a Typst VFS path in the right directive for its extension. */
 export function formatPathForDrop(path: string): string {
-  const ext = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
+  const extension = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
 
-  if (ext === "typ") {
+  if (extension === "typ") {
     return `#include "${path}"`;
   }
 
-  if (IMAGE_EXTENSIONS.has(ext)) {
+  if (IMAGE_EXTENSIONS.has(extension)) {
     return `#image("${path}")`;
   }
 
