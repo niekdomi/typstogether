@@ -11,7 +11,7 @@ import {
   onCleanup,
   useContext,
 } from "solid-js";
-import type * as Y from "yjs";
+import * as Y from "yjs";
 
 import { useAssetsSync } from "../../lib/assets/use-assets-sync";
 import { userColor } from "../../lib/collab/awareness-colors";
@@ -41,6 +41,7 @@ interface ProjectContextValue {
 
   editorView: Accessor<EditorView | null>;
   setEditorView: (view: EditorView | null) => void;
+  jumpToRemoteUser: (clientId: number) => void;
 
   diagnostics: Accessor<DiagnosticMessage[]>;
   errorCount: Accessor<number>;
@@ -129,6 +130,59 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     onCleanup(off);
   });
 
+  const jumpToRemoteUser = (clientId: number) => {
+    const awareness = collab.awareness;
+    const ydoc = collab.ydoc;
+    const files = collab.files;
+    if (!awareness || !ydoc || !files) {
+      return;
+    }
+
+    const state = awareness.getStates().get(clientId) as
+      | { cursor?: { anchor?: unknown; head?: unknown } | null }
+      | undefined;
+
+    const head = state?.cursor?.head;
+    if (head === null || head === undefined) {
+      return;
+    }
+
+    const relPos = Y.createRelativePositionFromJSON(head);
+    const absPos = Y.createAbsolutePositionFromRelativePosition(relPos, ydoc);
+    if (!absPos) {
+      return;
+    }
+
+    let targetPath: string | undefined;
+
+    for (const [path, text] of files.entries()) {
+      if (text === absPos.type) {
+        targetPath = path;
+        break;
+      }
+    }
+
+    if (!targetPath) {
+      return;
+    }
+
+    setRequestedFile(targetPath);
+
+    queueMicrotask(() => {
+      const view = editorView();
+      if (!view) {
+        return;
+      }
+
+      view.dispatch({
+        selection: { anchor: absPos.index, head: absPos.index },
+        scrollIntoView: true,
+      });
+
+      view.focus();
+    });
+  };
+
   const value: ProjectContextValue = {
     projectId,
     membership,
@@ -141,6 +195,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     isReadOnly,
     editorView,
     setEditorView,
+    jumpToRemoteUser,
     diagnostics,
     errorCount,
   };
