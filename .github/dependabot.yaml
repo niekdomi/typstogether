@@ -16,8 +16,8 @@ updates:
     labels:
       - "dependencies"
     commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
+      prefix: "build"
+      prefix-development: "build"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -29,7 +29,12 @@ updates:
       github-actions:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
     labels:
       - "dependencies"
     commit-message:
-      prefix: "chore"
+      prefix: "build"
