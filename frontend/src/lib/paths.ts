@@ -19,14 +19,40 @@ export function joinPath(dir: string, leaf: string): string {
   return dir ? `${dir}/${leaf}` : `/${leaf}`;
 }
 
-/** Normalize a user-entered file name into a Typst VFS path under `dir`. */
+/**
+ * Resolve an absolute path by collapsing `.` and `..` segments.
+ * `..` at root is silently absorbed (cannot go above `/`).
+ */
+function resolvePath(path: string): string {
+  const segments: string[] = [];
+  for (const seg of path.split("/")) {
+    if (seg === "" || seg === ".") {
+      continue;
+    }
+
+    if (seg === "..") {
+      segments.pop(); // no-op on empty array - clamps at root
+    } else {
+      segments.push(seg);
+    }
+  }
+
+  return "/" + segments.join("/");
+}
+
+/** Normalize a user-entered file name into a Typst VFS path under `dir`.
+ * Supports relative jumping: "../../other.typ" resolves from `dir`. */
 export function normalizeFile(input: string, dir: string): string {
-  let name = input.trim();
-  if (!name) return "";
-  if (!name.endsWith(".typ")) name += ".typ";
-  // Allow nested input: "utils/helpers.typ" creates an implicit subfolder.
-  if (name.startsWith("/")) return name;
-  return joinPath(dir, name);
+  let name = input.trim().replace(/\/+$/, "");
+  if (!name) {
+    return "";
+  }
+  if (!name.endsWith(".typ")) {
+    name += ".typ";
+  }
+
+  const raw = name.startsWith("/") ? name : joinPath(dir, name);
+  return resolvePath(raw);
 }
 
 /** Normalize an asset name into a Typst VFS path under `dir`, preserving its extension. */
@@ -40,7 +66,11 @@ export function normalizeAsset(input: string, dir: string): string {
 /** Normalize a user-entered folder name into a folder path under `dir`. */
 export function normalizeFolder(input: string, dir: string): string {
   const name = input.trim().replace(/\/+$/, "");
-  if (!name) return "";
-  if (name.startsWith("/")) return name;
-  return joinPath(dir, name);
+  if (!name) {
+    return "";
+  }
+
+  const raw = name.startsWith("/") ? name : joinPath(dir, name);
+  const resolved = resolvePath(raw);
+  return resolved === "/" ? "" : resolved;
 }
