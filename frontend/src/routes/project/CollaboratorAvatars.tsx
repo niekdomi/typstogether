@@ -59,12 +59,6 @@ export default function CollaboratorAvatars() {
             +{overflow()}
           </span>
         </Show>
-        <AvatarPill
-          name={user.name}
-          image={user.image ?? null}
-          color={selfColor()}
-          label={`${user.name} (you)`}
-        />
       </div>
     </Show>
   );
