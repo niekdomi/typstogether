@@ -298,15 +298,9 @@ export default function EditorToolbar() {
           title="Editor settings"
           aria-label="Editor settings"
         >
-          {/* `data-expanded` is set by Kobalte on the trigger when the menu is open. */}
           <TbOutlineChevronDown class="transition-transform duration-200 group-data-[expanded]:rotate-180" />
         </DropdownMenuTrigger>
         <DropdownMenuContent class="min-w-52">
-          {/* Kobalte's CheckboxItem primitive gives us the correct
-              `menuitemcheckbox` role + managed `aria-checked` for free. We
-              don't use our vendored DropdownMenuCheckboxItem because it
-              reserves left padding for a checkmark indicator we don't want
-              (the Switch on the right is the visual indicator). */}
           <DropdownMenuPrimitive.CheckboxItem
             checked={vimMode()}
             onChange={setVimMode}
