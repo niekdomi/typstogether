@@ -63,7 +63,7 @@ jobs:
       - name: Test with coverage
         run: |
           set -o pipefail
-          bun test --coverage 2>&1 | tee ../coverage.txt
+          bun test --coverage 2>&1 | tee coverage.txt
 
       - name: Generate coverage markdown
         run: python3 .github/scripts/coverage_report.py coverage.txt code-coverage-results.md
