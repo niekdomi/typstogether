@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
+import { createTarGzip, type TarFileInput } from "nanotar";
 import * as Y from "yjs";
 
 import { projectFactory, userFactory } from "../../../test/factories";
 import { cleanDb, expectThrows } from "../../../test/helpers";
-import { buildTarGz, type TarEntry } from "../../../test/template-tar";
 import { project as projectTable } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import { currentDb } from "../../transaction";
@@ -16,8 +16,8 @@ afterEach(cleanDb);
 
 const FILES_KEY = "files";
 
-function mockTemplateTarball(entries: TarEntry[]) {
-  const body = buildTarGz(entries);
+async function mockTemplateTarball(entries: TarFileInput[]) {
+  const body = await createTarGzip(entries);
   globalThis.fetch = mock(() => Promise.resolve(new Response(body))) as unknown as typeof fetch;
 }
 
@@ -188,9 +188,9 @@ describe("ProjectService.create", () => {
 
   test("seeds the collab_document with the template's text files", async () => {
     const owner = await userFactory.create();
-    mockTemplateTarball([
-      { name: "template/main.typ", content: "= Hello from template" },
-      { name: "template/refs.bib", content: "@book{x, title={y}}" },
+    await mockTemplateTarball([
+      { name: "template/main.typ", data: "= Hello from template" },
+      { name: "template/refs.bib", data: "@book{x, title={y}}" },
     ]);
 
     const created = await projectService.create(owner.id, {

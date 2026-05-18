@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
-import { buildTarGz, type TarEntry } from "../../../test/template-tar";
+import { createTarGzip, type TarFileInput } from "nanotar";
+
 import { fetchTemplateFiles } from "./files";
 
-function mockFetchTarball(entries: TarEntry[]) {
-  const body = buildTarGz(entries);
+async function mockFetchTarball(entries: TarFileInput[]) {
+  const body = await createTarGzip(entries);
   globalThis.fetch = mock(() => Promise.resolve(new Response(body))) as unknown as typeof fetch;
 }
 
@@ -18,10 +19,10 @@ afterEach(() => {
 
 describe("fetchTemplateFiles", () => {
   test("returns text files under the default `template/` directory", async () => {
-    mockFetchTarball([
-      { name: "template/main.typ", content: "= Hello" },
-      { name: "template/refs.bib", content: "@book{x, title={y}}" },
-      { name: "lib.typ", content: "// package code, not template" },
+    await mockFetchTarball([
+      { name: "template/main.typ", data: "= Hello" },
+      { name: "template/refs.bib", data: "@book{x, title={y}}" },
+      { name: "lib.typ", data: "// package code, not template" },
     ]);
 
     const { files } = await fetchTemplateFiles("foo", "1.0.0");
@@ -31,14 +32,13 @@ describe("fetchTemplateFiles", () => {
   });
 
   test("honours a custom template path declared in typst.toml", async () => {
-    mockFetchTarball([
+    await mockFetchTarball([
       {
         name: "typst.toml",
-        content:
-          '[package]\nname = "foo"\n\n[template]\npath = "starter"\nentrypoint = "main.typ"\n',
+        data: '[package]\nname = "foo"\n\n[template]\npath = "starter"\nentrypoint = "main.typ"\n',
       },
-      { name: "starter/main.typ", content: "= Custom path" },
-      { name: "template/main.typ", content: "// ignored, wrong dir" },
+      { name: "starter/main.typ", data: "= Custom path" },
+      { name: "template/main.typ", data: "// ignored, wrong dir" },
     ]);
 
     const { files } = await fetchTemplateFiles("foo", "1.0.0");
@@ -48,9 +48,9 @@ describe("fetchTemplateFiles", () => {
   });
 
   test("skips binary files by extension allowlist", async () => {
-    mockFetchTarball([
-      { name: "template/main.typ", content: "= Hi" },
-      { name: "template/cover.png", content: "PNG-bytes-here" },
+    await mockFetchTarball([
+      { name: "template/main.typ", data: "= Hi" },
+      { name: "template/cover.png", data: "PNG-bytes-here" },
     ]);
 
     const { files } = await fetchTemplateFiles("foo", "1.0.0");
