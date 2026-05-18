@@ -3,7 +3,7 @@ import { type EditorView, keymap } from "@codemirror/view";
 
 // Constants ───────────────────────────────────────────────────────────────────
 
-/** Heading group: every `= `, `== `, `=== `, … prefix is considered a sibling. */
+/** Heading group: every `= `, `== `, `=== `, ... prefix is considered a sibling. */
 export const HEADING_GROUP = /^=+ /;
 /** List group: bullet `- ` and numbered `+ ` are siblings. */
 export const LIST_GROUP = /^[+-] /;
@@ -41,7 +41,7 @@ function findEnclosingPair(
     return null;
   }
 
-  // Asymmetric markers (e.g. `#strike[…]`): nearest prefix before, nearest suffix after.
+  // Asymmetric markers (e.g. `#strike[...]`): nearest prefix before, nearest suffix after.
   const openAt = state.doc.sliceString(0, rangeFrom).lastIndexOf(prefix);
   if (openAt === -1) return null;
   const closeRel = state.doc.sliceString(rangeTo).indexOf(suffix);
@@ -49,13 +49,13 @@ function findEnclosingPair(
   return { open: openAt, close: rangeTo + closeRel };
 }
 
-/** Toggle `prefix…suffix` markers around each selected range. */
+/** Toggle `prefix` ... `suffix` markers around each selected range. */
 export function wrapSelection(view: EditorView, prefix: string, suffix = prefix): void {
   view.dispatch(
     view.state.changeByRange((range) => {
       const state = view.state;
 
-      // The selection itself is `prefix…suffix` -> strip the markers.
+      // The selection itself is `prefix` ... `suffix` -> strip the markers.
       const selLen = range.to - range.from;
       if (selLen >= prefix.length + suffix.length) {
         const text = state.sliceDoc(range.from, range.to);
@@ -265,7 +265,7 @@ export function toggleMath(view: EditorView): void {
       const state = view.state;
       const text = state.sliceDoc(range.from, range.to);
 
-      // Selection IS display math ($[ws]…[ws]$) -> strip
+      // Selection IS display math ($[ws]...[ws]$) -> strip
       if (
         text.startsWith("$") &&
         text.endsWith("$") &&
@@ -280,7 +280,7 @@ export function toggleMath(view: EditorView): void {
         };
       }
 
-      // Selection IS inline math ($…$) -> upgrade to display math
+      // Selection IS inline math ($...$) -> upgrade to display math
       if (text.startsWith("$") && text.endsWith("$") && text.length >= 2) {
         const inner = text.slice(1, -1);
         return {

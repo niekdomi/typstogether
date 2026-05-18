@@ -1,4 +1,13 @@
-import { afterEach, beforeEach, describe, expect, mock, setSystemTime, test } from "bun:test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  setSystemTime,
+  spyOn,
+  test,
+} from "bun:test";
 
 import { TemplateService } from "./service";
 
@@ -31,6 +40,7 @@ function mockFetchFail() {
 beforeEach(() => {
   service = new TemplateService();
   originalFetch = globalThis.fetch;
+  spyOn(console, "error").mockImplementation(() => null);
 });
 
 afterEach(() => {
