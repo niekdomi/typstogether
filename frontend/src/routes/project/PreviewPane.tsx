@@ -168,7 +168,7 @@ export default function PreviewPane() {
         <Button
           variant="ghost"
           size="sm"
-          class="font-mono"
+          class="w-14 font-mono tabular-nums"
           title="Reset zoom"
           aria-label="Reset zoom"
           onClick={() => {

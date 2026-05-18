@@ -7,6 +7,8 @@ updates:
       - "/backend"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     groups:
       dependencies:
         patterns:
@@ -14,18 +16,25 @@ updates:
     labels:
       - "dependencies"
     commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
+      prefix: "build"
+      prefix-development: "build"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     groups:
       github-actions:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
     labels:
       - "dependencies"
     commit-message:
-      prefix: "chore"
+      prefix: "build"

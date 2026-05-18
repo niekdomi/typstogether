@@ -8,6 +8,7 @@ import {
 } from "solid-icons/tb";
 import { createSignal, For, type JSX, Match, Show, Switch } from "solid-js";
 
+import { Button } from "../../../components/ui/button";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -160,7 +161,7 @@ function FolderRow(props: { node: FolderNode; onUpload: (dir: string) => void })
             props.onUpload(path());
           }}
         >
-          Upload asset…
+          Upload asset
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem
@@ -240,7 +241,7 @@ function RootDropZone(props: { children: JSX.Element; onUpload: (dir: string) =>
             props.onUpload("");
           }}
         >
-          Upload asset…
+          Upload asset
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
@@ -279,9 +280,9 @@ function FileSidebarBody() {
           <SidebarGroup>
             <SidebarGroupLabel class="flex items-center justify-between gap-1">
               <span>Files</span>
-              <button
-                type="button"
-                class="text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded p-1"
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 title="Upload asset"
                 aria-label="Upload asset"
                 onClick={() => {
@@ -289,7 +290,7 @@ function FileSidebarBody() {
                 }}
               >
                 <TbOutlineUpload />
-              </button>
+              </Button>
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>

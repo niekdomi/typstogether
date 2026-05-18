@@ -70,7 +70,7 @@ export default function CodeMirrorEditor() {
             themeCompartment.of(editorTheme(theme())),
             readOnlyCompartment.of(EditorState.readOnly.of(ctx.isReadOnly())),
             ...setup,
-            yCollab(text, null, { undoManager: cache.undoManager }),
+            yCollab(text, ctx.collab.awareness, { undoManager: cache.undoManager }),
             typstFilePath.of(path),
           ],
         });
