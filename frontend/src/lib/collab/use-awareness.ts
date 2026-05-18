@@ -32,7 +32,9 @@ export function useRemoteAwareness(
         if (clientId === awareness.clientID) continue;
 
         const user = state["user"] as Omit<RemoteUser, "clientId"> | undefined;
-        if (!user || typeof user.userId !== "string") continue;
+        if (!user || typeof user.userId !== "string") {
+          continue;
+        }
 
         if (!byUserId.has(user.userId)) {
           byUserId.set(user.userId, { clientId, ...user });
