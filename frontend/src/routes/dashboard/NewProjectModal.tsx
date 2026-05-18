@@ -42,6 +42,15 @@ async function loadTemplates(): Promise<Template[]> {
   return data ?? [];
 }
 
+function resolveTemplate(
+  id: string,
+  catalog: Template[] | undefined
+): { id: string; version: string } | undefined {
+  if (id === BLANK_ID) return undefined;
+  const chosen = catalog?.find((t) => t.id === id);
+  return chosen && { id: chosen.id, version: chosen.version };
+}
+
 interface TemplateCardProps {
   selected: boolean;
   onSelect: () => void;
@@ -150,11 +159,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
           onSubmit={(e) => {
             e.preventDefault();
             if (!trimmedName()) return;
-            const id = template();
-            const chosen =
-              id === BLANK_ID ? undefined : (templates() ?? []).find((t) => t.id === id);
-            const payload = chosen ? { id: chosen.id, version: chosen.version } : undefined;
-            props.onSubmit(trimmedName(), payload);
+            props.onSubmit(trimmedName(), resolveTemplate(template(), templates()));
           }}
           class="flex flex-col gap-4"
         >
