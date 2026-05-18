@@ -1,6 +1,7 @@
 import { indentWithTab } from "@codemirror/commands";
 import { Compartment, type EditorSelection, EditorState, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
+import { useColorMode } from "@kobalte/core/color-mode";
 import { vim } from "@replit/codemirror-vim";
 import { createTypstSetup, typstFilePath } from "@vedivad/codemirror-typst";
 import { basicSetup } from "codemirror";
@@ -9,7 +10,6 @@ import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
 import { vimMode } from "../../lib/editor-prefs";
-import { useTheme } from "../../lib/ThemeContext";
 import { formatKeymap } from "./editor-actions";
 import { editorTheme, fillHeight, getHighlighting, popupTheme } from "./editor-theme";
 import { useProjectContext } from "./ProjectContext";
@@ -21,7 +21,7 @@ interface PerFileCache {
 
 export default function CodeMirrorEditor() {
   const ctx = useProjectContext();
-  const { theme } = useTheme();
+  const { colorMode: theme } = useColorMode();
   let parent: HTMLDivElement | undefined;
 
   onMount(() => {
