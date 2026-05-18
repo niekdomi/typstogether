@@ -6,7 +6,7 @@ interface AwarenessUser {
   userId: string;
   name: string;
   color: string;
-  avatar: string;
+  image: string;
 }
 
 /**

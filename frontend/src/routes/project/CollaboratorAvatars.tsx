@@ -49,7 +49,7 @@ export default function CollaboratorAvatars() {
   return (
     <div class="flex items-center">
       <For each={visibleRemote()}>
-        {(u) => <AvatarItem name={u.name} image={u.avatar} color={u.color} label={u.name} />}
+        {(u) => <AvatarItem name={u.name} image={u.image} color={u.color} label={u.name} />}
       </For>
       <Show when={overflow() > 0}>
         <span class="bg-muted text-muted-foreground ring-background -ml-1.5 flex size-8 items-center justify-center rounded-full text-[11px] font-medium ring-2">
