@@ -9,7 +9,7 @@ import * as schema from "../src/db/schema";
 
 const client = new PGlite();
 const db = drizzle({ client, schema });
-await migrate(db, { migrationsFolder: "./drizzle" });
+await migrate(db, { migrationsFolder: `${import.meta.dir}/../drizzle` });
 dbRegistry.set(db);
 
 afterAll(async () => {
