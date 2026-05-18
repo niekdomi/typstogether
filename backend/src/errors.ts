@@ -21,3 +21,7 @@ export class ConflictError extends HttpError {
 export class GoneError extends HttpError {
   readonly status = 410;
 }
+
+export class BadGatewayError extends HttpError {
+  readonly status = 502;
+}

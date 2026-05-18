@@ -30,7 +30,7 @@ import { api } from "../../lib/api";
 interface NewProjectModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (name: string) => void;
+  onSubmit: (name: string, template: { id: string; version: string } | undefined) => void;
 }
 
 type Template = NonNullable<Awaited<ReturnType<typeof api.templates.get>>["data"]>[number];
@@ -40,6 +40,15 @@ const BLANK_ID = "blank";
 async function loadTemplates(): Promise<Template[]> {
   const { data } = await api.templates.get();
   return data ?? [];
+}
+
+function resolveTemplate(
+  id: string,
+  catalog: Template[] | undefined
+): { id: string; version: string } | undefined {
+  if (id === BLANK_ID) return undefined;
+  const chosen = catalog?.find((t) => t.id === id);
+  return chosen && { id: chosen.id, version: chosen.version };
 }
 
 interface TemplateCardProps {
@@ -149,7 +158,8 @@ export default function NewProjectModal(props: NewProjectModalProps) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (trimmedName()) props.onSubmit(trimmedName());
+            if (!trimmedName()) return;
+            props.onSubmit(trimmedName(), resolveTemplate(template(), templates()));
           }}
           class="flex flex-col gap-4"
         >
