@@ -1,3 +1,4 @@
+import { TOML } from "bun";
 import { fileTypeFromBuffer } from "file-type";
 import { lookup as lookupMime } from "mime-types";
 import { parseTarGzip, type ParsedTarFileItem } from "nanotar";
@@ -38,15 +39,21 @@ export interface TemplateFiles {
   binary: Map<string, BinaryTemplateFile>;
 }
 
-// Pulls `[template].path` from the package's typst.toml if present. We only
-// need the path, so a regex is enough.
+// Pulls `[template].path` from the package's typst.toml if present.
 function readTemplatePath(entries: ParsedTarFileItem[]): string | null {
   const toml = entries.find((e) => e.name === "typst.toml" || e.name.endsWith("/typst.toml"));
   if (!toml) return null;
-  const inTemplateSection = /\[template\][\s\S]*?(?=\n\[|$)/.exec(toml.text);
-  if (!inTemplateSection) return null;
-  const pathMatch = /path\s*=\s*"([^"]+)"/.exec(inTemplateSection[0]);
-  return pathMatch?.[1] ?? null;
+  let parsed: unknown;
+  try {
+    parsed = TOML.parse(toml.text);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const template = (parsed as Record<string, unknown>)["template"];
+  if (typeof template !== "object" || template === null) return null;
+  const path = (template as Record<string, unknown>)["path"];
+  return typeof path === "string" ? path : null;
 }
 
 function extOf(path: string): string {
