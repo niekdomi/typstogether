@@ -46,7 +46,6 @@ export default function CollaboratorAvatars() {
 
   const visible = createMemo(() => remote().slice(0, MAX_REMOTE));
   const overflow = createMemo(() => Math.max(0, remote().length - MAX_REMOTE));
-  const selfColor = createMemo(() => userColor(user.id).color);
 
   return (
     <Show when={remote().length > 0}>
