@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
+import { eq } from "drizzle-orm";
 import { createTarGzip, type TarFileInput } from "nanotar";
 import * as Y from "yjs";
 
 import { projectFactory, userFactory } from "../../../test/factories";
 import { cleanDb, expectThrows } from "../../../test/helpers";
-import { project as projectTable } from "../../db/app-schema";
+import { project as projectTable, projectBlob } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import { currentDb } from "../../transaction";
 import { fetchDocument } from "../collab/persistence";
@@ -15,6 +16,7 @@ import { projectService } from "./service";
 afterEach(cleanDb);
 
 const FILES_KEY = "files";
+const ASSETS_KEY = "assets";
 
 async function mockTemplateTarball(entries: TarFileInput[]) {
   const body = await createTarGzip(entries);
@@ -205,6 +207,44 @@ describe("ProjectService.create", () => {
     const files = doc.getMap<Y.Text>(FILES_KEY);
     expect([...files.keys()].toSorted()).toEqual(["/main.typ", "/refs.bib"]);
     expect(files.get("/main.typ")?.toJSON()).toBe("= Hello from template");
+  });
+
+  test("seeds binary template entries as project blobs and wires them into the assets Y.Map", async () => {
+    const owner = await userFactory.create();
+    const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const ttfBytes = new Uint8Array([0x00, 0x01, 0x00, 0x00, 0x00, 0xff]);
+    await mockTemplateTarball([
+      { name: "template/main.typ", data: "= Hi" },
+      { name: "template/cover.png", data: pngBytes },
+      { name: "template/fonts/Body.ttf", data: ttfBytes },
+    ]);
+
+    const created = await projectService.create(owner.id, {
+      name: "Templated",
+      template: { id: "foo", version: "1.0.0" },
+    });
+
+    const state = await fetchDocument(created.id);
+    expect(state).not.toBeNull();
+    const doc = new Y.Doc();
+    Y.applyUpdate(doc, state!);
+    const files = doc.getMap<Y.Text>(FILES_KEY);
+    const assets = doc.getMap<string>(ASSETS_KEY);
+    expect([...files.keys()]).toEqual(["/main.typ"]);
+    expect([...assets.keys()].toSorted()).toEqual(["/cover.png", "/fonts/Body.ttf"]);
+
+    const blobs = await currentDb()
+      .select()
+      .from(projectBlob)
+      .where(eq(projectBlob.projectId, created.id));
+    expect(blobs).toHaveLength(2);
+    const byId = new Map(blobs.map((b) => [b.blobId, b]));
+    const pngRow = byId.get(assets.get("/cover.png")!);
+    const ttfRow = byId.get(assets.get("/fonts/Body.ttf")!);
+    expect(pngRow?.mime).toBe("image/png");
+    expect(new Uint8Array(pngRow!.bytes)).toEqual(pngBytes);
+    expect(ttfRow?.mime).toBe("font/ttf");
+    expect(new Uint8Array(ttfRow!.bytes)).toEqual(ttfBytes);
   });
 
   test("fails the create when the template tarball can't be fetched, leaving no project row", async () => {

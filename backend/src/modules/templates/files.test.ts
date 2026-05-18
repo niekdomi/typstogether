@@ -25,10 +25,11 @@ describe("fetchTemplateFiles", () => {
       { name: "lib.typ", data: "// package code, not template" },
     ]);
 
-    const { files } = await fetchTemplateFiles("foo", "1.0.0");
+    const { text, binary } = await fetchTemplateFiles("foo", "1.0.0");
 
-    expect([...files.keys()].toSorted()).toEqual(["/main.typ", "/refs.bib"]);
-    expect(files.get("/main.typ")).toBe("= Hello");
+    expect([...text.keys()].toSorted()).toEqual(["/main.typ", "/refs.bib"]);
+    expect(text.get("/main.typ")).toBe("= Hello");
+    expect(binary.size).toBe(0);
   });
 
   test("honours a custom template path declared in typst.toml", async () => {
@@ -41,21 +42,43 @@ describe("fetchTemplateFiles", () => {
       { name: "template/main.typ", data: "// ignored, wrong dir" },
     ]);
 
-    const { files } = await fetchTemplateFiles("foo", "1.0.0");
+    const { text } = await fetchTemplateFiles("foo", "1.0.0");
 
-    expect([...files.keys()]).toEqual(["/main.typ"]);
-    expect(files.get("/main.typ")).toBe("= Custom path");
+    expect([...text.keys()]).toEqual(["/main.typ"]);
+    expect(text.get("/main.typ")).toBe("= Custom path");
   });
 
-  test("skips binary files by extension allowlist", async () => {
+  test("surfaces images, fonts, and archives as binary entries with mapped MIME types", async () => {
+    const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const ttfBytes = new Uint8Array([0x00, 0x01, 0x00, 0x00, 0x00]);
+    const zipBytes = new Uint8Array([0x50, 0x4b, 0x03, 0x04]);
     await mockFetchTarball([
       { name: "template/main.typ", data: "= Hi" },
-      { name: "template/cover.png", data: "PNG-bytes-here" },
+      { name: "template/cover.png", data: pngBytes },
+      { name: "template/fonts/Body.ttf", data: ttfBytes },
+      { name: "template/extras.zip", data: zipBytes },
     ]);
 
-    const { files } = await fetchTemplateFiles("foo", "1.0.0");
+    const { text, binary } = await fetchTemplateFiles("foo", "1.0.0");
 
-    expect([...files.keys()]).toEqual(["/main.typ"]);
+    expect([...text.keys()]).toEqual(["/main.typ"]);
+    expect([...binary.keys()].toSorted()).toEqual(["/cover.png", "/extras.zip", "/fonts/Body.ttf"]);
+    expect(binary.get("/cover.png")?.mime).toBe("image/png");
+    expect(binary.get("/cover.png")?.bytes).toEqual(pngBytes);
+    expect(binary.get("/fonts/Body.ttf")?.mime).toBe("font/ttf");
+    expect(binary.get("/extras.zip")?.mime).toBe("application/zip");
+  });
+
+  test("falls back to application/octet-stream for unknown extensions", async () => {
+    const blob = new Uint8Array([1, 2, 3, 4]);
+    await mockFetchTarball([
+      { name: "template/main.typ", data: "= Hi" },
+      { name: "template/data.bin", data: blob },
+    ]);
+
+    const { binary } = await fetchTemplateFiles("foo", "1.0.0");
+
+    expect(binary.get("/data.bin")?.mime).toBe("application/octet-stream");
   });
 
   test("throws BadGateway when the registry responds non-2xx", async () => {
