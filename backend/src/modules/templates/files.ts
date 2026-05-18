@@ -76,17 +76,16 @@ function extOf(path: string): string {
 /**
  * Fetches a Typst Universe package and returns the contents of its template
  * subdirectory. Text-allowlisted files come back as strings; everything else
- * (images, fonts, archives, …) comes back as bytes with a best-effort MIME so
- * the caller can persist it as a project blob.
+ * (images, fonts, archives, ...) comes back as bytes.
  */
 export async function fetchTemplateFiles(id: string, version: string): Promise<TemplateFiles> {
-  const res = await fetch(PACKAGE_URL(id, version));
-  if (!res.ok) {
+  const pkg = await fetch(PACKAGE_URL(id, version));
+  if (!pkg.ok) {
     throw new BadGatewayError(
-      `Failed to fetch template ${id}@${version}: HTTP ${String(res.status)}`
+      `Failed to fetch template ${id}@${version}: HTTP ${String(pkg.status)}`
     );
   }
-  const entries = await parseTarGzip(await res.arrayBuffer());
+  const entries = await parseTarGzip(await pkg.arrayBuffer());
 
   const templateDir = readTemplatePath(entries) ?? "template";
   const prefix = `${templateDir}/`;
