@@ -1,5 +1,5 @@
 import { type EditorState, type Extension, EditorSelection } from "@codemirror/state";
-import { type EditorView, keymap } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
 
 // Constants ───────────────────────────────────────────────────────────────────
 
@@ -375,3 +375,40 @@ export const formatKeymap: Extension = (() => {
     { key: "Mod-Shift-7", run: prefix("+ ", LIST_GROUP) },
   ]);
 })();
+
+// File-drop ───────────────────────────────────────────────────────────────────
+
+const IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"]);
+
+/** Wrap a Typst VFS path in the right directive for its extension. */
+export function formatPathForDrop(path: string): string {
+  const dot = path.lastIndexOf(".");
+  const ext = dot === -1 ? "" : path.slice(dot).toLowerCase();
+  if (ext === ".typ") return `#include "${path}"`;
+  if (IMAGE_EXTS.has(ext)) return `#image("${path}")`;
+  return `"${path}"`;
+}
+
+/**
+ * Replace CodeMirror's default file-path paste on drop with a Typst directive.
+ * The file sidebar puts the dragged file's VFS path (e.g. `/foo/bar.typ`) into
+ * `text/plain`; we wrap it as `#include "..."` / `#image("...")` instead of
+ * inserting the bare path.
+ */
+export const fileDropHandler: Extension = EditorView.domEventHandlers({
+  drop(event, view) {
+    const data = event.dataTransfer?.getData("text/plain");
+    if (!data || !data.startsWith("/")) return false;
+    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+    if (pos === null) return false;
+    event.preventDefault();
+    const text = formatPathForDrop(data);
+    view.dispatch({
+      changes: { from: pos, insert: text },
+      selection: EditorSelection.cursor(pos + text.length),
+      userEvent: "input.drop",
+    });
+    view.focus();
+    return true;
+  },
+});

@@ -8,7 +8,7 @@ import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
 import { useTheme } from "../../lib/ThemeContext";
-import { formatKeymap } from "./editor-actions";
+import { fileDropHandler, formatKeymap } from "./editor-actions";
 import { editorTheme, fillHeight, getHighlighting, popupTheme } from "./editor-theme";
 import { useProjectContext } from "./ProjectContext";
 
@@ -65,6 +65,7 @@ export default function CodeMirrorEditor() {
             basicSetup,
             keymap.of([indentWithTab, ...yUndoManagerKeymap]),
             Prec.high(formatKeymap),
+            Prec.high(fileDropHandler),
             fillHeight,
             popupTheme,
             themeCompartment.of(editorTheme(theme())),
