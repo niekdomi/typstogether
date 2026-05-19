@@ -187,13 +187,14 @@
     font-family: var(--mono);
   }
 
-  /* Fade theme-driven colors on every color-mode change. Always-on (rather
-     than toggled by JS) since Kobalte's ColorModeProvider just flips the
-     `data-kb-theme` attribute — there's no hook to gate transitions to that
-     event specifically. */
-  *,
-  *::before,
-  *::after {
+  /* Fade theme-driven colors only during a color-mode change. The class is
+     applied to <html> for 200ms by the observer in main.tsx, scoping the
+     transition to actual theme flips so it doesn't bleed into per-frame
+     background changes like CodeMirror's active-line highlight. */
+  .theme-fade,
+  .theme-fade *,
+  .theme-fade *::before,
+  .theme-fade *::after {
     transition:
       background-color 200ms ease,
       color 200ms ease,
