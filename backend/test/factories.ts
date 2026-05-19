@@ -35,7 +35,6 @@ export const projectFactory = Factory.define<Project, never, Promise<Project>>((
     id: crypto.randomUUID(),
     name: faker.commerce.productName(),
     ownerUserId: "",
-    entry: "/main.typ",
     deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),

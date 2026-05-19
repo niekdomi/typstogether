@@ -34,9 +34,15 @@ export function useFileSidebar() {
   const files = ctx.collab.files!;
   const assets = ctx.collab.assets!;
   const projectId = ctx.projectId;
-  // Lock the file currently marked as the project's compile entry: deleting
-  // or renaming it would leave the compiler pointing at a missing path.
-  const isLocked = (path: string) => path === ctx.entry();
+  // Lock is tied to the *project's* entry (Y.Doc), not the per-user preview:
+  // a viewer shouldn't be able to delete the canonical entry, but local
+  // preview is ephemeral so the locked file shouldn't shift with it.
+  const isLocked = (path: string) => path === ctx.collab.entry;
+  // Preview eligibility: only text files (assets aren't Typst sources), and
+  // not the currently-effective entry (preview or global). Available to all
+  // sessions including viewers — preview is local-only.
+  const canPreview = (path: string) => files.has(path) && path !== ctx.entry();
+  const isPreviewing = (path: string) => ctx.previewEntry() === path;
   const [paths, setPaths] = createSignal<string[]>([]);
   const [collapsed, setCollapsed] = createSignal(new Set<string>());
   // Folders the user created via "New folder" that don't yet contain any file.
@@ -430,6 +436,19 @@ export function useFileSidebar() {
     completeDrop(e, (src) => `/${leafOf(src)}`);
   };
 
+  // Per-user preview ───────────────────────────────────────────────────────
+  // Memory-only override of the compile entry. Local to this client; doesn't
+  // mutate the Y.Doc or affect other collaborators. Resets on page reload.
+
+  const handlePreview = (path: string): void => {
+    if (!canPreview(path)) return;
+    ctx.setPreviewEntry(path);
+  };
+
+  const stopPreview = (): void => {
+    ctx.setPreviewEntry(null);
+  };
+
   return {
     tree,
     dialog,
@@ -439,6 +458,8 @@ export function useFileSidebar() {
     drag,
     activeFile: ctx.activeFile,
     canDeleteFile: (path: string) => !isLocked(path) && totalCount() > 1,
+    canPreview,
+    isPreviewing,
     isLocked,
     isAsset,
     onSelectFile: ctx.setActiveFile,
@@ -451,6 +472,8 @@ export function useFileSidebar() {
     handleRenameFolder,
     handleDeleteFolder,
     handleUploadAsset,
+    handlePreview,
+    stopPreview,
     onFileDragStart,
     onDragEnd,
     onFolderDragOver,

@@ -17,6 +17,7 @@ afterEach(cleanDb);
 
 const FILES_KEY = "files";
 const ASSETS_KEY = "assets";
+const META_KEY = "meta";
 
 async function mockTemplateTarball(entries: TarFileInput[]) {
   const body = await createTarGzip(entries);
@@ -185,12 +186,13 @@ describe("ProjectService.create", () => {
 
     const created = await projectService.create(owner.id, { name: "Blank" });
 
+    // Blank projects start with no doc state at all; the client seeds the
+    // default file (and the frontend defaults the entry to /main.typ) on
+    // first connect.
     expect(await fetchDocument(created.id)).toBeNull();
-    // Blank projects fall back to the column default.
-    expect(created.entry).toBe("/main.typ");
   });
 
-  test("uses the template's declared entrypoint as the project entry", async () => {
+  test("seeds the template's declared entrypoint into the doc's meta map", async () => {
     const owner = await userFactory.create();
     await mockTemplateTarball([
       {
@@ -205,7 +207,11 @@ describe("ProjectService.create", () => {
       template: { id: "foo", version: "1.0.0" },
     });
 
-    expect(created.entry).toBe("/report.typ");
+    const state = await fetchDocument(created.id);
+    expect(state).not.toBeNull();
+    const doc = new Y.Doc();
+    Y.applyUpdate(doc, state!);
+    expect(doc.getMap<string>(META_KEY).get("entry")).toBe("/report.typ");
   });
 
   test("seeds the collab_document with the template's text files", async () => {

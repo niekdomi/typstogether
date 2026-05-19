@@ -57,7 +57,12 @@ function FileRow(props: { node: FileNode }) {
             <TbOutlinePhoto />
           </Show>
           <span>{props.node.name}</span>
-          <Show when={sb.isLocked(path())}>
+          <Show when={sb.isPreviewing(path())}>
+            <span class="text-muted-foreground ml-auto text-[10px] tracking-wide uppercase">
+              preview
+            </span>
+          </Show>
+          <Show when={sb.isLocked(path()) && !sb.isPreviewing(path())}>
             <span class="text-muted-foreground ml-auto text-[10px] tracking-wide uppercase">
               entry
             </span>
@@ -65,6 +70,26 @@ function FileRow(props: { node: FileNode }) {
         </SidebarMenuButton>
       </ContextMenuTrigger>
       <ContextMenuContent>
+        <Show when={sb.canPreview(path())}>
+          <ContextMenuItem
+            onSelect={() => {
+              sb.handlePreview(path());
+            }}
+          >
+            Preview
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+        </Show>
+        <Show when={sb.isPreviewing(path())}>
+          <ContextMenuItem
+            onSelect={() => {
+              sb.stopPreview();
+            }}
+          >
+            Stop previewing
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+        </Show>
         <ContextMenuItem
           disabled={sb.isLocked(path())}
           onSelect={() => {

@@ -11,7 +11,7 @@ import { createStore } from "solid-js/store";
 import type { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 
-import { ASSETS_KEY, FILES_KEY } from "../paths";
+import { ASSETS_KEY, FILES_KEY, MAIN_PATH, META_KEY } from "../paths";
 import { collabWsUrl } from "./ws-url";
 
 interface CollabState {
@@ -19,23 +19,41 @@ interface CollabState {
   files: Y.Map<Y.Text> | null;
   // path -> blob_id of a row stored in the backend's project_blob table.
   assets: Y.Map<string> | null;
+  // Project-level metadata that needs to sync across collaborators (currently
+  // just the compile entry). Stored in the same Y.Doc as files/assets so a
+  // change made by one client lands instantly for everyone else.
+  meta: Y.Map<string> | null;
+  /** Mirror of `meta.get("entry")` so consumers don't need a Y.Map observer. */
+  entry: string;
   awareness: Awareness | null;
   status: WebSocketStatus;
   synced: boolean;
   readOnly: boolean;
   error: string | null;
+  /**
+   * Update the project's compile entry. No-op when the Y.Doc isn't ready.
+   * Method shorthand so `this` binds to the store proxy at call time; that
+   * keeps `setEntry` co-located with the state it operates on without
+   * forking the return shape.
+   */
+  setEntry: (path: string) => void;
 }
 
-export function useCollabDoc(projectId: () => string, entry: () => string) {
+export function useCollabDoc(projectId: () => string) {
   const [state, setState] = createStore<CollabState>({
     ydoc: null,
     files: null,
     assets: null,
+    meta: null,
+    entry: MAIN_PATH,
     awareness: null,
     status: WebSocketStatus.Connecting,
     synced: false,
     readOnly: false,
     error: null,
+    setEntry(path: string) {
+      this.meta?.set("entry", path);
+    },
   });
 
   createEffect(() => {
@@ -47,16 +65,25 @@ export function useCollabDoc(projectId: () => string, entry: () => string) {
       synced: false,
       readOnly: false,
       error: null,
+      entry: MAIN_PATH,
     });
 
     const doc = new Y.Doc();
     const filesMap = doc.getMap<Y.Text>(FILES_KEY);
     const assetsMap = doc.getMap<string>(ASSETS_KEY);
+    const metaMap = doc.getMap<string>(META_KEY);
     const provider = new HocuspocusProvider({
       url: collabWsUrl(),
       name: id,
       document: doc,
     });
+
+    // Mirror meta.entry into Solid state so consumers can read reactively
+    // without observing the Y.Map themselves.
+    const refreshEntry = () => {
+      setState("entry", metaMap.get("entry") ?? MAIN_PATH);
+    };
+    metaMap.observe(refreshEntry);
 
     provider.on("status", (data: onStatusParameters) => {
       setState("status", data.status);
@@ -64,16 +91,18 @@ export function useCollabDoc(projectId: () => string, entry: () => string) {
     provider.on("synced", (data: onSyncedParameters) => {
       setState("synced", data.state);
       if (!data.state) return;
-      // After initial sync, ensure at least one file exists in the project.
-      // Seed at the project's declared entry so the compiler can find it.
+      // After initial sync, ensure at least one file exists. Seed at the
+      // already-synced entry (templates set this server-side; blank projects
+      // fall back to the default).
       if (filesMap.size === 0) {
         doc.transact(() => {
-          filesMap.set(entry(), new Y.Text());
+          filesMap.set(metaMap.get("entry") ?? MAIN_PATH, new Y.Text());
         });
       }
+      refreshEntry();
       // Only expose the maps once they're guaranteed to be populated, so the
       // typst project hook never sees a transient empty state.
-      setState({ files: filesMap, assets: assetsMap });
+      setState({ files: filesMap, assets: assetsMap, meta: metaMap });
     });
     provider.on("authenticated", (data: onAuthenticatedParameters) => {
       setState("readOnly", data.scope === "readonly");
@@ -85,9 +114,10 @@ export function useCollabDoc(projectId: () => string, entry: () => string) {
     setState({ ydoc: doc, awareness: provider.awareness });
 
     onCleanup(() => {
+      metaMap.unobserve(refreshEntry);
       provider.destroy();
       doc.destroy();
-      setState({ ydoc: null, files: null, assets: null, awareness: null });
+      setState({ ydoc: null, files: null, assets: null, meta: null, awareness: null });
     });
   });
 

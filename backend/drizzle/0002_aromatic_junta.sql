@@ -1,1 +1,0 @@
-ALTER TABLE "project" ADD COLUMN "entry" text DEFAULT '/main.typ' NOT NULL;

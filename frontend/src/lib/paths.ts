@@ -3,6 +3,7 @@
 export const MAIN_PATH = "/main.typ";
 export const FILES_KEY = "files";
 export const ASSETS_KEY = "assets";
+export const META_KEY = "meta";
 
 /** The directory part of a path. Returns "" for root-level paths, which is falsy and acts as the loop terminator when walking ancestors. */
 export function dirOf(path: string): string {

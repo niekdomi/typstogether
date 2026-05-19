@@ -17,7 +17,6 @@ import { useAssetsSync } from "../../lib/assets/use-assets-sync";
 import { userColor } from "../../lib/collab/awareness-colors";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { useCurrentUser } from "../../lib/CurrentUserContext";
-import { MAIN_PATH } from "../../lib/paths";
 import { useProject } from "../../lib/projects/use-project";
 import { useTypstProject } from "../../lib/typst/use-typst-project";
 
@@ -34,7 +33,19 @@ interface ProjectContextValue {
   typst: ReturnType<typeof useTypstProject>;
 
   ready: Accessor<Ready | null>;
+  /**
+   * VFS path of the file currently being compiled. Resolves to the per-user
+   * preview override when set, falling back to the project's global entry
+   * (`collab.entry`).
+   */
   entry: Accessor<string>;
+  /**
+   * Per-user, in-memory override of the compile entry. Memory-only by design:
+   * resets on reload, doesn't propagate to other collaborators. Use the
+   * project settings panel for changes that should stick and sync.
+   */
+  previewEntry: Accessor<string | null>;
+  setPreviewEntry: (path: string | null) => void;
   activeFile: Accessor<string>;
   activeIsAsset: Accessor<boolean>;
   setActiveFile: (path: string) => void;
@@ -56,10 +67,12 @@ export function ProjectProvider(props: { children: JSX.Element }) {
 
   const { user } = useCurrentUser();
   const membership = useProject(projectId);
-  // membership lags the collab connection by one round-trip; until it lands,
-  // fall back to MAIN_PATH so the seed/compile use the documented default.
-  const entry = createMemo(() => membership()?.project.entry ?? MAIN_PATH);
-  const collab = useCollabDoc(projectId, entry);
+  const collab = useCollabDoc(projectId);
+  // Per-user, in-memory preview override. When set, takes precedence over
+  // `collab.entry` for compile, but the project-level entry stays put for
+  // everyone else (and locks the sidebar's rename/delete on the same file).
+  const [previewEntry, setPreviewEntry] = createSignal<string | null>(null);
+  const entry = () => previewEntry() ?? collab.entry;
   const typst = useTypstProject(() => collab.files, entry);
 
   // Broadcast our identity into Yjs awareness for cursors + the avatar bar.
@@ -194,6 +207,8 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     typst,
     ready,
     entry,
+    previewEntry,
+    setPreviewEntry,
     activeFile,
     activeIsAsset,
     setActiveFile: setRequestedFile,

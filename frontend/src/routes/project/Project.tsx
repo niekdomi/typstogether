@@ -1,7 +1,7 @@
 import { WebSocketStatus } from "@hocuspocus/provider";
 import { A } from "@solidjs/router";
 import { FaSolidChevronLeft } from "solid-icons/fa";
-import { TbOutlineAlertTriangle, TbOutlineFiles } from "solid-icons/tb";
+import { TbOutlineAlertTriangle, TbOutlineFiles, TbOutlineSettings } from "solid-icons/tb";
 import { createSignal, type JSX, Match, Show, Switch } from "solid-js";
 
 import ThemeToggle from "../../components/ThemeToggle";
@@ -18,6 +18,7 @@ import EditorToolbar from "./EditorToolbar";
 import FileSidebar from "./file-sidebar/FileSidebar";
 import PreviewPane from "./PreviewPane";
 import { ProjectProvider, useProjectContext } from "./ProjectContext";
+import ProjectSettingsDialog from "./ProjectSettingsDialog";
 import WorkspacePanel from "./WorkspacePanel";
 
 type Panel = "files" | "diagnostics" | null;
@@ -76,6 +77,7 @@ function statusInfo(status: WebSocketStatus, synced: boolean, readOnly: boolean)
 function ProjectView() {
   const ctx = useProjectContext();
   const [currentPanel, setCurrentPanel] = createSignal<Panel>("files");
+  const [settingsOpen, setSettingsOpen] = createSignal(false);
 
   const togglePanel = (p: Exclude<Panel, null>) => {
     setCurrentPanel((cur) => (cur === p ? null : p));
@@ -154,7 +156,22 @@ function ProjectView() {
             // NOTE: I commented this out, since it's in most cases just one, didn't add much value therefore
             // badge={ctx.errorCount() > 0 ? ctx.errorCount() : undefined}
           />
+          <div class="mt-auto" />
+          <RailButton
+            label="Project settings"
+            active={settingsOpen()}
+            onClick={() => {
+              setSettingsOpen((s) => !s);
+            }}
+            icon={<TbOutlineSettings size={16} />}
+          />
         </nav>
+        <ProjectSettingsDialog
+          open={settingsOpen()}
+          onClose={() => {
+            setSettingsOpen(false);
+          }}
+        />
         <Switch
           fallback={
             <div class="flex flex-1 items-center justify-center">
