@@ -9,7 +9,7 @@ import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
 import { vimMode } from "../../lib/editor-prefs";
-import { formatKeymap } from "./editor-actions";
+import { fileDropHandler, formatKeymap } from "./editor-actions";
 import { editorSetup } from "./editor-setup";
 import { editorTheme, fillHeight, getHighlighting, popupTheme } from "./editor-theme";
 import { useProjectContext } from "./ProjectContext";
@@ -80,6 +80,7 @@ export default function CodeMirrorEditor() {
           extensions: [
             Prec.highest(vimCompartment.of(vimMode() ? vim() : [])),
             Prec.high(formatKeymap),
+            fileDropHandler,
             keymap.of([indentWithTab, ...yUndoManagerKeymap]),
             editorSetup,
             ...setup,
