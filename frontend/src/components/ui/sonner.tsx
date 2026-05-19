@@ -1,12 +1,11 @@
+import { useColorMode } from "@kobalte/core/color-mode";
 import { Toaster as Sonner } from "somoto";
 
-import { useTheme } from "../../lib/ThemeContext";
-
 export const Toaster = (props: Parameters<typeof Sonner>[0]) => {
-  const { theme } = useTheme();
+  const { colorMode } = useColorMode();
   return (
     <Sonner
-      theme={theme()}
+      theme={colorMode()}
       icons={{
         success: (
           <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24">

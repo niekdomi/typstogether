@@ -1,9 +1,9 @@
 import { and, eq } from "drizzle-orm";
 
 import { type ProjectBlob, projectBlob } from "../../db/app-schema";
-import { NotFoundError } from "../../errors";
+import { NotFoundError, UnsupportedMediaTypeError } from "../../errors";
 import { currentDb } from "../../transaction";
-import type { BlobMeta } from "./model";
+import { ALLOWED_MIME_TYPES, type BlobMeta } from "./model";
 
 export class BlobService {
   // Each call creates a new row with a fresh blob_id, even if identical bytes
@@ -20,6 +20,9 @@ export class BlobService {
   }
 
   async store(projectId: string, file: File): Promise<BlobMeta> {
+    if (!(ALLOWED_MIME_TYPES as readonly string[]).includes(file.type)) {
+      throw new UnsupportedMediaTypeError(`Unsupported mime type: ${file.type}`);
+    }
     const bytes = new Uint8Array(await file.arrayBuffer());
     return this.storeBytes(projectId, bytes, file.type);
   }

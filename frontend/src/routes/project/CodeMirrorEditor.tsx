@@ -1,16 +1,31 @@
 import { indentWithTab } from "@codemirror/commands";
 import { Compartment, type EditorSelection, EditorState, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
+import { useColorMode } from "@kobalte/core/color-mode";
+import { Vim, vim } from "@replit/codemirror-vim";
 import { createTypstSetup, typstFilePath } from "@vedivad/codemirror-typst";
-import { basicSetup } from "codemirror";
 import { createEffect, getOwner, onCleanup, onMount, runWithOwner } from "solid-js";
 import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
-import { useTheme } from "../../lib/ThemeContext";
+import { vimMode } from "../../lib/editor-prefs";
 import { formatKeymap } from "./editor-actions";
+import { editorSetup } from "./editor-setup";
 import { editorTheme, fillHeight, getHighlighting, popupTheme } from "./editor-theme";
 import { useProjectContext } from "./ProjectContext";
+
+// Vim's `u` / `Ctrl-R` call `@codemirror/commands` undo/redo, which target the
+// local CM history we deliberately don't load. Route them through Yjs instead.
+const yjsUndo = yUndoManagerKeymap.find((b) => b.key === "Mod-z")?.run;
+const yjsRedo = yUndoManagerKeymap.find((b) => b.key === "Mod-y")?.run;
+if (yjsUndo && yjsRedo) {
+  Vim.defineAction("undo", (cm, args) => {
+    for (let i = 0; i < args.repeat; i++) yjsUndo(cm.cm6);
+  });
+  Vim.defineAction("redo", (cm, args) => {
+    for (let i = 0; i < args.repeat; i++) yjsRedo(cm.cm6);
+  });
+}
 
 interface PerFileCache {
   undoManager: Y.UndoManager;
@@ -19,7 +34,7 @@ interface PerFileCache {
 
 export default function CodeMirrorEditor() {
   const ctx = useProjectContext();
-  const { theme } = useTheme();
+  const { colorMode: theme } = useColorMode();
   let parent: HTMLDivElement | undefined;
 
   onMount(() => {
@@ -33,6 +48,7 @@ export default function CodeMirrorEditor() {
 
       const readOnlyCompartment = new Compartment();
       const themeCompartment = new Compartment();
+      const vimCompartment = new Compartment();
       const setup = createTypstSetup({
         project: typstProject,
         sync: "external",
@@ -62,16 +78,17 @@ export default function CodeMirrorEditor() {
           doc,
           selection,
           extensions: [
-            basicSetup,
-            keymap.of([indentWithTab, ...yUndoManagerKeymap]),
+            Prec.highest(vimCompartment.of(vimMode() ? vim() : [])),
             Prec.high(formatKeymap),
-            fillHeight,
-            popupTheme,
-            themeCompartment.of(editorTheme(theme())),
-            readOnlyCompartment.of(EditorState.readOnly.of(ctx.isReadOnly())),
+            keymap.of([indentWithTab, ...yUndoManagerKeymap]),
+            editorSetup,
             ...setup,
             yCollab(text, ctx.collab.awareness, { undoManager: cache.undoManager }),
             typstFilePath.of(path),
+            readOnlyCompartment.of(EditorState.readOnly.of(ctx.isReadOnly())),
+            themeCompartment.of(editorTheme(theme())),
+            popupTheme,
+            fillHeight,
           ],
         });
       };
@@ -97,6 +114,7 @@ export default function CodeMirrorEditor() {
           effects: [
             themeCompartment.reconfigure(editorTheme(theme())),
             readOnlyCompartment.reconfigure(EditorState.readOnly.of(ctx.isReadOnly())),
+            vimCompartment.reconfigure(vimMode() ? vim() : []),
           ],
         });
         controller.setTheme(view, theme());
@@ -131,9 +149,10 @@ export default function CodeMirrorEditor() {
         });
 
         createEffect(() => {
-          // Touch reactive deps (theme/readOnly) so reconfigure runs on change.
+          // Touch reactive deps (theme/readOnly/vim) so reconfigure runs on change.
           theme();
           ctx.isReadOnly();
+          vimMode();
           syncCompartments();
         });
 

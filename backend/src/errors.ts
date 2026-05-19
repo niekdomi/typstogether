@@ -22,6 +22,10 @@ export class GoneError extends HttpError {
   readonly status = 410;
 }
 
+export class UnsupportedMediaTypeError extends HttpError {
+  readonly status = 415;
+}
+
 export class BadGatewayError extends HttpError {
   readonly status = 502;
 }
