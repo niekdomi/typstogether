@@ -82,7 +82,13 @@ export class ProjectService {
 
     const [created] = await currentDb()
       .insert(project)
-      .values({ name: input.name, ownerUserId: userId })
+      .values({
+        name: input.name,
+        ownerUserId: userId,
+        // Templates declare their entry in typst.toml; respect it when set,
+        // otherwise let the column default (/main.typ) take over.
+        ...(templateFiles?.entry ? { entry: templateFiles.entry } : {}),
+      })
       .returning();
 
     if (!created) throw new Error("Failed to create project");

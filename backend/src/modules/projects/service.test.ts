@@ -186,6 +186,26 @@ describe("ProjectService.create", () => {
     const created = await projectService.create(owner.id, { name: "Blank" });
 
     expect(await fetchDocument(created.id)).toBeNull();
+    // Blank projects fall back to the column default.
+    expect(created.entry).toBe("/main.typ");
+  });
+
+  test("uses the template's declared entrypoint as the project entry", async () => {
+    const owner = await userFactory.create();
+    await mockTemplateTarball([
+      {
+        name: "typst.toml",
+        data: '[package]\nname = "foo"\n\n[template]\npath = "template"\nentrypoint = "report.typ"\n',
+      },
+      { name: "template/report.typ", data: "= Report" },
+    ]);
+
+    const created = await projectService.create(owner.id, {
+      name: "Templated",
+      template: { id: "foo", version: "1.0.0" },
+    });
+
+    expect(created.entry).toBe("/report.typ");
   });
 
   test("seeds the collab_document with the template's text files", async () => {
