@@ -7,7 +7,6 @@ import {
   dirOf,
   joinPath,
   leafOf,
-  MAIN_PATH,
   normalizeAsset,
   normalizeFile,
   normalizeFolder,
@@ -25,8 +24,6 @@ const copyText = (src: Y.Text): Y.Text => {
   return copy;
 };
 
-const isLocked = (path: string) => path === MAIN_PATH;
-
 /**
  * Owns all reactive state and operations for the file sidebar. Returns plain
  * accessors and handlers - the JSX layer is pure rendering.
@@ -37,6 +34,9 @@ export function useFileSidebar() {
   const files = ctx.collab.files!;
   const assets = ctx.collab.assets!;
   const projectId = ctx.projectId;
+  // Lock the file currently marked as the project's compile entry: deleting
+  // or renaming it would leave the compiler pointing at a missing path.
+  const isLocked = (path: string) => path === ctx.entry();
   const [paths, setPaths] = createSignal<string[]>([]);
   const [collapsed, setCollapsed] = createSignal(new Set<string>());
   // Folders the user created via "New folder" that don't yet contain any file.

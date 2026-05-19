@@ -11,7 +11,7 @@ import { createStore } from "solid-js/store";
 import type { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 
-import { ASSETS_KEY, FILES_KEY, MAIN_PATH } from "../paths";
+import { ASSETS_KEY, FILES_KEY } from "../paths";
 import { collabWsUrl } from "./ws-url";
 
 interface CollabState {
@@ -26,7 +26,7 @@ interface CollabState {
   error: string | null;
 }
 
-export function useCollabDoc(projectId: () => string) {
+export function useCollabDoc(projectId: () => string, entry: () => string) {
   const [state, setState] = createStore<CollabState>({
     ydoc: null,
     files: null,
@@ -65,9 +65,10 @@ export function useCollabDoc(projectId: () => string) {
       setState("synced", data.state);
       if (!data.state) return;
       // After initial sync, ensure at least one file exists in the project.
+      // Seed at the project's declared entry so the compiler can find it.
       if (filesMap.size === 0) {
         doc.transact(() => {
-          filesMap.set(MAIN_PATH, new Y.Text());
+          filesMap.set(entry(), new Y.Text());
         });
       }
       // Only expose the maps once they're guaranteed to be populated, so the

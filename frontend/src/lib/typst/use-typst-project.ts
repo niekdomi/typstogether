@@ -17,7 +17,7 @@ interface TypstState {
   error: string | null;
 }
 
-export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
+export function useTypstProject(files: () => Y.Map<Y.Text> | null, entry: () => string) {
   const [state, setState] = createStore<TypstState>({ project: null, error: null });
 
   createEffect(() => {
@@ -50,6 +50,7 @@ export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
         project = new TypstProject({
           compiler,
           analyzer,
+          entry: entry(),
           autoCompile: { debounceMs: 200, maxWaitMs: 1000 },
         });
 
@@ -78,6 +79,13 @@ export function useTypstProject(files: () => Y.Map<Y.Text> | null) {
       project?.destroy();
       setState("project", null);
     });
+  });
+
+  // Track entry changes after the project is ready - lets a future "Set as
+  // entry" action take effect without rebuilding the compiler.
+  createEffect(() => {
+    const p = state.project;
+    if (p) p.entry = entry();
   });
 
   return state;

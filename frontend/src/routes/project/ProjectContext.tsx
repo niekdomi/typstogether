@@ -34,6 +34,7 @@ interface ProjectContextValue {
   typst: ReturnType<typeof useTypstProject>;
 
   ready: Accessor<Ready | null>;
+  entry: Accessor<string>;
   activeFile: Accessor<string>;
   activeIsAsset: Accessor<boolean>;
   setActiveFile: (path: string) => void;
@@ -55,8 +56,11 @@ export function ProjectProvider(props: { children: JSX.Element }) {
 
   const { user } = useCurrentUser();
   const membership = useProject(projectId);
-  const collab = useCollabDoc(projectId);
-  const typst = useTypstProject(() => collab.files);
+  // membership lags the collab connection by one round-trip; until it lands,
+  // fall back to MAIN_PATH so the seed/compile use the documented default.
+  const entry = createMemo(() => membership()?.project.entry ?? MAIN_PATH);
+  const collab = useCollabDoc(projectId, entry);
+  const typst = useTypstProject(() => collab.files, entry);
 
   // Broadcast our identity into Yjs awareness for cursors + the avatar bar.
   // Re-runs when the provider (and its awareness) is recreated on project switch.
@@ -82,7 +86,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     () => collab.assets
   );
 
-  const [requestedFile, setRequestedFile] = createSignal(MAIN_PATH);
+  const [requestedFile, setRequestedFile] = createSignal(entry());
   const [editorView, setEditorView] = createSignal<EditorView | null>(null);
   const [diagnostics, setDiagnostics] = createSignal<DiagnosticMessage[]>([]);
 
@@ -102,10 +106,10 @@ export function ProjectProvider(props: { children: JSX.Element }) {
   // deleted (or never existed). Assets and files share the same path namespace.
   const activeFile = createMemo(() => {
     const r = ready();
-    if (!r) return MAIN_PATH;
+    if (!r) return entry();
     const requested = requestedFile();
     if (r.files.has(requested) || r.assets.has(requested)) return requested;
-    return [...r.files.keys()][0] ?? MAIN_PATH;
+    return [...r.files.keys()][0] ?? entry();
   });
 
   const activeIsAsset = createMemo(() => ready()?.assets.has(activeFile()) ?? false);
@@ -189,6 +193,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     collab,
     typst,
     ready,
+    entry,
     activeFile,
     activeIsAsset,
     setActiveFile: setRequestedFile,
