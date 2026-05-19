@@ -1,9 +1,8 @@
 import { type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
+import type { ColorMode as Theme } from "@kobalte/core/color-mode";
 import { githubDark, githubLight } from "@uiw/codemirror-theme-github";
 import { createTypstHighlighting } from "@vedivad/codemirror-typst";
-
-import { type Theme } from "../../lib/ThemeContext";
 
 // Lazy-load the Typst highlighting controller on first editor mount. The
 // `initial` theme is only the controller's starting state, the editor calls

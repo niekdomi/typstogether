@@ -1,3 +1,4 @@
+import { useColorMode } from "@kobalte/core/color-mode";
 import type { RenderedSvgPage } from "@vedivad/typst-web-service";
 import {
   TbOutlineArrowAutofitHeight,
@@ -9,7 +10,6 @@ import { createEffect, createSignal, For, Match, onCleanup, onMount, Switch } fr
 import { createStore } from "solid-js/store";
 
 import { Button } from "../../components/ui/button";
-import { useTheme } from "../../lib/ThemeContext";
 import { renderer } from "../../lib/typst/use-typst-project";
 import ExportPdfButton from "./ExportPdfButton";
 import { useProjectContext } from "./ProjectContext";
@@ -24,7 +24,7 @@ const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 
 export default function PreviewPane() {
   const ctx = useProjectContext();
-  const { theme } = useTheme();
+  const { colorMode: theme } = useColorMode();
   const [render, setRender] = createStore<{
     pages: RenderedSvgPage[] | null;
     error: string | null;

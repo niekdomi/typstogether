@@ -69,7 +69,7 @@ describe("POST /projects/:id/blobs", () => {
     expect(res.status).toBe(404);
   });
 
-  test("422 for unsupported mime types", async () => {
+  test("415 for unsupported mime types", async () => {
     const owner = await userFactory.create();
     const project = await projectFactory.create({ ownerUserId: owner.id });
     setTestUser(owner);
@@ -79,7 +79,23 @@ describe("POST /projects/:id/blobs", () => {
       uploadInit(new Uint8Array([1, 2, 3]), "application/zip", "x.zip")
     );
 
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(415);
+  });
+
+  test("200 accepts SVG (text-based, byte-sniffers reject it)", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    setTestUser(owner);
+
+    const svg = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"/>');
+    const res = await request(
+      `/projects/${project.id}/blobs`,
+      uploadInit(svg, "image/svg+xml", "logo.svg")
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as UploadBody;
+    expect(body.mime).toBe("image/svg+xml");
   });
 
   test("200 returns id, mime, size for the owner", async () => {

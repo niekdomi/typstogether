@@ -1,15 +1,18 @@
+import { ColorModeProvider, ColorModeScript } from "@kobalte/core/color-mode";
 import { render } from "solid-js/web";
 
 import App from "./App";
-import { ThemeProvider } from "./lib/ThemeContext";
 
 import "./styles.css";
 
 render(
   () => (
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
+    <>
+      <ColorModeScript />
+      <ColorModeProvider disableTransitionOnChange={false}>
+        <App />
+      </ColorModeProvider>
+    </>
   ),
   document.querySelector("#app")!
 );
