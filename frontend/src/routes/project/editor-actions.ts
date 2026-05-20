@@ -403,10 +403,10 @@ export const fileDropHandler: Extension = EditorView.domEventHandlers({
       return false;
     }
 
-    const position = view.posAtCoords({ x: event.clientX, y: event.clientY });
-    if (position === null) {
-      return false;
-    }
+    // `precise: false` snaps to the nearest valid doc position instead of
+    // returning null when the drop lands on a line boundary or past the last
+    // line. Without it, dropping exactly on the bottom edge silently fails.
+    const position = view.posAtCoords({ x: event.clientX, y: event.clientY }, false);
 
     const text = formatPathForDrop(data);
     view.dispatch({
