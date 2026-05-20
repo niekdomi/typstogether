@@ -1,6 +1,8 @@
 import {
   TbOutlineChevronDown,
   TbOutlineChevronRight,
+  TbOutlineEye,
+  TbOutlineEyeClosed,
   TbOutlineFileText,
   TbOutlineFolder,
   TbOutlinePhoto,
@@ -38,9 +40,14 @@ function FileRow(props: { node: FileNode }) {
   const sb = useFileSidebarController();
   const path = () => props.node.path;
 
+  // Eye toggle shows for .typ files that can be previewed or are currently
+  // previewed. The current effective entry (no preview active) shows neither
+  // an eye nor an option, since previewing what's already compiled is a no-op.
+  const showEye = () => sb.isPreviewing(path()) || sb.canPreview(path());
+
   return (
     <ContextMenu>
-      <ContextMenuTrigger as="div">
+      <ContextMenuTrigger as="div" class="group/file relative">
         <SidebarMenuButton
           isActive={sb.activeFile() === path()}
           tooltip={path()}
@@ -57,39 +64,34 @@ function FileRow(props: { node: FileNode }) {
             <TbOutlinePhoto />
           </Show>
           <span>{props.node.name}</span>
-          <Show when={sb.isPreviewing(path())}>
-            <span class="text-muted-foreground ml-auto text-[10px] tracking-wide uppercase">
-              preview
-            </span>
-          </Show>
-          <Show when={sb.isLocked(path()) && !sb.isPreviewing(path())}>
+          <Show when={sb.isLocked(path())}>
             <span class="text-muted-foreground ml-auto text-[10px] tracking-wide uppercase">
               entry
             </span>
           </Show>
         </SidebarMenuButton>
+        <Show when={showEye()}>
+          <button
+            type="button"
+            title={sb.isPreviewing(path()) ? "Stop previewing" : "Preview this file"}
+            aria-label={sb.isPreviewing(path()) ? "Stop previewing" : "Preview this file"}
+            aria-pressed={sb.isPreviewing(path())}
+            class={cx(
+              "text-muted-foreground hover:text-foreground absolute top-1/2 right-1.5 -translate-y-1/2 rounded p-0.5 transition-opacity",
+              sb.isPreviewing(path()) ? "opacity-100" : "opacity-0 group-hover/file:opacity-100"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              sb.togglePreview(path());
+            }}
+          >
+            <Show when={sb.isPreviewing(path())} fallback={<TbOutlineEyeClosed size={14} />}>
+              <TbOutlineEye size={14} />
+            </Show>
+          </button>
+        </Show>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        <Show when={sb.canPreview(path())}>
-          <ContextMenuItem
-            onSelect={() => {
-              sb.handlePreview(path());
-            }}
-          >
-            Preview
-          </ContextMenuItem>
-          <ContextMenuSeparator />
-        </Show>
-        <Show when={sb.isPreviewing(path())}>
-          <ContextMenuItem
-            onSelect={() => {
-              sb.stopPreview();
-            }}
-          >
-            Stop previewing
-          </ContextMenuItem>
-          <ContextMenuSeparator />
-        </Show>
         <ContextMenuItem
           disabled={sb.isLocked(path())}
           onSelect={() => {

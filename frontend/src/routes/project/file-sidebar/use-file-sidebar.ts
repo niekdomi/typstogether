@@ -38,11 +38,13 @@ export function useFileSidebar() {
   // a viewer shouldn't be able to delete the canonical entry, but local
   // preview is ephemeral so the locked file shouldn't shift with it.
   const isLocked = (path: string) => path === ctx.collab.entry;
-  // Preview eligibility: only text files (assets aren't Typst sources), and
-  // not the currently-effective entry (preview or global). Available to all
-  // sessions including viewers — preview is local-only.
-  const canPreview = (path: string) => files.has(path) && path !== ctx.entry();
   const isPreviewing = (path: string) => ctx.previewEntry() === path;
+  // Preview eligibility: .typ source files only, never the project's own entry
+  // (that file shows the "entry" badge and is the default compile target), and
+  // not the file already being previewed. Available to all sessions including
+  // viewers — preview is local-only.
+  const canPreview = (path: string) =>
+    path.endsWith(".typ") && files.has(path) && path !== ctx.collab.entry && !isPreviewing(path);
   const [paths, setPaths] = createSignal<string[]>([]);
   const [collapsed, setCollapsed] = createSignal(new Set<string>());
   // Folders the user created via "New folder" that don't yet contain any file.
@@ -440,13 +442,12 @@ export function useFileSidebar() {
   // Memory-only override of the compile entry. Local to this client; doesn't
   // mutate the Y.Doc or affect other collaborators. Resets on page reload.
 
-  const handlePreview = (path: string): void => {
-    if (!canPreview(path)) return;
-    ctx.setPreviewEntry(path);
-  };
-
-  const stopPreview = (): void => {
-    ctx.setPreviewEntry(null);
+  const togglePreview = (path: string): void => {
+    if (isPreviewing(path)) {
+      ctx.setPreviewEntry(null);
+    } else if (canPreview(path)) {
+      ctx.setPreviewEntry(path);
+    }
   };
 
   return {
@@ -472,8 +473,7 @@ export function useFileSidebar() {
     handleRenameFolder,
     handleDeleteFolder,
     handleUploadAsset,
-    handlePreview,
-    stopPreview,
+    togglePreview,
     onFileDragStart,
     onDragEnd,
     onFolderDragOver,
