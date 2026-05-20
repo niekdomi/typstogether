@@ -25,11 +25,14 @@ describe("fetchTemplateFiles", () => {
       { name: "lib.typ", data: "// package code, not template" },
     ]);
 
-    const { text, binary } = await fetchTemplateFiles("foo", "1.0.0");
+    const { text, binary, entry } = await fetchTemplateFiles("foo", "1.0.0");
 
     expect([...text.keys()].toSorted()).toEqual(["/main.typ", "/refs.bib"]);
     expect(text.get("/main.typ")).toBe("= Hello");
     expect(binary.size).toBe(0);
+    // No typst.toml in the tarball, so the entrypoint is unknown, callers
+    // apply the default (/main.typ).
+    expect(entry).toBeNull();
   });
 
   test("honors a custom template path declared in typst.toml", async () => {
@@ -42,10 +45,26 @@ describe("fetchTemplateFiles", () => {
       { name: "template/main.typ", data: "// ignored, wrong dir" },
     ]);
 
-    const { text } = await fetchTemplateFiles("foo", "1.0.0");
+    const { text, entry } = await fetchTemplateFiles("foo", "1.0.0");
 
     expect([...text.keys()]).toEqual(["/main.typ"]);
     expect(text.get("/main.typ")).toBe("= Custom path");
+    expect(entry).toBe("/main.typ");
+  });
+
+  test("returns the declared entrypoint when it's not /main.typ", async () => {
+    await mockFetchTarball([
+      {
+        name: "typst.toml",
+        data: '[package]\nname = "foo"\n\n[template]\npath = "template"\nentrypoint = "report.typ"\n',
+      },
+      { name: "template/report.typ", data: "= Report" },
+      { name: "template/lib.typ", data: "// helpers" },
+    ]);
+
+    const { entry } = await fetchTemplateFiles("foo", "1.0.0");
+
+    expect(entry).toBe("/report.typ");
   });
 
   test("partitions non-text files into the binary map and preserves their bytes", async () => {

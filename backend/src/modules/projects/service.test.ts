@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
+import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, META_KEY } from "@typstogether/shared";
 import { eq } from "drizzle-orm";
 import { createTarGzip, type TarFileInput } from "nanotar";
 import * as Y from "yjs";
@@ -14,9 +15,6 @@ import { memberService } from "../members/service";
 import { projectService } from "./service";
 
 afterEach(cleanDb);
-
-const FILES_KEY = "files";
-const ASSETS_KEY = "assets";
 
 async function mockTemplateTarball(entries: TarFileInput[]) {
   const body = await createTarGzip(entries);
@@ -185,7 +183,32 @@ describe("ProjectService.create", () => {
 
     const created = await projectService.create(owner.id, { name: "Blank" });
 
+    // Blank projects start with no doc state at all; the client seeds the
+    // default file (and the frontend defaults the entry to /main.typ) on
+    // first connect.
     expect(await fetchDocument(created.id)).toBeNull();
+  });
+
+  test("seeds the template's declared entrypoint into the doc's meta map", async () => {
+    const owner = await userFactory.create();
+    await mockTemplateTarball([
+      {
+        name: "typst.toml",
+        data: '[package]\nname = "foo"\n\n[template]\npath = "template"\nentrypoint = "report.typ"\n',
+      },
+      { name: "template/report.typ", data: "= Report" },
+    ]);
+
+    const created = await projectService.create(owner.id, {
+      name: "Templated",
+      template: { id: "foo", version: "1.0.0" },
+    });
+
+    const state = await fetchDocument(created.id);
+    expect(state).not.toBeNull();
+    const doc = new Y.Doc();
+    Y.applyUpdate(doc, state!);
+    expect(doc.getMap<string>(META_KEY).get(ENTRY_KEY)).toBe("/report.typ");
   });
 
   test("seeds the collab_document with the template's text files", async () => {

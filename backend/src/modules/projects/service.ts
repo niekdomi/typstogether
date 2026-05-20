@@ -1,3 +1,4 @@
+import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, META_KEY } from "@typstogether/shared";
 import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
 import * as Y from "yjs";
 
@@ -8,10 +9,6 @@ import { blobService } from "../blobs/service";
 import { storeDocument } from "../collab/persistence";
 import { fetchTemplateFiles } from "../templates/files";
 import type { CreateProjectInput, UpdateProjectInput } from "./model";
-
-// Must match the frontend's keys (see frontend/src/lib/paths.ts).
-const FILES_KEY = "files";
-const ASSETS_KEY = "assets";
 
 export type ProjectRole = "owner" | "editor" | "viewer";
 
@@ -99,12 +96,19 @@ export class ProjectService {
       const doc = new Y.Doc();
       const filesMap = doc.getMap<Y.Text>(FILES_KEY);
       const assetsMap = doc.getMap<string>(ASSETS_KEY);
+      const metaMap = doc.getMap<string>(META_KEY);
       doc.transact(() => {
         for (const [path, content] of templateFiles.text) {
           filesMap.set(path, new Y.Text(content));
         }
         for (const [path, blobId] of blobIdByPath) {
           assetsMap.set(path, blobId);
+        }
+        // Seed the compile entry alongside the files so collaborators pick it
+        // up from the doc on first sync. Default (/main.typ) is the frontend's
+        // fallback when this key is absent, so we only set it when overriding.
+        if (templateFiles.entry) {
+          metaMap.set(ENTRY_KEY, templateFiles.entry);
         }
       });
       await storeDocument(created.id, Y.encodeStateAsUpdate(doc));

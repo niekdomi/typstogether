@@ -17,7 +17,6 @@ import { useAssetsSync } from "../../lib/assets/use-assets-sync";
 import { userColor } from "../../lib/collab/awareness-colors";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { useCurrentUser } from "../../lib/CurrentUserContext";
-import { MAIN_PATH } from "../../lib/paths";
 import { useProject } from "../../lib/projects/use-project";
 import { useTypstProject } from "../../lib/typst/use-typst-project";
 
@@ -34,6 +33,19 @@ interface ProjectContextValue {
   typst: ReturnType<typeof useTypstProject>;
 
   ready: Accessor<Ready | null>;
+  /**
+   * VFS path of the file currently being compiled. Resolves to the per-user
+   * preview override when set, falling back to the project's global entry
+   * (`collab.entry`).
+   */
+  entry: Accessor<string>;
+  /**
+   * Per-user, in-memory override of the compile entry. Memory-only by design:
+   * resets on reload, doesn't propagate to other collaborators. Use the
+   * project settings panel for changes that should stick and sync.
+   */
+  previewEntry: Accessor<string | null>;
+  setPreviewEntry: (path: string | null) => void;
   activeFile: Accessor<string>;
   activeIsAsset: Accessor<boolean>;
   setActiveFile: (path: string) => void;
@@ -56,7 +68,12 @@ export function ProjectProvider(props: { children: JSX.Element }) {
   const { user } = useCurrentUser();
   const membership = useProject(projectId);
   const collab = useCollabDoc(projectId);
-  const typst = useTypstProject(() => collab.files);
+  // Per-user, in-memory preview override. When set, takes precedence over
+  // `collab.entry` for compile, but the project-level entry stays put for
+  // everyone else (and locks the sidebar's rename/delete on the same file).
+  const [previewEntry, setPreviewEntry] = createSignal<string | null>(null);
+  const entry = () => previewEntry() ?? collab.entry;
+  const typst = useTypstProject(() => collab.files, entry);
 
   // Broadcast our identity into Yjs awareness for cursors + the avatar bar.
   // Re-runs when the provider (and its awareness) is recreated on project switch.
@@ -82,7 +99,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     () => collab.assets
   );
 
-  const [requestedFile, setRequestedFile] = createSignal(MAIN_PATH);
+  const [requestedFile, setRequestedFile] = createSignal(entry());
   const [editorView, setEditorView] = createSignal<EditorView | null>(null);
   const [diagnostics, setDiagnostics] = createSignal<DiagnosticMessage[]>([]);
 
@@ -102,10 +119,10 @@ export function ProjectProvider(props: { children: JSX.Element }) {
   // deleted (or never existed). Assets and files share the same path namespace.
   const activeFile = createMemo(() => {
     const r = ready();
-    if (!r) return MAIN_PATH;
+    if (!r) return entry();
     const requested = requestedFile();
     if (r.files.has(requested) || r.assets.has(requested)) return requested;
-    return [...r.files.keys()][0] ?? MAIN_PATH;
+    return [...r.files.keys()][0] ?? entry();
   });
 
   const activeIsAsset = createMemo(() => ready()?.assets.has(activeFile()) ?? false);
@@ -189,6 +206,9 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     collab,
     typst,
     ready,
+    entry,
+    previewEntry,
+    setPreviewEntry,
     activeFile,
     activeIsAsset,
     setActiveFile: setRequestedFile,

@@ -1,6 +1,8 @@
 import {
   TbOutlineChevronDown,
   TbOutlineChevronRight,
+  TbOutlineEye,
+  TbOutlineEyeClosed,
   TbOutlineFileText,
   TbOutlineFolder,
   TbOutlinePhoto,
@@ -38,9 +40,16 @@ function FileRow(props: { node: FileNode }) {
   const sb = useFileSidebarController();
   const path = () => props.node.path;
 
+  const previewing = () => sb.isPreviewing(path());
+  // Eye toggle shows for the previewed file plus any .typ file eligible to be
+  // previewed. The project entry (no preview active) shows neither, since
+  // previewing what's already compiled is a no-op.
+  const showEye = () => previewing() || sb.canPreview(path());
+  const previewLabel = () => (previewing() ? "Stop previewing" : "Preview this file");
+
   return (
     <ContextMenu>
-      <ContextMenuTrigger as="div">
+      <ContextMenuTrigger as="div" class="group/file relative">
         <SidebarMenuButton
           isActive={sb.activeFile() === path()}
           tooltip={path()}
@@ -63,6 +72,26 @@ function FileRow(props: { node: FileNode }) {
             </span>
           </Show>
         </SidebarMenuButton>
+        <Show when={showEye()}>
+          <button
+            type="button"
+            title={previewLabel()}
+            aria-label={previewLabel()}
+            aria-pressed={previewing()}
+            class={cx(
+              "text-muted-foreground hover:text-foreground absolute top-1/2 right-1.5 -translate-y-1/2 rounded p-0.5 transition-opacity",
+              previewing() ? "opacity-100" : "opacity-0 group-hover/file:opacity-100"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              sb.togglePreview(path());
+            }}
+          >
+            <Show when={previewing()} fallback={<TbOutlineEyeClosed size={14} />}>
+              <TbOutlineEye size={14} />
+            </Show>
+          </button>
+        </Show>
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem

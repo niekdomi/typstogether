@@ -21,6 +21,7 @@
         "@hocuspocus/extension-database": "^4.0.0",
         "@hocuspocus/extension-logger": "^4.0.0",
         "@hocuspocus/server": "^4.0.0",
+        "@typstogether/shared": "workspace:*",
         "better-auth": "^1.6.9",
         "drizzle-orm": "^0.45.2",
         "elysia": "^1.4.28",
@@ -60,6 +61,7 @@
         "@solid-primitives/storage": "^4.3.4",
         "@solidjs/router": "^0.16.1",
         "@typstogether/backend": "workspace:*",
+        "@typstogether/shared": "workspace:*",
         "@uiw/codemirror-theme-github": "^4.25.9",
         "@vedivad/codemirror-typst": "^0.15.4",
         "@vedivad/typst-web-service": "^0.15.4",
@@ -85,6 +87,10 @@
         "vite-plugin-solid": "^2.11.12",
         "vite-plugin-wasm": "^3.6.0",
       },
+    },
+    "shared": {
+      "name": "@typstogether/shared",
+      "version": "0.1.0",
     },
   },
   "overrides": {
@@ -526,6 +532,8 @@
     "@typstogether/backend": ["@typstogether/backend@workspace:backend"],
 
     "@typstogether/frontend": ["@typstogether/frontend@workspace:frontend"],
+
+    "@typstogether/shared": ["@typstogether/shared@workspace:shared"],
 
     "@typstyle/typstyle-wasm-bundler": ["@typstyle/typstyle-wasm-bundler@0.14.4", "", {}, "sha512-/umkAkAgjMQEXN5TdpcpHSHt9DFZkMO6w5j13VsQK9toK/09AneBXSHOnhA+Mv9KOOiS/3h/DPBqLDdkBVPQcw=="],
 

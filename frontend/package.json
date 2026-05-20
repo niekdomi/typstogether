@@ -24,6 +24,7 @@
     "@solid-primitives/storage": "^4.3.4",
     "@solidjs/router": "^0.16.1",
     "@typstogether/backend": "workspace:*",
+    "@typstogether/shared": "workspace:*",
     "@uiw/codemirror-theme-github": "^4.25.9",
     "@vedivad/codemirror-typst": "^0.15.4",
     "@vedivad/typst-web-service": "^0.15.4",

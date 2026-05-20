@@ -1,10 +1,8 @@
 import type { Extension } from "@hocuspocus/server";
+import { ASSETS_KEY } from "@typstogether/shared";
 import type * as Y from "yjs";
 
 import { blobService } from "../blobs/service";
-
-// Must match the frontend's ASSETS_KEY (see frontend/src/lib/paths.ts).
-const ASSETS_KEY = "assets";
 
 const observers = new WeakMap<Y.Doc, (event: Y.YMapEvent<string>) => void>();
 
