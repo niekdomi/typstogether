@@ -11,7 +11,7 @@ import { createStore } from "solid-js/store";
 import type { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 
-import { ASSETS_KEY, FILES_KEY, MAIN_PATH, META_KEY } from "../paths";
+import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, MAIN_PATH, META_KEY } from "../paths";
 import { collabWsUrl } from "./ws-url";
 
 interface CollabState {
@@ -51,7 +51,7 @@ export function useCollabDoc(projectId: () => string) {
     readOnly: false,
     error: null,
     setEntry(path: string) {
-      this.meta?.set("entry", path);
+      this.meta?.set(ENTRY_KEY, path);
     },
   });
 
@@ -80,7 +80,7 @@ export function useCollabDoc(projectId: () => string) {
     // Mirror meta.entry into Solid state so consumers react
     // without observing the Y.Map themselves.
     const refreshEntry = () => {
-      setState("entry", metaMap.get("entry") ?? MAIN_PATH);
+      setState("entry", metaMap.get(ENTRY_KEY) ?? MAIN_PATH);
     };
     metaMap.observe(refreshEntry);
 
@@ -95,7 +95,7 @@ export function useCollabDoc(projectId: () => string) {
       // fall back to the default).
       if (filesMap.size === 0) {
         doc.transact(() => {
-          filesMap.set(metaMap.get("entry") ?? MAIN_PATH, new Y.Text());
+          filesMap.set(metaMap.get(ENTRY_KEY) ?? MAIN_PATH, new Y.Text());
         });
       }
       refreshEntry();

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
+import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, META_KEY } from "@typstogether/shared";
 import { eq } from "drizzle-orm";
 import { createTarGzip, type TarFileInput } from "nanotar";
 import * as Y from "yjs";
@@ -14,10 +15,6 @@ import { memberService } from "../members/service";
 import { projectService } from "./service";
 
 afterEach(cleanDb);
-
-const FILES_KEY = "files";
-const ASSETS_KEY = "assets";
-const META_KEY = "meta";
 
 async function mockTemplateTarball(entries: TarFileInput[]) {
   const body = await createTarGzip(entries);
@@ -211,7 +208,7 @@ describe("ProjectService.create", () => {
     expect(state).not.toBeNull();
     const doc = new Y.Doc();
     Y.applyUpdate(doc, state!);
-    expect(doc.getMap<string>(META_KEY).get("entry")).toBe("/report.typ");
+    expect(doc.getMap<string>(META_KEY).get(ENTRY_KEY)).toBe("/report.typ");
   });
 
   test("seeds the collab_document with the template's text files", async () => {

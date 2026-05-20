@@ -81,8 +81,7 @@ export function useTypstProject(files: () => Y.Map<Y.Text> | null, entry: () => 
     });
   });
 
-  // Track entry changes after the project is ready - lets a future "Set as
-  // entry" action take effect without rebuilding the compiler.
+  // Re-apply the entry on change without rebuilding the compiler.
   createEffect(() => {
     const p = state.project;
     if (p) p.entry = entry();

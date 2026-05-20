@@ -17,6 +17,7 @@
     "@hocuspocus/extension-database": "^4.0.0",
     "@hocuspocus/extension-logger": "^4.0.0",
     "@hocuspocus/server": "^4.0.0",
+    "@typstogether/shared": "workspace:*",
     "better-auth": "^1.6.9",
     "drizzle-orm": "^0.45.2",
     "elysia": "^1.4.28",

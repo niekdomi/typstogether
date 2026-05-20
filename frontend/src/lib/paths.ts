@@ -1,9 +1,6 @@
-// Files are addressed by Typst VFS path (leading slash, per
-// `@vedivad/typst-web-service`). The Y.Map of files uses these paths as keys.
-export const MAIN_PATH = "/main.typ";
-export const FILES_KEY = "files";
-export const ASSETS_KEY = "assets";
-export const META_KEY = "meta";
+// Y.Doc wire-protocol constants are shared with the backend; see
+// @typstogether/shared. Path-manipulation helpers below are frontend-only.
+export { ASSETS_KEY, ENTRY_KEY, FILES_KEY, MAIN_PATH, META_KEY } from "@typstogether/shared";
 
 /** Whether a path is a Typst source file (the only kind eligible as a compile entry). */
 export function isTypFile(path: string): boolean {
@@ -53,7 +50,7 @@ export function normalizeFile(input: string, dir: string): string {
   if (!name) {
     return "";
   }
-  if (!name.endsWith(".typ")) {
+  if (!isTypFile(name)) {
     name += ".typ";
   }
 

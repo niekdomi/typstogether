@@ -439,10 +439,8 @@ export function useFileSidebar() {
     completeDrop(e, (src) => `/${leafOf(src)}`);
   };
 
-  // Per-user preview ───────────────────────────────────────────────────────
   // Memory-only override of the compile entry. Local to this client; doesn't
   // mutate the Y.Doc or affect other collaborators. Resets on page reload.
-
   const togglePreview = (path: string): void => {
     if (isPreviewing(path)) {
       ctx.setPreviewEntry(null);

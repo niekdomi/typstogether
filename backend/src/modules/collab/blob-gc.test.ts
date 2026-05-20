@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 
+import { ASSETS_KEY } from "@typstogether/shared";
 import * as Y from "yjs";
 
 import { projectFactory, userFactory } from "../../../test/factories";
@@ -10,8 +11,6 @@ import { blobService } from "../blobs/service";
 import { blobGcExtension } from "./blob-gc";
 
 afterEach(cleanDb);
-
-const ASSETS_KEY = "assets";
 
 const BYTES_A = new Uint8Array([1, 2, 3, 4]);
 const BYTES_B = new Uint8Array([9, 9, 9]);
