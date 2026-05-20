@@ -32,9 +32,8 @@ interface CollabState {
   error: string | null;
   /**
    * Update the project's compile entry. No-op when the Y.Doc isn't ready.
-   * Method shorthand so `this` binds to the store proxy at call time; that
-   * keeps `setEntry` co-located with the state it operates on without
-   * forking the return shape.
+   * Method shorthand so `this` binds to the store proxy at call time, reading
+   * the live meta map without a parallel reference.
    */
   setEntry: (path: string) => void;
 }
