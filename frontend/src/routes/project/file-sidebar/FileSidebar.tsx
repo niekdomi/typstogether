@@ -40,10 +40,12 @@ function FileRow(props: { node: FileNode }) {
   const sb = useFileSidebarController();
   const path = () => props.node.path;
 
-  // Eye toggle shows for .typ files that can be previewed or are currently
-  // previewed. The current effective entry (no preview active) shows neither
-  // an eye nor an option, since previewing what's already compiled is a no-op.
-  const showEye = () => sb.isPreviewing(path()) || sb.canPreview(path());
+  const previewing = () => sb.isPreviewing(path());
+  // Eye toggle shows for the previewed file plus any .typ file eligible to be
+  // previewed. The project entry (no preview active) shows neither, since
+  // previewing what's already compiled is a no-op.
+  const showEye = () => previewing() || sb.canPreview(path());
+  const previewLabel = () => (previewing() ? "Stop previewing" : "Preview this file");
 
   return (
     <ContextMenu>
@@ -73,19 +75,19 @@ function FileRow(props: { node: FileNode }) {
         <Show when={showEye()}>
           <button
             type="button"
-            title={sb.isPreviewing(path()) ? "Stop previewing" : "Preview this file"}
-            aria-label={sb.isPreviewing(path()) ? "Stop previewing" : "Preview this file"}
-            aria-pressed={sb.isPreviewing(path())}
+            title={previewLabel()}
+            aria-label={previewLabel()}
+            aria-pressed={previewing()}
             class={cx(
               "text-muted-foreground hover:text-foreground absolute top-1/2 right-1.5 -translate-y-1/2 rounded p-0.5 transition-opacity",
-              sb.isPreviewing(path()) ? "opacity-100" : "opacity-0 group-hover/file:opacity-100"
+              previewing() ? "opacity-100" : "opacity-0 group-hover/file:opacity-100"
             )}
             onClick={(e) => {
               e.stopPropagation();
               sb.togglePreview(path());
             }}
           >
-            <Show when={sb.isPreviewing(path())} fallback={<TbOutlineEyeClosed size={14} />}>
+            <Show when={previewing()} fallback={<TbOutlineEyeClosed size={14} />}>
               <TbOutlineEye size={14} />
             </Show>
           </button>

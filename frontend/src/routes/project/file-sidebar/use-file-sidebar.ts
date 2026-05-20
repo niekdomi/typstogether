@@ -5,6 +5,7 @@ import * as Y from "yjs";
 import { uploadAsset } from "../../../lib/assets/upload";
 import {
   dirOf,
+  isTypFile,
   joinPath,
   leafOf,
   normalizeAsset,
@@ -44,7 +45,7 @@ export function useFileSidebar() {
   // not the file already being previewed. Available to all sessions including
   // viewers — preview is local-only.
   const canPreview = (path: string) =>
-    path.endsWith(".typ") && files.has(path) && path !== ctx.collab.entry && !isPreviewing(path);
+    isTypFile(path) && files.has(path) && path !== ctx.collab.entry && !isPreviewing(path);
   const [paths, setPaths] = createSignal<string[]>([]);
   const [collapsed, setCollapsed] = createSignal(new Set<string>());
   // Folders the user created via "New folder" that don't yet contain any file.

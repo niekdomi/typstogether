@@ -5,6 +5,11 @@ export const FILES_KEY = "files";
 export const ASSETS_KEY = "assets";
 export const META_KEY = "meta";
 
+/** Whether a path is a Typst source file (the only kind eligible as a compile entry). */
+export function isTypFile(path: string): boolean {
+  return path.endsWith(".typ");
+}
+
 /** The directory part of a path. Returns "" for root-level paths, which is falsy and acts as the loop terminator when walking ancestors. */
 export function dirOf(path: string): string {
   return path.split("/").slice(0, -1).join("/");
