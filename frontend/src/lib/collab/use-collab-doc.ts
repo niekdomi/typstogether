@@ -77,7 +77,7 @@ export function useCollabDoc(projectId: () => string) {
       document: doc,
     });
 
-    // Mirror meta.entry into Solid state so consumers can read reactively
+    // Mirror meta.entry into Solid state so consumers react
     // without observing the Y.Map themselves.
     const refreshEntry = () => {
       setState("entry", metaMap.get("entry") ?? MAIN_PATH);
