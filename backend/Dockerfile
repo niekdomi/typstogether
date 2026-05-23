@@ -6,9 +6,11 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
+COPY shared/package.json ./shared/
 RUN bun install --frozen-lockfile --filter @typstogether/backend
 
 COPY tsconfig.json ./
+COPY shared/ ./shared/
 COPY backend/ ./backend/
 
 RUN cd backend && bun build src/index.ts src/migrate.ts --target=bun --minify --sourcemap --outdir=dist

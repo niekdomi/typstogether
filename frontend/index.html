@@ -11,7 +11,7 @@
         --foreground: oklch(0.145 0 0);
       }
 
-      [data-theme="dark"] {
+      [data-kb-theme="dark"] {
         --background: oklch(0.145 0 0);
         --foreground: oklch(0.985 0 0);
       }
@@ -21,18 +21,6 @@
         color: var(--foreground);
       }
     </style>
-    <script>
-      (function () {
-        try {
-          const stored = localStorage.getItem("theme");
-          const systemTheme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-          const theme = ["light", "dark"].includes(stored) ? stored : systemTheme;
-          document.documentElement.dataset.theme = theme;
-        } catch {
-          document.documentElement.dataset.theme = "dark";
-        }
-      })();
-    </script>
   </head>
 
   <body>

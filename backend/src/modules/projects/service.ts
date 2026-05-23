@@ -1,8 +1,13 @@
+import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, META_KEY } from "@typstogether/shared";
 import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
+import * as Y from "yjs";
 
 import { type Project, project, projectMember } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import { currentDb } from "../../transaction";
+import { blobService } from "../blobs/service";
+import { storeDocument } from "../collab/persistence";
+import { fetchTemplateFiles } from "../templates/files";
 import type { CreateProjectInput, UpdateProjectInput } from "./model";
 
 export type ProjectRole = "owner" | "editor" | "viewer";
@@ -66,12 +71,49 @@ export class ProjectService {
   }
 
   async create(userId: string, input: CreateProjectInput): Promise<Project> {
+    // If a template is requested, fetch its files *before* the insert so that a
+    // network failure surfaces as an error rather than an orphan empty project.
+    const templateFiles = input.template
+      ? await fetchTemplateFiles(input.template.id, input.template.version)
+      : null;
+
     const [created] = await currentDb()
       .insert(project)
       .values({ name: input.name, ownerUserId: userId })
       .returning();
 
     if (!created) throw new Error("Failed to create project");
+
+    if (templateFiles && (templateFiles.text.size > 0 || templateFiles.binary.size > 0)) {
+      // Persist each binary entry as a project_blob row first so we can wire
+      // its assigned id into the assets Y.Map alongside the text files.
+      const blobIdByPath = new Map<string, string>();
+      for (const [path, { bytes, mime }] of templateFiles.binary) {
+        const { id } = await blobService.storeBytes(created.id, bytes, mime);
+        blobIdByPath.set(path, id);
+      }
+
+      const doc = new Y.Doc();
+      const filesMap = doc.getMap<Y.Text>(FILES_KEY);
+      const assetsMap = doc.getMap<string>(ASSETS_KEY);
+      const metaMap = doc.getMap<string>(META_KEY);
+      doc.transact(() => {
+        for (const [path, content] of templateFiles.text) {
+          filesMap.set(path, new Y.Text(content));
+        }
+        for (const [path, blobId] of blobIdByPath) {
+          assetsMap.set(path, blobId);
+        }
+        // Seed the compile entry alongside the files so collaborators pick it
+        // up from the doc on first sync. Default (/main.typ) is the frontend's
+        // fallback when this key is absent, so we only set it when overriding.
+        if (templateFiles.entry) {
+          metaMap.set(ENTRY_KEY, templateFiles.entry);
+        }
+      });
+      await storeDocument(created.id, Y.encodeStateAsUpdate(doc));
+    }
+
     return created;
   }
 

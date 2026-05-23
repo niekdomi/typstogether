@@ -1,5 +1,5 @@
 import { type EditorState, type Extension, EditorSelection } from "@codemirror/state";
-import { type EditorView, keymap } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
 
 // Constants ───────────────────────────────────────────────────────────────────
 
@@ -375,3 +375,47 @@ export const formatKeymap: Extension = (() => {
     { key: "Mod-Shift-7", run: prefix("+ ", LIST_GROUP) },
   ]);
 })();
+
+// File-drop ───────────────────────────────────────────────────────────────────
+
+// REF: https://typst.app/docs/reference/visualize/image/ section "source":
+// Supported formats are "png", "jpg", "gif", "svg", "pdf", "webp" as well as raw pixel data.
+const IMAGE_EXTENSIONS = new Set(["png", "jpg", "gif", "svg", "pdf", "webp"]);
+
+export function formatPathForDrop(path: string): string {
+  const extension = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
+
+  if (extension === "typ") {
+    return `#include "${path}"`;
+  }
+
+  if (IMAGE_EXTENSIONS.has(extension)) {
+    return `#image("${path}")`;
+  }
+
+  return `"${path}"`;
+}
+
+export const fileDropHandler: Extension = EditorView.domEventHandlers({
+  drop(event, view) {
+    const data = event.dataTransfer?.getData("text/plain");
+    if (!data || !data.startsWith("/")) {
+      return false;
+    }
+
+    // `precise: false` snaps to the nearest valid doc position instead of
+    // returning null when the drop lands on a line boundary or past the last
+    // line. Without it, dropping exactly on the bottom edge silently fails.
+    const position = view.posAtCoords({ x: event.clientX, y: event.clientY }, false);
+
+    const text = formatPathForDrop(data);
+    view.dispatch({
+      changes: { from: position, insert: text },
+      selection: EditorSelection.cursor(position + text.length),
+      userEvent: "input.drop",
+    });
+
+    view.focus();
+    return true;
+  },
+});

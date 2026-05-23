@@ -1,9 +1,8 @@
 import { type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
+import type { ColorMode as Theme } from "@kobalte/core/color-mode";
 import { githubDark, githubLight } from "@uiw/codemirror-theme-github";
 import { createTypstHighlighting } from "@vedivad/codemirror-typst";
-
-import { type Theme } from "../../lib/ThemeContext";
 
 // Lazy-load the Typst highlighting controller on first editor mount. The
 // `initial` theme is only the controller's starting state, the editor calls
@@ -20,6 +19,8 @@ export const fillHeight = EditorView.theme({
   "&": { height: "100%" },
   "&.cm-focused": { outline: "none" },
   ".cm-scroller": { overflow: "auto" },
+  // NOTE: Without this, the label on the first visible line is clipped by the editor toolbar.
+  ".cm-content": { paddingTop: "0.75em" },
 });
 
 // Unify autocomplete / hover / lint popups with the app's popover styling.
@@ -175,6 +176,13 @@ export const popupTheme = EditorView.theme({
     padding: "1px 4px",
     borderRadius: "4px",
     backgroundColor: "var(--muted)",
+  },
+
+  ".cm-ySelectionInfo": {
+    fontFamily: "var(--sans)",
+    fontWeight: "500",
+    borderRadius: "3px",
+    padding: "1px 5px",
   },
 
   ".cm-diagnostic": {

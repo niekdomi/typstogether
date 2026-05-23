@@ -12,25 +12,6 @@ interface UniverseEntry {
 const CATALOG_URL = "https://packages.typst.org/preview/index.json";
 const TTL_MS = 60 * 60 * 1000;
 
-function versionParts(v: string): number[] {
-  return v.split(".").map((p) => {
-    const n = Number.parseInt(p, 10);
-    return Number.isNaN(n) ? 0 : n;
-  });
-}
-
-function compareVersions(a: string, b: string): number {
-  const pa = versionParts(a);
-  const pb = versionParts(b);
-  const len = Math.max(pa.length, pb.length);
-  for (let i = 0; i < len; i++) {
-    const da = pa[i] ?? 0;
-    const db = pb[i] ?? 0;
-    if (da !== db) return da - db;
-  }
-  return 0;
-}
-
 export class TemplateService {
   #cached: Template[] | null = null;
   #fetchedAt = 0;
@@ -47,7 +28,7 @@ export class TemplateService {
       for (const e of entries) {
         if (e.template === undefined) continue;
         const existing = latestById.get(e.name);
-        if (!existing || compareVersions(e.version, existing.version) > 0) {
+        if (!existing || Bun.semver.order(e.version, existing.version) > 0) {
           latestById.set(e.name, e);
         }
       }

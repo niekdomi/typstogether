@@ -5,9 +5,9 @@ import * as Y from "yjs";
 import { uploadAsset } from "../../../lib/assets/upload";
 import {
   dirOf,
+  isTypFile,
   joinPath,
   leafOf,
-  MAIN_PATH,
   normalizeAsset,
   normalizeFile,
   normalizeFolder,
@@ -25,8 +25,6 @@ const copyText = (src: Y.Text): Y.Text => {
   return copy;
 };
 
-const isLocked = (path: string) => path === MAIN_PATH;
-
 /**
  * Owns all reactive state and operations for the file sidebar. Returns plain
  * accessors and handlers - the JSX layer is pure rendering.
@@ -37,6 +35,17 @@ export function useFileSidebar() {
   const files = ctx.collab.files!;
   const assets = ctx.collab.assets!;
   const projectId = ctx.projectId;
+  // Lock is tied to the *project's* entry (Y.Doc), not the per-user preview:
+  // a viewer shouldn't be able to delete the canonical entry, but local
+  // preview is ephemeral so the locked file shouldn't shift with it.
+  const isLocked = (path: string) => path === ctx.collab.entry;
+  const isPreviewing = (path: string) => ctx.previewEntry() === path;
+  // Preview eligibility: .typ source files only, never the project's own entry
+  // (that file shows the "entry" badge and is the default compile target), and
+  // not the file already being previewed. Available to all sessions including
+  // viewers — preview is local-only.
+  const canPreview = (path: string) =>
+    isTypFile(path) && files.has(path) && path !== ctx.collab.entry && !isPreviewing(path);
   const [paths, setPaths] = createSignal<string[]>([]);
   const [collapsed, setCollapsed] = createSignal(new Set<string>());
   // Folders the user created via "New folder" that don't yet contain any file.
@@ -430,6 +439,16 @@ export function useFileSidebar() {
     completeDrop(e, (src) => `/${leafOf(src)}`);
   };
 
+  // Memory-only override of the compile entry. Local to this client; doesn't
+  // mutate the Y.Doc or affect other collaborators. Resets on page reload.
+  const togglePreview = (path: string): void => {
+    if (isPreviewing(path)) {
+      ctx.setPreviewEntry(null);
+    } else if (canPreview(path)) {
+      ctx.setPreviewEntry(path);
+    }
+  };
+
   return {
     tree,
     dialog,
@@ -439,6 +458,8 @@ export function useFileSidebar() {
     drag,
     activeFile: ctx.activeFile,
     canDeleteFile: (path: string) => !isLocked(path) && totalCount() > 1,
+    canPreview,
+    isPreviewing,
     isLocked,
     isAsset,
     onSelectFile: ctx.setActiveFile,
@@ -451,6 +472,7 @@ export function useFileSidebar() {
     handleRenameFolder,
     handleDeleteFolder,
     handleUploadAsset,
+    togglePreview,
     onFileDragStart,
     onDragEnd,
     onFolderDragOver,
