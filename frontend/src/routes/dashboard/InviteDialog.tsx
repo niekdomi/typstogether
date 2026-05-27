@@ -37,7 +37,7 @@ interface InviteDialogProps {
   projectName: string;
 }
 
-const INVITE_TTL_MS = 7 * 86_400 * 1000;
+const INVITE_TTL_MS = 7 * 86_400 * 1000; // 7 days
 
 function expiresLabel(expiresAt: Date | string): string {
   return `expires ${formatRelative(new Date(expiresAt))}`;
@@ -59,6 +59,7 @@ export default function InviteDialog(props: InviteDialogProps) {
     token: null,
     copied: false,
   });
+
   let urlInput: HTMLInputElement | undefined;
 
   const [invites, { refetch: refetchInvites }] = createResource(() => props.projectId, loadInvites);
@@ -69,20 +70,25 @@ export default function InviteDialog(props: InviteDialogProps) {
   const activeInvites = createMemo(() => {
     const now = Date.now();
     return (invites() ?? []).filter(
-      (i) => i.revokedAt === null && new Date(i.expiresAt).getTime() > now
+      (invite) => invite.revokedAt === null && new Date(invite.expiresAt).getTime() > now
     );
   });
 
   async function createInvite() {
-    if (!props.projectId) return;
+    if (!props.projectId) {
+      return;
+    }
+
     const { data, error } = await api.projects({ id: props.projectId }).invites.post({
       role: role(),
       expiresAt: new Date(Date.now() + INVITE_TTL_MS),
     });
+
     if (error) {
       toast.error("Could not create invite link.");
       return;
     }
+
     setLink({ token: data.token, copied: false });
     void refetchInvites();
   }
@@ -96,7 +102,7 @@ export default function InviteDialog(props: InviteDialogProps) {
 
   async function copyLink() {
     const url = linkUrl();
-    // navigator.clipboard is only available in secure contexts (HTTPS / localhost).
+    // `navigator.clipboard` is only available in secure contexts (HTTPS / localhost).
     // Fall back to selecting the visible input + execCommand for plain-HTTP deploys.
     if (globalThis.isSecureContext) {
       try {
@@ -107,15 +113,25 @@ export default function InviteDialog(props: InviteDialogProps) {
         // fall through to execCommand fallback
       }
     }
+
     // The input lives inside the dialog's focus scope, so selecting it (rather
     // than a detached textarea) survives the dialog's focus trap.
     try {
-      if (!urlInput) throw new Error("urlInput is not mounted");
+      if (!urlInput) {
+        throw new Error("urlInput is not mounted");
+      }
+
       urlInput.focus();
       urlInput.select();
       urlInput.setSelectionRange(0, url.length);
+
+      // WARN: This function is deprecated but seems to be the only case
+      // currently to solve copy-to-clipboard in non https environments
       // oxlint-disable-next-line typescript/no-deprecated
-      if (!document.execCommand("copy")) throw new Error("execCommand copy failed");
+      if (!document.execCommand("copy")) {
+        throw new Error("execCommand copy failed");
+      }
+
       markCopied();
     } catch {
       toast.error("Could not copy to clipboard.");
@@ -123,12 +139,16 @@ export default function InviteDialog(props: InviteDialogProps) {
   }
 
   async function revoke(inviteId: string) {
-    if (!props.projectId) return;
+    if (!props.projectId) {
+      return;
+    }
+
     const { error } = await api.projects({ id: props.projectId }).invites({ inviteId }).delete();
     if (error) {
       toast.error("Could not revoke link.");
       return;
     }
+
     void refetchInvites();
   }
 
