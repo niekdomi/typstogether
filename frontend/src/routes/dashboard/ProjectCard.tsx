@@ -43,10 +43,8 @@ export default function ProjectCard(props: ProjectCardProps) {
     >
       <div class="bg-muted border-border flex aspect-[1/1.1] border-b">
         <div
-          class="bg-white flex flex-1 items-center justify-center overflow-hidden rounded-t-xl"
-          style={
-            colorMode() === "dark" ? { filter: "invert(0.85) hue-rotate(180deg)" } : undefined
-          }
+          class="flex flex-1 items-center justify-center overflow-hidden rounded-t-xl bg-white"
+          style={colorMode() === "dark" ? { filter: "invert(0.85) hue-rotate(180deg)" } : undefined}
         >
           <Show
             when={props.project.thumbnailBlobId}
