@@ -10,6 +10,7 @@ import { Badge } from "../../components/ui/badge";
 import { cx } from "../../components/ui/cva";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
+import UserMenu from "../../components/UserMenu";
 import AssetPreview from "./AssetPreview";
 import CodeMirrorEditor from "./CodeMirrorEditor";
 import CollaboratorAvatars from "./CollaboratorAvatars";
@@ -126,6 +127,7 @@ function ProjectView() {
             </TooltipContent>
           </Tooltip>
           <ThemeToggle />
+          <UserMenu />
         </div>
       </header>
 
