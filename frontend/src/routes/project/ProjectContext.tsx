@@ -11,6 +11,7 @@ import {
   onCleanup,
   useContext,
 } from "solid-js";
+import { toast } from "somoto";
 import * as Y from "yjs";
 
 import { useAssetsSync } from "../../lib/assets/use-assets-sync";
@@ -132,6 +133,33 @@ export function ProjectProvider(props: { children: JSX.Element }) {
   createEffect(() => {
     const a = activeFile();
     if (a !== requestedFile()) setRequestedFile(a);
+  });
+
+  // Y.Map mutations aren't reactive in Solid, so a remote delete of the open
+  // file leaves `activeFile` stale. Bridge the observers into the signal graph
+  // by re-pointing `requestedFile` at a valid fallback when its target vanishes.
+  createEffect(() => {
+    const r = ready();
+    if (!r) return;
+    const onChange = (event: { transaction: Y.Transaction }) => {
+      const current = requestedFile();
+      if (r.files.has(current) || r.assets.has(current)) return;
+      const entryPath = collab.entry;
+      const fallback =
+        entryPath && (r.files.has(entryPath) || r.assets.has(entryPath))
+          ? entryPath
+          : ([...r.files.keys()][0] ?? [...r.assets.keys()][0]);
+      if (fallback) setRequestedFile(fallback);
+      if (!event.transaction.local) {
+        toast(`"${current.replace(/^\//, "")}" was deleted by a collaborator.`);
+      }
+    };
+    r.files.observe(onChange);
+    r.assets.observe(onChange);
+    onCleanup(() => {
+      r.files.unobserve(onChange);
+      r.assets.unobserve(onChange);
+    });
   });
 
   // Pipe compile diagnostics out so panels and badges stay in sync.
