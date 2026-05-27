@@ -89,14 +89,16 @@ export default function InviteDialog(props: InviteDialogProps) {
 
   function markCopied() {
     setLink("copied", true);
-    setTimeout(() => setLink("copied", false), 1400);
+    setTimeout(() => {
+      setLink("copied", false);
+    }, 1400);
   }
 
   async function copyLink() {
     const url = linkUrl();
     // navigator.clipboard is only available in secure contexts (HTTPS / localhost).
     // Fall back to selecting the visible input + execCommand for plain-HTTP deploys.
-    if (navigator.clipboard && window.isSecureContext) {
+    if (globalThis.isSecureContext) {
       try {
         await navigator.clipboard.writeText(url);
         markCopied();
@@ -108,11 +110,12 @@ export default function InviteDialog(props: InviteDialogProps) {
     // The input lives inside the dialog's focus scope, so selecting it (rather
     // than a detached textarea) survives the dialog's focus trap.
     try {
-      if (!urlInput) throw new Error();
+      if (!urlInput) throw new Error("urlInput is not mounted");
       urlInput.focus();
       urlInput.select();
       urlInput.setSelectionRange(0, url.length);
-      if (!document.execCommand("copy")) throw new Error();
+      // oxlint-disable-next-line typescript/no-deprecated
+      if (!document.execCommand("copy")) throw new Error("execCommand copy failed");
       markCopied();
     } catch {
       toast.error("Could not copy to clipboard.");
@@ -193,7 +196,9 @@ export default function InviteDialog(props: InviteDialogProps) {
             <div class="border-border bg-muted/40 flex items-center gap-2 rounded-md border py-1 pr-1 pl-3">
               <TbOutlineLink size={14} class="text-muted-foreground shrink-0" />
               <input
-                ref={urlInput}
+                ref={(el) => {
+                  urlInput = el;
+                }}
                 class="text-foreground min-w-0 flex-1 border-0 bg-transparent font-mono text-xs outline-none"
                 readonly
                 value={linkUrl()}
