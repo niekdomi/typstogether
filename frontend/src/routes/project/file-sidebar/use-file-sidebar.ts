@@ -130,6 +130,13 @@ export function useFileSidebar() {
         assets.delete(oldPath);
       }
     });
+
+    // Folders are derived from file paths, so emptying one makes it vanish.
+    // Keep it as a pending folder
+    const oldParent = dirOf(oldPath);
+    if (oldParent && oldParent !== dirOf(newPath)) {
+      setPendingFolders((prev) => (prev.has(oldParent) ? prev : new Set([...prev, oldParent])));
+    }
   };
 
   const moveFolder = (oldFolder: string, newFolder: string) => {
@@ -343,9 +350,14 @@ export function useFileSidebar() {
       return;
     }
 
+    // Deleting a nested folder shouldn't take its now-empty parent down with it.
+    const parent = dirOf(folder);
     setPendingFolders((prev) => {
       const next = new Set([...prev].filter((p) => p !== folder && !p.startsWith(folder + "/")));
-      return next.size < prev.size ? next : prev;
+      if (parent) {
+        next.add(parent);
+      }
+      return next;
     });
 
     if (toDelete.length > 0) {
