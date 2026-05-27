@@ -1,4 +1,5 @@
-import { TbOutlineChevronDown, TbOutlineLogout, TbOutlineSettings } from "solid-icons/tb";
+import { useColorMode } from "@kobalte/core/color-mode";
+import { TbOutlineChevronDown, TbOutlineLogout, TbOutlineMoon, TbOutlineSun } from "solid-icons/tb";
 import { Show } from "solid-js";
 
 import { useCurrentUser, useSignOut } from "../lib/CurrentUserContext";
@@ -13,9 +14,23 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
+// Matches the 200ms transition declared in styles.css; +10ms slack so the
+// class outlives the actual paint.
+const THEME_TRANSITION_MS = 210;
+
+function toggleWithTransition(toggle: () => void) {
+  const html = document.documentElement;
+  html.classList.add("theme-changing");
+  toggle();
+  setTimeout(() => {
+    html.classList.remove("theme-changing");
+  }, THEME_TRANSITION_MS);
+}
+
 export default function UserMenu() {
   const current = useCurrentUser();
   const signOut = useSignOut();
+  const { colorMode, toggleColorMode } = useColorMode();
 
   return (
     <DropdownMenu placement="bottom-end" gutter={8}>
@@ -49,9 +64,16 @@ export default function UserMenu() {
           </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
-          <TbOutlineSettings size={14} />
-          Settings
+        <DropdownMenuItem
+          closeOnSelect={false}
+          onSelect={() => {
+            toggleWithTransition(toggleColorMode);
+          }}
+        >
+          <Show when={colorMode() === "dark"} fallback={<TbOutlineMoon size={14} />}>
+            <TbOutlineSun size={14} />
+          </Show>
+          {colorMode() === "dark" ? "Light mode" : "Dark mode"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOut()}>

@@ -1,7 +1,6 @@
 import { TbOutlineSearch } from "solid-icons/tb";
 
 import Logo from "../../components/Logo";
-import ThemeToggle from "../../components/ThemeToggle";
 import { TextField, TextFieldInput } from "../../components/ui/text-field";
 import UserMenu from "../../components/UserMenu";
 
@@ -22,7 +21,6 @@ export default function TopBar(props: TopBarProps) {
           />
           <TextFieldInput type="text" placeholder="Find a project…" class="w-full pl-9" />
         </TextField>
-        <ThemeToggle />
         <UserMenu />
       </div>
     </header>

@@ -4,7 +4,6 @@ import { FaSolidChevronLeft } from "solid-icons/fa";
 import { TbOutlineAlertTriangle, TbOutlineFiles, TbOutlineSettings } from "solid-icons/tb";
 import { createSignal, type JSX, Match, Show, Switch } from "solid-js";
 
-import ThemeToggle from "../../components/ThemeToggle";
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Badge } from "../../components/ui/badge";
 import { cx } from "../../components/ui/cva";
@@ -126,7 +125,6 @@ function ProjectView() {
               {statusInfo(ctx.collab.status, ctx.collab.synced, ctx.isReadOnly()).label}
             </TooltipContent>
           </Tooltip>
-          <ThemeToggle />
           <UserMenu />
         </div>
       </header>
