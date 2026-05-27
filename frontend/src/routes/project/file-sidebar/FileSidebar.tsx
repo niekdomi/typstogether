@@ -149,9 +149,14 @@ function FolderRow(props: { node: FolderNode; onUpload: (dir: string) => void })
         <SidebarMenuButton
           tooltip={path()}
           class={cx(sb.drag.over === path() && sb.drag.source && "ring-2 ring-sidebar-ring")}
+          draggable={!sb.isFolderLocked(path())}
           onClick={() => {
             sb.toggleCollapsed(path());
           }}
+          onDragStart={(e: DragEvent) => {
+            sb.onFolderDragStart(e, path());
+          }}
+          onDragEnd={sb.onDragEnd}
           onDragOver={(e: DragEvent) => {
             sb.onFolderDragOver(e, path());
           }}
