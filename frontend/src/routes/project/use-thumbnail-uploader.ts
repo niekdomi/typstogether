@@ -29,7 +29,7 @@ async function fetchAsDataUrl(href: string): Promise<string | null> {
   }
 }
 
-// Make the renderer's SVG self-contained so the stored thumbnail doesn't
+// Make the renderer SVG self-contained so the stored thumbnail doesn't
 // depend on runtime sub-resource fetches.
 async function prepareSvgForStorage(raw: string): Promise<string> {
   const container = document.createElement("div");
@@ -37,7 +37,7 @@ async function prepareSvgForStorage(raw: string): Promise<string> {
   const svg = container.querySelector("svg");
   if (!svg) throw new Error("Typst renderer output had no <svg> element");
 
-  // The renderer's `<script>` body uses HTML-only entities (`&nbsp;`). The
+  // The renderer `<script>` body uses HTML-only entities (`&nbsp;`). The
   // dashboard loads this SVG via `<img>`, which strict-XML-parses and rejects
   // the whole document on undefined entities. Strip the script so the bytes
   // stay parseable.

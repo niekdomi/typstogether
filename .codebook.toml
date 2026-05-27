@@ -12,6 +12,7 @@ words = [
   "bytea",
   "collab",
   "cpuprofile",
+  "CRDT",
   "dedup",
   "dedupe",
   "elysia",
@@ -21,6 +22,7 @@ words = [
   "hocuspocus",
   "hsl",
   "kobalte",
+  "loadend",
   "microtasks",
   "minmax",
   "mousemove",
@@ -43,6 +45,7 @@ words = [
   "uppercased",
   "upserts",
   "vedivad",
+  "xlink",
   "ydoc",
   "yjs",
 ]
