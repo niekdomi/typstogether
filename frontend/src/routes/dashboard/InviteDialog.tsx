@@ -3,6 +3,7 @@ import {
   TbOutlineChevronRight,
   TbOutlineCopy,
   TbOutlineLink,
+  TbOutlineX,
 } from "solid-icons/tb";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
@@ -27,8 +28,14 @@ import { Separator } from "../../components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
 import { api } from "../../lib/api";
 import { formatDate, formatRelative, userInitial } from "../../lib/format";
+import ConfirmDialog from "./ConfirmDialog";
 
 type InviteRole = "editor" | "viewer";
+
+interface PendingRemoval {
+  userId: string;
+  name: string;
+}
 
 interface InviteDialogProps {
   open: boolean;
@@ -37,7 +44,7 @@ interface InviteDialogProps {
   projectName: string;
 }
 
-const INVITE_TTL_MS = 7 * 86_400 * 1000;
+const INVITE_TTL_MS = 7 * 86_400 * 1000; // 7 days
 
 function expiresLabel(expiresAt: Date | string): string {
   return `expires ${formatRelative(new Date(expiresAt))}`;
@@ -60,51 +67,127 @@ export default function InviteDialog(props: InviteDialogProps) {
     copied: false,
   });
 
+  let urlInput: HTMLInputElement | undefined;
+
   const [invites, { refetch: refetchInvites }] = createResource(() => props.projectId, loadInvites);
-  const [members] = createResource(() => props.projectId, loadMembers);
+  const [members, { refetch: refetchMembers }] = createResource(() => props.projectId, loadMembers);
+  const [pendingRemoval, setPendingRemoval] = createSignal<PendingRemoval | null>(null);
 
   const linkUrl = () => (link.token ? `${location.origin}/invite/${link.token}` : "");
 
   const activeInvites = createMemo(() => {
     const now = Date.now();
     return (invites() ?? []).filter(
-      (i) => i.revokedAt === null && new Date(i.expiresAt).getTime() > now
+      (invite) => invite.revokedAt === null && new Date(invite.expiresAt).getTime() > now
     );
   });
 
   async function createInvite() {
-    if (!props.projectId) return;
+    if (!props.projectId) {
+      return;
+    }
+
     const { data, error } = await api.projects({ id: props.projectId }).invites.post({
       role: role(),
       expiresAt: new Date(Date.now() + INVITE_TTL_MS),
     });
+
     if (error) {
       toast.error("Could not create invite link.");
       return;
     }
+
     setLink({ token: data.token, copied: false });
     void refetchInvites();
   }
 
+  function markCopied() {
+    setLink("copied", true);
+    setTimeout(() => {
+      setLink("copied", false);
+    }, 1400);
+  }
+
   async function copyLink() {
+    const url = linkUrl();
+    // `navigator.clipboard` is only available in secure contexts (HTTPS / localhost).
+    // Fall back to selecting the visible input + execCommand for plain-HTTP deploys.
+    if (globalThis.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(url);
+        markCopied();
+        return;
+      } catch {
+        // fall through to execCommand fallback
+      }
+    }
+
+    // The input lives inside the dialog's focus scope, so selecting it (rather
+    // than a detached textarea) survives the dialog's focus trap.
     try {
-      await navigator.clipboard.writeText(linkUrl());
-      setLink("copied", true);
-      setTimeout(() => {
-        setLink("copied", false);
-      }, 1400);
+      if (!urlInput) {
+        throw new Error("urlInput is not mounted");
+      }
+
+      urlInput.focus();
+      urlInput.select();
+      urlInput.setSelectionRange(0, url.length);
+
+      // WARN: This function is deprecated but seems to be the only case
+      // currently to solve copy-to-clipboard in non https environments
+      // oxlint-disable-next-line typescript/no-deprecated
+      if (!document.execCommand("copy")) {
+        throw new Error("execCommand copy failed");
+      }
+
+      markCopied();
     } catch {
       toast.error("Could not copy to clipboard.");
     }
   }
 
+  async function changeMemberRole(userId: string, newRole: InviteRole) {
+    if (!props.projectId) {
+      return;
+    }
+
+    const { error } = await api
+      .projects({ id: props.projectId })
+      .members({ userId })
+      .patch({ role: newRole });
+    if (error) {
+      toast.error("Could not update member role.");
+      return;
+    }
+
+    void refetchMembers();
+  }
+
+  async function removeMember(userId: string) {
+    if (!props.projectId) {
+      return;
+    }
+
+    const { error } = await api.projects({ id: props.projectId }).members({ userId }).delete();
+    if (error) {
+      toast.error("Could not remove member.");
+      return;
+    }
+
+    void refetchMembers();
+  }
+
   async function revoke(inviteId: string) {
-    if (!props.projectId) return;
+    if (!props.projectId) {
+      return;
+    }
+
     const { error } = await api.projects({ id: props.projectId }).invites({ inviteId }).delete();
     if (error) {
       toast.error("Could not revoke link.");
       return;
     }
+
     void refetchInvites();
   }
 
@@ -129,13 +212,35 @@ export default function InviteDialog(props: InviteDialogProps) {
           <ul class="flex flex-col gap-2">
             <For each={members() ?? []}>
               {(m) => (
-                <li class="flex items-center gap-3 text-sm">
+                <li class="flex items-center gap-2 text-sm">
                   <Avatar class="size-7">
                     <AvatarImage src={m.user.image ?? undefined} alt="" />
                     <AvatarFallback class="text-[10px]">{userInitial(m.user.name)}</AvatarFallback>
                   </Avatar>
-                  <span class="text-foreground flex-1">{m.user.name}</span>
-                  <Badge variant="outline">{m.member.role}</Badge>
+                  <span class="text-foreground min-w-0 flex-1 truncate">{m.user.name}</span>
+                  <ToggleGroup
+                    variant="outline"
+                    size="sm"
+                    value={m.member.role}
+                    onChange={(v) => {
+                      if (v && v !== m.member.role) {
+                        void changeMemberRole(m.member.userId, v as InviteRole);
+                      }
+                    }}
+                  >
+                    <ToggleGroupItem value="editor">Editor</ToggleGroupItem>
+                    <ToggleGroupItem value="viewer">Viewer</ToggleGroupItem>
+                  </ToggleGroup>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Remove ${m.user.name}`}
+                    onClick={() => {
+                      setPendingRemoval({ userId: m.member.userId, name: m.user.name });
+                    }}
+                  >
+                    <TbOutlineX size={14} />
+                  </Button>
                 </li>
               )}
             </For>
@@ -172,6 +277,9 @@ export default function InviteDialog(props: InviteDialogProps) {
             <div class="border-border bg-muted/40 flex items-center gap-2 rounded-md border py-1 pr-1 pl-3">
               <TbOutlineLink size={14} class="text-muted-foreground shrink-0" />
               <input
+                ref={(el) => {
+                  urlInput = el;
+                }}
                 class="text-foreground min-w-0 flex-1 border-0 bg-transparent font-mono text-xs outline-none"
                 readonly
                 value={linkUrl()}
@@ -237,6 +345,18 @@ export default function InviteDialog(props: InviteDialogProps) {
           </Button>
         </DialogFooter>
       </DialogContent>
+      <ConfirmDialog
+        open={pendingRemoval() !== null}
+        onClose={() => setPendingRemoval(null)}
+        onConfirm={() => {
+          const target = pendingRemoval();
+          if (target) void removeMember(target.userId);
+        }}
+        title="Remove collaborator"
+        message={`${pendingRemoval()?.name ?? ""} will lose access to this project.`}
+        confirmLabel="Remove"
+        danger
+      />
     </Dialog>
   );
 }
