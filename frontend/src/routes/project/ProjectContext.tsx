@@ -19,6 +19,7 @@ import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { useCurrentUser } from "../../lib/CurrentUserContext";
 import { useProject } from "../../lib/projects/use-project";
 import { useTypstProject } from "../../lib/typst/use-typst-project";
+import { useThumbnailUploader } from "./use-thumbnail-uploader";
 
 export interface Ready {
   files: Y.Map<Y.Text>;
@@ -99,11 +100,21 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     () => collab.assets
   );
 
+  const isReadOnly = () => membership()?.role === "viewer" || collab.readOnly;
+
+  useThumbnailUploader(
+    projectId,
+    () => typst.project,
+    (id) => {
+      collab.setThumbnail(id);
+    },
+    () => !isReadOnly()
+  );
+
   const [requestedFile, setRequestedFile] = createSignal(entry());
   const [editorView, setEditorView] = createSignal<EditorView | null>(null);
   const [diagnostics, setDiagnostics] = createSignal<DiagnosticMessage[]>([]);
 
-  const isReadOnly = () => membership()?.role === "viewer" || collab.readOnly;
   const errorCount = createMemo(
     () => diagnostics().filter((d) => (d.severity as string) === "error").length
   );

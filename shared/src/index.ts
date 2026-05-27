@@ -14,3 +14,9 @@ export const META_KEY = "meta";
 
 /** Key under the `meta` Y.Map holding the project's compile entry path. */
 export const ENTRY_KEY = "entry";
+
+/**
+ * Key under the `meta` Y.Map whose value is the `project_blob.blob_id` of the
+ * dashboard thumbnail.
+ */
+export const THUMBNAIL_KEY = "thumbnail";

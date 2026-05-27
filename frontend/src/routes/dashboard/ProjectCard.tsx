@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
+import { blobUrl } from "../../lib/assets/upload";
 import { formatDate, formatRelative } from "../../lib/format";
 import type { ProjectRow, Role } from "../../lib/projects/types";
 
@@ -39,10 +40,25 @@ export default function ProjectCard(props: ProjectCardProps) {
       }}
     >
       <div class="bg-muted border-border flex aspect-[1/1.1] border-b p-5">
-        <div class="bg-card border-border/60 flex flex-1 items-center justify-center overflow-hidden border px-4 py-3">
-          <span class="text-foreground/75 line-clamp-4 text-center text-[13px] leading-snug">
-            {props.project.name}
-          </span>
+        <div class="bg-card border-border/60 flex flex-1 items-center justify-center overflow-hidden border">
+          <Show
+            when={props.project.thumbnailBlobId}
+            fallback={
+              <span class="text-foreground/75 line-clamp-4 px-4 py-3 text-center text-[13px] leading-snug">
+                {props.project.name}
+              </span>
+            }
+          >
+            {(blobId) => (
+              <img
+                src={blobUrl(props.project.id, blobId())}
+                alt={props.project.name}
+                loading="lazy"
+                decoding="async"
+                class="h-full w-full object-contain"
+              />
+            )}
+          </Show>
         </div>
       </div>
       <div class="flex items-start gap-3 px-5 py-4">

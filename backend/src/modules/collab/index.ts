@@ -5,9 +5,10 @@ import { Elysia } from "elysia";
 import { onAuthenticate } from "./auth";
 import { blobGcExtension } from "./blob-gc";
 import { persistence } from "./persistence";
+import { thumbnailSyncExtension } from "./thumbnail-sync";
 
 const hocuspocus = new Hocuspocus({
-  extensions: [new Logger(), persistence, blobGcExtension],
+  extensions: [new Logger(), persistence, blobGcExtension, thumbnailSyncExtension],
   quiet: false,
   onAuthenticate,
 });

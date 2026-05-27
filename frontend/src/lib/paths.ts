@@ -1,6 +1,13 @@
 // Y.Doc wire-protocol constants are shared with the backend; see
 // @typstogether/shared. Path-manipulation helpers below are frontend-only.
-export { ASSETS_KEY, ENTRY_KEY, FILES_KEY, MAIN_PATH, META_KEY } from "@typstogether/shared";
+export {
+  ASSETS_KEY,
+  ENTRY_KEY,
+  FILES_KEY,
+  MAIN_PATH,
+  META_KEY,
+  THUMBNAIL_KEY,
+} from "@typstogether/shared";
 
 /** Whether a path is a Typst source file (the only kind eligible as a compile entry). */
 export function isTypFile(path: string): boolean {

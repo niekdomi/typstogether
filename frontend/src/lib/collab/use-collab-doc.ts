@@ -11,7 +11,7 @@ import { createStore } from "solid-js/store";
 import type { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 
-import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, MAIN_PATH, META_KEY } from "../paths";
+import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, MAIN_PATH, META_KEY, THUMBNAIL_KEY } from "../paths";
 import { collabWsUrl } from "./ws-url";
 
 interface CollabState {
@@ -36,6 +36,8 @@ interface CollabState {
    * the live meta map without a parallel reference.
    */
   setEntry: (path: string) => void;
+  // Point the dashboard thumbnail at a `project_blob` row.
+  setThumbnail: (blobId: string) => void;
 }
 
 export function useCollabDoc(projectId: () => string) {
@@ -52,6 +54,9 @@ export function useCollabDoc(projectId: () => string) {
     error: null,
     setEntry(path: string) {
       this.meta?.set(ENTRY_KEY, path);
+    },
+    setThumbnail(blobId: string) {
+      this.meta?.set(THUMBNAIL_KEY, blobId);
     },
   });
 
