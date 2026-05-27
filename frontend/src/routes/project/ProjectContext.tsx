@@ -144,7 +144,11 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     const onChange = (event: { transaction: Y.Transaction }) => {
       const current = requestedFile();
       if (r.files.has(current) || r.assets.has(current)) return;
-      const fallback = [...r.files.keys()][0] ?? [...r.assets.keys()][0];
+      const entryPath = collab.entry;
+      const fallback =
+        entryPath && (r.files.has(entryPath) || r.assets.has(entryPath))
+          ? entryPath
+          : ([...r.files.keys()][0] ?? [...r.assets.keys()][0]);
       if (fallback) setRequestedFile(fallback);
       if (!event.transaction.local) {
         toast(`"${current.replace(/^\//, "")}" was deleted by a collaborator.`);
