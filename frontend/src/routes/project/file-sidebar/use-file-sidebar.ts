@@ -191,6 +191,7 @@ export function useFileSidebar() {
       if (![...prev].some((p) => under(p))) {
         return prev;
       }
+
       return new Set([...prev].map((p) => (under(p) ? newFolder + p.slice(oldFolder.length) : p)));
     });
 
@@ -357,6 +358,7 @@ export function useFileSidebar() {
     const textKeys = [...files.keys()].filter((p) => p.startsWith(folder + "/"));
     const assetKeys = [...assets.keys()].filter((p) => p.startsWith(folder + "/"));
     const toDelete = [...textKeys, ...assetKeys];
+
     if (toDelete.length === totalCount()) {
       close();
       return;
@@ -369,8 +371,12 @@ export function useFileSidebar() {
 
     if (toDelete.length > 0) {
       files.doc?.transact(() => {
-        for (const p of textKeys) files.delete(p);
-        for (const p of assetKeys) assets.delete(p);
+        for (const p of textKeys) {
+          files.delete(p);
+        }
+        for (const p of assetKeys) {
+          assets.delete(p);
+        }
       });
 
       if (toDelete.includes(ctx.activeFile())) {
@@ -391,8 +397,10 @@ export function useFileSidebar() {
   // from landing on itself or inside its own subtree.
   const completeDrop = (e: DragEvent, destDir: string) => {
     e.preventDefault();
+
     const src = e.dataTransfer?.getData("text/plain");
     const kind = drag.sourceKind;
+
     setDrag({ source: null, sourceKind: null, over: null });
 
     if (!src) {
@@ -401,9 +409,11 @@ export function useFileSidebar() {
 
     if (kind === "folder") {
       const dest = joinPath(destDir, leafOf(src));
+
       if (isFolderLocked(src) || dest === src || dest.startsWith(src + "/") || folderExists(dest)) {
         return;
       }
+
       relocateFolder(src, dest);
       return;
     }
@@ -453,6 +463,7 @@ export function useFileSidebar() {
     if (drag.sourceKind !== "folder") {
       return true;
     }
+
     const src = drag.source;
     return !!src && folder !== src && !folder.startsWith(src + "/");
   };

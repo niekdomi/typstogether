@@ -130,12 +130,17 @@ async function uploadOsFiles(
   upload: (dir: string, file: File) => Promise<string | undefined>
 ): Promise<boolean> {
   const list = e.dataTransfer?.files;
-  if (!list || list.length === 0) return false;
+  if (!list || list.length === 0) {
+    return false;
+  }
+
   e.preventDefault();
   e.stopPropagation();
+
   for (const file of list) {
     await upload(dir, file);
   }
+
   return true;
 }
 
@@ -163,7 +168,9 @@ function FolderRow(props: { node: FolderNode; onUpload: (dir: string) => void })
           onDragLeave={sb.clearDragOver}
           onDrop={(e: DragEvent) => {
             void (async () => {
-              if (await uploadOsFiles(e, path(), sb.handleUploadAsset)) return;
+              if (await uploadOsFiles(e, path(), sb.handleUploadAsset)) {
+                return;
+              }
               sb.onFolderDrop(e, path());
             })();
           }}
@@ -248,13 +255,16 @@ function RootDropZone(props: { children: JSX.Element; onUpload: (dir: string) =>
         onDragLeave={sb.onRootDragLeave}
         onDrop={(e: DragEvent) => {
           void (async () => {
-            if (await uploadOsFiles(e, "", sb.handleUploadAsset)) return;
+            if (await uploadOsFiles(e, "", sb.handleUploadAsset)) {
+              return;
+            }
             sb.onRootDrop(e);
           })();
         }}
       >
         {props.children}
       </ContextMenuTrigger>
+
       <ContextMenuContent>
         <ContextMenuItem
           onSelect={() => {
@@ -263,13 +273,16 @@ function RootDropZone(props: { children: JSX.Element; onUpload: (dir: string) =>
         >
           New file
         </ContextMenuItem>
+
         <ContextMenuItem
           onSelect={() => {
             sb.setDialog({ type: "newFolder", dir: "" });
           }}
         >
-          New folder
+          {" "}
+          New folder{" "}
         </ContextMenuItem>
+
         <ContextMenuItem
           onSelect={() => {
             props.onUpload("");
@@ -291,8 +304,12 @@ function FileSidebarBody() {
   };
 
   const triggerUpload = (dir: string) => {
-    if (!fileInput) return;
+    if (!fileInput) {
+      return;
+    }
+
     setUploadDir(dir);
+
     fileInput.value = "";
     fileInput.click();
   };
@@ -300,7 +317,10 @@ function FileSidebarBody() {
   const onFilesPicked = async (e: Event) => {
     const target = e.currentTarget as HTMLInputElement;
     const list = target.files;
-    if (!list || list.length === 0) return;
+    if (!list || list.length === 0) {
+      return;
+    }
+
     const dir = uploadDir();
     for (const file of list) {
       await sb.handleUploadAsset(dir, file);
