@@ -87,12 +87,31 @@ export default function InviteDialog(props: InviteDialogProps) {
   }
 
   async function copyLink() {
+    const url = linkUrl();
+    // navigator.clipboard is only available in secure contexts (HTTPS / localhost).
+    // Fall back to the legacy execCommand approach for plain-HTTP deployments.
+    if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(url);
+        setLink("copied", true);
+        setTimeout(() => setLink("copied", false), 1400);
+        return;
+      } catch {
+        // fall through to execCommand fallback
+      }
+    }
     try {
-      await navigator.clipboard.writeText(linkUrl());
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      if (!ok) throw new Error();
       setLink("copied", true);
-      setTimeout(() => {
-        setLink("copied", false);
-      }, 1400);
+      setTimeout(() => setLink("copied", false), 1400);
     } catch {
       toast.error("Could not copy to clipboard.");
     }
