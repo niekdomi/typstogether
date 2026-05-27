@@ -3,7 +3,6 @@ import { SiGithub } from "solid-icons/si";
 import { For, Match, Switch, createMemo, createSignal } from "solid-js";
 
 import { Alert, AlertDescription } from "../../components/ui/alert";
-import { Skeleton } from "../../components/ui/skeleton";
 import { useProjects } from "../../lib/projects/use-projects";
 import ConfirmDialog from "./ConfirmDialog";
 import InviteDialog from "./InviteDialog";
@@ -69,19 +68,12 @@ export default function Dashboard() {
             </div>
           }
         >
-          <Match when={projects.loading}>
-            <div class="my-6 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-7">
-              <For each={Array.from({ length: 8 })}>
-                {() => <Skeleton class="aspect-[1/1.4] rounded-xl" />}
-              </For>
-            </div>
-          </Match>
           <Match when={projects.error !== undefined}>
             <Alert variant="destructive" class="mt-6">
               <AlertDescription>Could not load projects.</AlertDescription>
             </Alert>
           </Match>
-          <Match when={list().length === 0}>
+          <Match when={!projects.loading && list().length === 0}>
             <p class="text-muted-foreground mt-6 py-16 text-center italic">No matching projects.</p>
           </Match>
         </Switch>
