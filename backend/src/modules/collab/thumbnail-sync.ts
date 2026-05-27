@@ -24,9 +24,7 @@ async function mirror(projectId: string, blobId: string | null): Promise<boolean
 
 /**
  * `meta[THUMBNAIL_KEY]` is the source of truth for the dashboard thumbnail
- * blob_id. Mirror writes into `project.thumbnail_blob_id` (so the dashboard
- * list query is one SQL read) and GC the replaced blob (so concurrent
- * uploaders' losing rows don't leak).
+ * blob_id. Mirror writes into `project.thumbnail_blob_id`.
  */
 export const thumbnailSyncExtension: Extension = {
   afterLoadDocument({ documentName, document }) {
