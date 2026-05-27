@@ -2,9 +2,7 @@ import { createMemo, For, Show } from "solid-js";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
-import { userColor } from "../../lib/collab/awareness-colors";
 import { useRemoteAwareness } from "../../lib/collab/use-awareness";
-import { useCurrentUser } from "../../lib/CurrentUserContext";
 import { userInitial } from "../../lib/format";
 import { useProjectContext } from "./ProjectContext";
 
@@ -58,7 +56,6 @@ function AvatarPill(props: AvatarPillProps) {
 
 export default function CollaboratorAvatars() {
   const ctx = useProjectContext();
-  const { user } = useCurrentUser();
   const remote = useRemoteAwareness(() => ctx.collab.awareness);
 
   const visible = createMemo(() => remote().slice(0, MAX_REMOTE));
@@ -85,12 +82,6 @@ export default function CollaboratorAvatars() {
             +{overflow()}
           </span>
         </Show>
-        <AvatarPill
-          name={user.name}
-          image={user.image ?? null}
-          color={userColor(user.id).color}
-          label={`${user.name} (you)`}
-        />
       </div>
     </Show>
   );
