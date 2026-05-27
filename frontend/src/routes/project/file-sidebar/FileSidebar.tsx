@@ -268,34 +268,34 @@ function RootDropZone(props: { children: JSX.Element; onUpload: (dir: string) =>
       >
         {props.children}
       </ContextMenuTrigger>
-    <Show when={!sb.isReadOnly()}>
-      <ContextMenuContent>
-        <ContextMenuItem
-          onSelect={() => {
-            sb.setDialog({ type: "newFile", dir: "" });
-          }}
-        >
-          New file
-        </ContextMenuItem>
+      <Show when={!sb.isReadOnly()}>
+        <ContextMenuContent>
+          <ContextMenuItem
+            onSelect={() => {
+              sb.setDialog({ type: "newFile", dir: "" });
+            }}
+          >
+            New file
+          </ContextMenuItem>
 
-        <ContextMenuItem
-          onSelect={() => {
-            sb.setDialog({ type: "newFolder", dir: "" });
-          }}
-        >
-          {" "}
-          New folder{" "}
-        </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={() => {
+              sb.setDialog({ type: "newFolder", dir: "" });
+            }}
+          >
+            {" "}
+            New folder{" "}
+          </ContextMenuItem>
 
-        <ContextMenuItem
-          onSelect={() => {
-            props.onUpload("");
-          }}
-        >
-          Upload asset
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </Show>
+          <ContextMenuItem
+            onSelect={() => {
+              props.onUpload("");
+            }}
+          >
+            Upload asset
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </Show>
     </ContextMenu>
   );
 }
