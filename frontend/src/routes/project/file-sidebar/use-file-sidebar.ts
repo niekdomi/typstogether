@@ -462,6 +462,7 @@ export function useFileSidebar() {
     isPreviewing,
     isLocked,
     isAsset,
+    isReadOnly: ctx.isReadOnly,
     onSelectFile: ctx.setActiveFile,
     toggleCollapsed,
     handleNewFile,
