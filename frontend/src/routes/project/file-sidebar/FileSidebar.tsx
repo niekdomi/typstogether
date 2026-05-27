@@ -132,12 +132,17 @@ async function uploadOsFiles(
   upload: (dir: string, file: File) => Promise<string | undefined>
 ): Promise<boolean> {
   const list = e.dataTransfer?.files;
-  if (!list || list.length === 0) return false;
+  if (!list || list.length === 0) {
+    return false;
+  }
+
   e.preventDefault();
   e.stopPropagation();
+
   for (const file of list) {
     await upload(dir, file);
   }
+
   return true;
 }
 
@@ -151,16 +156,23 @@ function FolderRow(props: { node: FolderNode; onUpload: (dir: string) => void })
         <SidebarMenuButton
           tooltip={path()}
           class={cx(sb.drag.over === path() && sb.drag.source && "ring-2 ring-sidebar-ring")}
+          draggable={!sb.isFolderLocked(path())}
           onClick={() => {
             sb.toggleCollapsed(path());
           }}
+          onDragStart={(e: DragEvent) => {
+            sb.onFolderDragStart(e, path());
+          }}
+          onDragEnd={sb.onDragEnd}
           onDragOver={(e: DragEvent) => {
             sb.onFolderDragOver(e, path());
           }}
           onDragLeave={sb.clearDragOver}
           onDrop={(e: DragEvent) => {
             void (async () => {
-              if (await uploadOsFiles(e, path(), sb.handleUploadAsset)) return;
+              if (await uploadOsFiles(e, path(), sb.handleUploadAsset)) {
+                return;
+              }
               sb.onFolderDrop(e, path());
             })();
           }}
@@ -247,38 +259,43 @@ function RootDropZone(props: { children: JSX.Element; onUpload: (dir: string) =>
         onDragLeave={sb.onRootDragLeave}
         onDrop={(e: DragEvent) => {
           void (async () => {
-            if (await uploadOsFiles(e, "", sb.handleUploadAsset)) return;
+            if (await uploadOsFiles(e, "", sb.handleUploadAsset)) {
+              return;
+            }
             sb.onRootDrop(e);
           })();
         }}
       >
         {props.children}
       </ContextMenuTrigger>
-      <Show when={!sb.isReadOnly()}>
-        <ContextMenuContent>
-          <ContextMenuItem
-            onSelect={() => {
-              sb.setDialog({ type: "newFile", dir: "" });
-            }}
-          >
-            New file
-          </ContextMenuItem>
-          <ContextMenuItem
-            onSelect={() => {
-              sb.setDialog({ type: "newFolder", dir: "" });
-            }}
-          >
-            New folder
-          </ContextMenuItem>
-          <ContextMenuItem
-            onSelect={() => {
-              props.onUpload("");
-            }}
-          >
-            Upload asset
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </Show>
+    <Show when={!sb.isReadOnly()}>
+      <ContextMenuContent>
+        <ContextMenuItem
+          onSelect={() => {
+            sb.setDialog({ type: "newFile", dir: "" });
+          }}
+        >
+          New file
+        </ContextMenuItem>
+
+        <ContextMenuItem
+          onSelect={() => {
+            sb.setDialog({ type: "newFolder", dir: "" });
+          }}
+        >
+          {" "}
+          New folder{" "}
+        </ContextMenuItem>
+
+        <ContextMenuItem
+          onSelect={() => {
+            props.onUpload("");
+          }}
+        >
+          Upload asset
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </Show>
     </ContextMenu>
   );
 }
@@ -292,8 +309,12 @@ function FileSidebarBody() {
   };
 
   const triggerUpload = (dir: string) => {
-    if (!fileInput) return;
+    if (!fileInput) {
+      return;
+    }
+
     setUploadDir(dir);
+
     fileInput.value = "";
     fileInput.click();
   };
@@ -301,7 +322,10 @@ function FileSidebarBody() {
   const onFilesPicked = async (e: Event) => {
     const target = e.currentTarget as HTMLInputElement;
     const list = target.files;
-    if (!list || list.length === 0) return;
+    if (!list || list.length === 0) {
+      return;
+    }
+
     const dir = uploadDir();
     for (const file of list) {
       await sb.handleUploadAsset(dir, file);
