@@ -1,3 +1,4 @@
+import { useColorMode } from "@kobalte/core/color-mode";
 import { TbOutlineDots, TbOutlinePencil, TbOutlineShare, TbOutlineTrash } from "solid-icons/tb";
 import { Show } from "solid-js";
 
@@ -24,6 +25,7 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard(props: ProjectCardProps) {
+  const { colorMode } = useColorMode();
   const isShared = () => props.role !== "owner";
 
   return (
@@ -39,12 +41,17 @@ export default function ProjectCard(props: ProjectCardProps) {
         }
       }}
     >
-      <div class="bg-muted border-border flex aspect-[1/1.1] border-b p-5">
-        <div class="bg-card border-border/60 flex flex-1 items-center justify-center overflow-hidden border">
+      <div class="bg-muted border-border flex aspect-[1/1.1] border-b">
+        <div
+          class="bg-white flex flex-1 items-center justify-center overflow-hidden rounded-t-xl"
+          style={
+            colorMode() === "dark" ? { filter: "invert(0.85) hue-rotate(180deg)" } : undefined
+          }
+        >
           <Show
             when={props.project.thumbnailBlobId}
             fallback={
-              <span class="text-foreground/75 line-clamp-4 px-4 py-3 text-center text-[13px] leading-snug">
+              <span class="line-clamp-4 px-4 py-3 text-center text-[13px] leading-snug text-zinc-700">
                 {props.project.name}
               </span>
             }
