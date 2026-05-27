@@ -59,6 +59,7 @@ export default function InviteDialog(props: InviteDialogProps) {
     token: null,
     copied: false,
   });
+  let urlInput: HTMLInputElement | undefined;
 
   const [invites, { refetch: refetchInvites }] = createResource(() => props.projectId, loadInvites);
   const [members] = createResource(() => props.projectId, loadMembers);
@@ -86,32 +87,33 @@ export default function InviteDialog(props: InviteDialogProps) {
     void refetchInvites();
   }
 
+  function markCopied() {
+    setLink("copied", true);
+    setTimeout(() => setLink("copied", false), 1400);
+  }
+
   async function copyLink() {
     const url = linkUrl();
     // navigator.clipboard is only available in secure contexts (HTTPS / localhost).
-    // Fall back to the legacy execCommand approach for plain-HTTP deployments.
-    if (navigator.clipboard) {
+    // Fall back to selecting the visible input + execCommand for plain-HTTP deploys.
+    if (navigator.clipboard && window.isSecureContext) {
       try {
         await navigator.clipboard.writeText(url);
-        setLink("copied", true);
-        setTimeout(() => setLink("copied", false), 1400);
+        markCopied();
         return;
       } catch {
         // fall through to execCommand fallback
       }
     }
+    // The input lives inside the dialog's focus scope, so selecting it (rather
+    // than a detached textarea) survives the dialog's focus trap.
     try {
-      const ta = document.createElement("textarea");
-      ta.value = url;
-      ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-      if (!ok) throw new Error();
-      setLink("copied", true);
-      setTimeout(() => setLink("copied", false), 1400);
+      if (!urlInput) throw new Error();
+      urlInput.focus();
+      urlInput.select();
+      urlInput.setSelectionRange(0, url.length);
+      if (!document.execCommand("copy")) throw new Error();
+      markCopied();
     } catch {
       toast.error("Could not copy to clipboard.");
     }
@@ -191,6 +193,7 @@ export default function InviteDialog(props: InviteDialogProps) {
             <div class="border-border bg-muted/40 flex items-center gap-2 rounded-md border py-1 pr-1 pl-3">
               <TbOutlineLink size={14} class="text-muted-foreground shrink-0" />
               <input
+                ref={urlInput}
                 class="text-foreground min-w-0 flex-1 border-0 bg-transparent font-mono text-xs outline-none"
                 readonly
                 value={linkUrl()}
