@@ -53,8 +53,13 @@ export function useFileSidebar() {
   // is removed from here) the moment a file lands inside.
   const [pendingFolders, setPendingFolders] = createSignal(new Set<string>());
   const [dialog, setDialog] = createSignal<DialogState | null>(null);
-  const [drag, setDrag] = createStore<{ source: string | null; over: string | null }>({
+  const [drag, setDrag] = createStore<{
+    source: string | null;
+    sourceKind: "file" | "folder" | null;
+    over: string | null;
+  }>({
     source: null,
+    sourceKind: null,
     over: null,
   });
 
@@ -87,6 +92,15 @@ export function useFileSidebar() {
   const isAsset = (path: string) => assets.has(path);
   const folderHasFiles = (folder: string) => paths().some((p) => p.startsWith(folder + "/"));
   const totalCount = () => files.size + assets.size;
+  // A folder already exists if anything (real file/asset, pending entry, or a
+  // file living under it) occupies that path. Used to reject move collisions.
+  const folderExists = (folder: string) =>
+    has(folder) || folderHasFiles(folder) || pendingFolders().has(folder);
+  // Locked when the project's compile entry lives at or under the folder:
+  // moving it would orphan the synced entry reference, just like dragging the
+  // entry file itself is blocked.
+  const isFolderLocked = (folder: string) =>
+    ctx.collab.entry === folder || ctx.collab.entry.startsWith(folder + "/");
 
   // Narrow the dialog union for type-safe rendering.
   const dialogOf =
@@ -173,6 +187,23 @@ export function useFileSidebar() {
     const moved = moves.find(([from]) => from === active);
     if (moved) {
       ctx.setActiveFile(moved[1]);
+    }
+  };
+
+  // Relocate a folder and everything beneath it. Rewrites locally-pending
+  // (empty) folder entries by prefix and moves any real files/assets across.
+  const relocateFolder = (oldFolder: string, newFolder: string) => {
+    setPendingFolders((prev) => {
+      const under = (p: string) => p === oldFolder || p.startsWith(oldFolder + "/");
+      if (![...prev].some((p) => under(p))) {
+        return prev;
+      }
+
+      return new Set([...prev].map((p) => (under(p) ? newFolder + p.slice(oldFolder.length) : p)));
+    });
+
+    if (folderHasFiles(oldFolder)) {
+      moveFolder(oldFolder, newFolder);
     }
   };
 
@@ -325,18 +356,7 @@ export function useFileSidebar() {
       return existsMsg(newFolder);
     }
 
-    // Rewrite any pending entries with the matching prefix.
-    setPendingFolders((prev) => {
-      const under = (p: string) => p === oldFolder || p.startsWith(oldFolder + "/");
-      if (![...prev].some((p) => under(p))) {
-        return prev;
-      }
-      return new Set([...prev].map((p) => (under(p) ? newFolder + p.slice(oldFolder.length) : p)));
-    });
-
-    if (folderHasFiles(oldFolder)) {
-      moveFolder(oldFolder, newFolder);
-    }
+    relocateFolder(oldFolder, newFolder);
 
     return undefined;
   };
@@ -345,6 +365,7 @@ export function useFileSidebar() {
     const textKeys = [...files.keys()].filter((p) => p.startsWith(folder + "/"));
     const assetKeys = [...assets.keys()].filter((p) => p.startsWith(folder + "/"));
     const toDelete = [...textKeys, ...assetKeys];
+
     if (toDelete.length === totalCount()) {
       close();
       return;
@@ -362,8 +383,12 @@ export function useFileSidebar() {
 
     if (toDelete.length > 0) {
       files.doc?.transact(() => {
-        for (const p of textKeys) files.delete(p);
-        for (const p of assetKeys) assets.delete(p);
+        for (const p of textKeys) {
+          files.delete(p);
+        }
+        for (const p of assetKeys) {
+          assets.delete(p);
+        }
       });
 
       if (toDelete.includes(ctx.activeFile())) {
@@ -379,16 +404,37 @@ export function useFileSidebar() {
 
   // Drag and drop ──────────────────────────────────────────────────────────
 
-  const completeDrop = (e: DragEvent, destFor: (src: string) => string) => {
+  // Resolve a drop into target directory `destDir` ("" is root). A file/asset
+  // moves a single path; a folder relocates its whole subtree and is barred
+  // from landing on itself or inside its own subtree.
+  const completeDrop = (e: DragEvent, destDir: string) => {
     e.preventDefault();
-    const src = e.dataTransfer?.getData("text/plain");
-    setDrag({ source: null, over: null });
 
-    if (!src || isLocked(src)) {
+    const src = e.dataTransfer?.getData("text/plain");
+    const kind = drag.sourceKind;
+
+    setDrag({ source: null, sourceKind: null, over: null });
+
+    if (!src) {
       return;
     }
 
-    const dest = destFor(src);
+    if (kind === "folder") {
+      const dest = joinPath(destDir, leafOf(src));
+
+      if (isFolderLocked(src) || dest === src || dest.startsWith(src + "/") || folderExists(dest)) {
+        return;
+      }
+
+      relocateFolder(src, dest);
+      return;
+    }
+
+    if (isLocked(src)) {
+      return;
+    }
+
+    const dest = joinPath(destDir, leafOf(src));
     if (dest === src || has(dest)) {
       return;
     }
@@ -406,11 +452,32 @@ export function useFileSidebar() {
     }
 
     e.dataTransfer?.setData("text/plain", path);
-    setDrag({ source: path, over: null });
+    setDrag({ source: path, sourceKind: "file", over: null });
+  };
+
+  const onFolderDragStart = (e: DragEvent, folder: string) => {
+    if (isFolderLocked(folder)) {
+      e.preventDefault();
+      return;
+    }
+
+    e.dataTransfer?.setData("text/plain", folder);
+    setDrag({ source: folder, sourceKind: "folder", over: null });
   };
 
   const onDragEnd = () => {
-    setDrag({ source: null, over: null });
+    setDrag({ source: null, sourceKind: null, over: null });
+  };
+
+  // A dragged folder can't target itself or any folder within its own subtree;
+  // file/asset drags accept any folder.
+  const isValidFolderTarget = (folder: string) => {
+    if (drag.sourceKind !== "folder") {
+      return true;
+    }
+
+    const src = drag.source;
+    return !!src && folder !== src && !folder.startsWith(src + "/");
   };
 
   const onFolderDragOver = (e: DragEvent, folder: string) => {
@@ -418,15 +485,21 @@ export function useFileSidebar() {
       return;
     }
 
-    e.preventDefault();
+    // Always swallow the event so an invalid target doesn't bubble up and
+    // light up the root drop zone instead.
     e.stopPropagation();
+    if (!isValidFolderTarget(folder)) {
+      setDrag("over", null);
+      return;
+    }
 
+    e.preventDefault();
     setDrag("over", folder);
   };
 
   const onFolderDrop = (e: DragEvent, folder: string) => {
     e.stopPropagation();
-    completeDrop(e, (src) => joinPath(folder, leafOf(src)));
+    completeDrop(e, folder);
   };
 
   const onRootDragOver = (e: DragEvent) => {
@@ -448,7 +521,7 @@ export function useFileSidebar() {
   };
 
   const onRootDrop = (e: DragEvent) => {
-    completeDrop(e, (src) => `/${leafOf(src)}`);
+    completeDrop(e, "");
   };
 
   // Memory-only override of the compile entry. Local to this client; doesn't
@@ -473,6 +546,7 @@ export function useFileSidebar() {
     canPreview,
     isPreviewing,
     isLocked,
+    isFolderLocked,
     isAsset,
     onSelectFile: ctx.setActiveFile,
     toggleCollapsed,
@@ -486,6 +560,7 @@ export function useFileSidebar() {
     handleUploadAsset,
     togglePreview,
     onFileDragStart,
+    onFolderDragStart,
     onDragEnd,
     onFolderDragOver,
     onFolderDrop,
