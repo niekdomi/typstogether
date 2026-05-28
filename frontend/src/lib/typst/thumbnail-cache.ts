@@ -10,7 +10,15 @@ const MAX_ENTRIES = 50;
 interface ThumbnailRecord {
   projectId: string;
   gz: Blob;
+  // Server content-version (collab_document.updatedAt as epoch ms) the SVG was
+  // built from; null when unknown. The dashboard recompiles when it differs.
+  version: number | null;
   visitedAt: number;
+}
+
+export interface CachedThumbnail {
+  svg: string;
+  version: number | null;
 }
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -92,8 +100,17 @@ function evict(conn: IDBDatabase): Promise<void> {
 
 // visitedAt is set on write only — a "visit" is entering the project (when a
 // fresh thumbnail is produced), so dashboard reads don't perturb LRU order.
-export async function putThumbnail(projectId: string, svg: string): Promise<void> {
-  const record: ThumbnailRecord = { projectId, gz: await gzip(svg), visitedAt: Date.now() };
+export async function putThumbnail(
+  projectId: string,
+  svg: string,
+  version: number | null
+): Promise<void> {
+  const record: ThumbnailRecord = {
+    projectId,
+    gz: await gzip(svg),
+    version,
+    visitedAt: Date.now(),
+  };
   const conn = await db();
   await promisify(conn.transaction(STORE, "readwrite").objectStore(STORE).put(record));
   await evict(conn);
@@ -102,12 +119,13 @@ export async function putThumbnail(projectId: string, svg: string): Promise<void
 // A cache read must never throw to the UI: ProjectCard reads this inside a memo
 // with no ErrorBoundary above it, so a failure (IndexedDB unavailable, corrupt
 // entry) degrades to the project-name fallback rather than breaking the render.
-export async function getThumbnail(projectId: string): Promise<string | null> {
+export async function getThumbnail(projectId: string): Promise<CachedThumbnail | null> {
   try {
     const conn = await db();
     const req = conn.transaction(STORE, "readonly").objectStore(STORE).get(projectId);
     const record = (await promisify(req)) as ThumbnailRecord | undefined;
-    return record ? await gunzip(record.gz) : null;
+    if (!record) return null;
+    return { svg: await gunzip(record.gz), version: record.version ?? null };
   } catch (error) {
     console.warn("[thumbnail] read failed", error);
     return null;

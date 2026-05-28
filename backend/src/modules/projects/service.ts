@@ -1,14 +1,14 @@
-import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, META_KEY } from "@typstogether/shared";
+import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, MAIN_PATH, META_KEY } from "@typstogether/shared";
 import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
 import * as Y from "yjs";
 
-import { type Project, project, projectMember } from "../../db/app-schema";
+import { collabDocument, type Project, project, projectMember } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import { currentDb } from "../../transaction";
 import { blobService } from "../blobs/service";
-import { storeDocument } from "../collab/persistence";
+import { fetchDocument, storeDocument } from "../collab/persistence";
 import { fetchTemplateFiles } from "../templates/files";
-import type { CreateProjectInput, UpdateProjectInput } from "./model";
+import type { CreateProjectInput, ProjectSnapshot, UpdateProjectInput } from "./model";
 
 export type ProjectRole = "owner" | "editor" | "viewer";
 
@@ -17,18 +17,30 @@ export interface ProjectMembership {
   role: ProjectRole;
 }
 
+// A list row also carries the project's content-version (collab_document
+// updatedAt, null when no doc has been stored yet) so the dashboard can decide
+// whether its cached thumbnail is stale without fetching each project's doc.
+export interface ProjectListItem extends ProjectMembership {
+  docUpdatedAt: Date | null;
+}
+
 export class ProjectService {
   private membershipSelect(userId: string) {
     return currentDb()
-      .select({ project, memberRole: projectMember.role })
+      .select({
+        project,
+        memberRole: projectMember.role,
+        docUpdatedAt: collabDocument.updatedAt,
+      })
       .from(project)
       .leftJoin(
         projectMember,
         and(eq(projectMember.projectId, project.id), eq(projectMember.userId, userId))
-      );
+      )
+      .leftJoin(collabDocument, eq(collabDocument.projectId, project.id));
   }
 
-  async list(userId: string): Promise<ProjectMembership[]> {
+  async list(userId: string): Promise<ProjectListItem[]> {
     const rows = await this.membershipSelect(userId)
       .where(
         and(
@@ -41,6 +53,7 @@ export class ProjectService {
     return rows.map((row) => ({
       project: row.project,
       role: row.project.ownerUserId === userId ? "owner" : row.memberRole!,
+      docUpdatedAt: row.docUpdatedAt,
     }));
   }
 
@@ -68,6 +81,32 @@ export class ProjectService {
     }
 
     throw new NotFoundError("Project not found");
+  }
+
+  // Decode the persisted Y.Doc into a plain read-only view for callers (e.g. the
+  // dashboard) that need a project's files without joining the collab websocket.
+  // Authorization is the route's `projectMember` macro; this acts purely by id.
+  async snapshot(id: string): Promise<ProjectSnapshot> {
+    const state = await fetchDocument(id);
+    if (!state) {
+      return { entry: MAIN_PATH, files: {}, assets: {} };
+    }
+
+    const doc = new Y.Doc();
+    Y.applyUpdate(doc, state);
+
+    const files: Record<string, string> = {};
+    for (const [path, text] of doc.getMap<Y.Text>(FILES_KEY)) {
+      files[path] = text.toJSON();
+    }
+
+    const assets: Record<string, string> = {};
+    for (const [path, blobId] of doc.getMap<string>(ASSETS_KEY)) {
+      assets[path] = blobId;
+    }
+
+    const entry = doc.getMap<string>(META_KEY).get(ENTRY_KEY) ?? MAIN_PATH;
+    return { entry, files, assets };
   }
 
   async create(userId: string, input: CreateProjectInput): Promise<Project> {

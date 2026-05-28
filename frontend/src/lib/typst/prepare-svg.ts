@@ -1,9 +1,3 @@
-import type { TypstProject } from "@vedivad/codemirror-typst";
-import { createEffect, onCleanup } from "solid-js";
-
-import { putThumbnail } from "../../lib/typst/thumbnail-cache";
-import { renderer } from "../../lib/typst/use-typst-project";
-
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -29,9 +23,9 @@ async function fetchAsDataUrl(href: string): Promise<string | null> {
   }
 }
 
-// Make the renderer SVG self-contained so the stored thumbnail doesn't
-// depend on runtime sub-resource fetches.
-async function prepareSvgForStorage(raw: string): Promise<string> {
+// Make the renderer SVG self-contained so the stored thumbnail doesn't depend on
+// runtime sub-resource fetches.
+export async function prepareSvgForStorage(raw: string): Promise<string> {
   const container = document.createElement("div");
   container.innerHTML = raw;
   const svg = container.querySelector("svg");
@@ -65,39 +59,4 @@ async function prepareSvgForStorage(raw: string): Promise<string> {
   );
 
   return svg.outerHTML;
-}
-
-// Thumbnails are stored only on this device (IndexedDB), so a project shows a
-// preview only where it has been opened. We capture on every compile and lean
-// on the compiler's existing debounce for cadence rather than throttling here.
-export function useThumbnailUploader(
-  projectId: () => string,
-  project: () => TypstProject | null,
-  canEdit: () => boolean
-) {
-  createEffect(() => {
-    const p = project();
-    if (!p || !canEdit()) return;
-
-    // Bound per activation so an in-flight capture can't write the old
-    // project's content under a switched-to id.
-    const id = projectId();
-
-    const store = async (vector: Uint8Array): Promise<void> => {
-      try {
-        const pages = await renderer.renderSvgPages(vector);
-        const svg = pages[0]?.svg;
-        if (svg) await putThumbnail(id, await prepareSvgForStorage(svg));
-      } catch (error) {
-        console.error("Thumbnail capture failed:", error);
-      }
-    };
-
-    if (p.lastResult?.vector) void store(p.lastResult.vector);
-
-    const off = p.onCompile((result) => {
-      if (result.vector) void store(result.vector);
-    });
-    onCleanup(off);
-  });
 }

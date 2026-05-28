@@ -1,6 +1,6 @@
 import { useColorMode } from "@kobalte/core/color-mode";
 import { TbOutlineDots, TbOutlinePencil, TbOutlineShare, TbOutlineTrash } from "solid-icons/tb";
-import { createMemo, createResource, onCleanup, Show } from "solid-js";
+import { createEffect, createMemo, createResource, onCleanup, onMount, Show } from "solid-js";
 
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
@@ -13,11 +13,13 @@ import {
 } from "../../components/ui/dropdown-menu";
 import { formatDate, formatRelative } from "../../lib/format";
 import type { ProjectRow, Role } from "../../lib/projects/types";
+import { generateThumbnail } from "../../lib/typst/dashboard-thumbnailer";
 import { getThumbnail } from "../../lib/typst/thumbnail-cache";
 
 interface ProjectCardProps {
   project: ProjectRow;
   role: Role;
+  docUpdatedAt: Date | null;
   onOpen: () => void;
   onShare: () => void;
   onRename: () => void;
@@ -28,15 +30,61 @@ export default function ProjectCard(props: ProjectCardProps) {
   const { colorMode } = useColorMode();
   const isShared = () => props.role !== "owner";
 
-  const [svg] = createResource(() => props.project.id, getThumbnail);
+  const [entry, { refetch }] = createResource(() => props.project.id, getThumbnail);
   const thumbnailUrl = createMemo(() => {
-    const markup = svg();
-    if (!markup) return null;
-    const url = URL.createObjectURL(new Blob([markup], { type: "image/svg+xml" }));
+    const svg = entry()?.svg;
+    if (!svg) return null;
+    const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
     onCleanup(() => {
       URL.revokeObjectURL(url);
     });
     return url;
+  });
+
+  // Lazily (re)compile the preview when the card is on screen and the cached SVG
+  // is missing or older than the server's content-version. Compilation is heavy,
+  // so it's gated on visibility and triggered at most once per (id, version).
+  const currentVersion = () => (props.docUpdatedAt ? new Date(props.docUpdatedAt).getTime() : null);
+  let thumbRef: HTMLDivElement | undefined;
+  let visible = false;
+  let requested = "";
+
+  const maybeGenerate = () => {
+    if (!visible) return;
+    const version = currentVersion();
+    if (version === null) return; // no stored doc to compile
+    const cached = entry();
+    if (cached === undefined) return; // cache read still in flight
+    if (cached?.version === version) return; // already fresh
+    const id = props.project.id;
+    const key = `${id}:${String(version)}`;
+    if (requested === key) return;
+    requested = key;
+    void (async () => {
+      await generateThumbnail(id, version);
+      await refetch();
+    })();
+  };
+
+  onMount(() => {
+    if (!thumbRef) return;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        visible = true;
+        maybeGenerate();
+      }
+    });
+    io.observe(thumbRef);
+    onCleanup(() => {
+      io.disconnect();
+    });
+  });
+
+  createEffect(() => {
+    entry();
+    currentVersion();
+    maybeGenerate();
   });
 
   return (
@@ -52,7 +100,12 @@ export default function ProjectCard(props: ProjectCardProps) {
         }
       }}
     >
-      <div class="bg-muted border-border flex aspect-[1/1.1] border-b">
+      <div
+        ref={(el) => {
+          thumbRef = el;
+        }}
+        class="bg-muted border-border flex aspect-[1/1.1] border-b"
+      >
         <div
           class="flex flex-1 items-center justify-center overflow-hidden rounded-t-xl bg-white"
           style={colorMode() === "dark" ? { filter: "invert(0.85) hue-rotate(180deg)" } : undefined}

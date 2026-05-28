@@ -20,7 +20,6 @@ import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { useCurrentUser } from "../../lib/CurrentUserContext";
 import { useProject } from "../../lib/projects/use-project";
 import { useTypstProject } from "../../lib/typst/use-typst-project";
-import { useThumbnailUploader } from "./use-thumbnail-uploader";
 
 export interface Ready {
   files: Y.Map<Y.Text>;
@@ -102,12 +101,6 @@ export function ProjectProvider(props: { children: JSX.Element }) {
   );
 
   const isReadOnly = () => membership()?.role === "viewer" || collab.readOnly;
-
-  useThumbnailUploader(
-    projectId,
-    () => typst.project,
-    () => !isReadOnly()
-  );
 
   const [requestedFile, setRequestedFile] = createSignal(entry());
   const [editorView, setEditorView] = createSignal<EditorView | null>(null);

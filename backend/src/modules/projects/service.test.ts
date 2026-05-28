@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
-import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, META_KEY } from "@typstogether/shared";
+import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, MAIN_PATH, META_KEY } from "@typstogether/shared";
 import { eq } from "drizzle-orm";
 import { createTarGzip, type TarFileInput } from "nanotar";
 import * as Y from "yjs";
@@ -10,7 +10,7 @@ import { cleanDb, expectThrows } from "../../../test/helpers";
 import { project as projectTable, projectBlob } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import { currentDb } from "../../transaction";
-import { fetchDocument } from "../collab/persistence";
+import { fetchDocument, storeDocument } from "../collab/persistence";
 import { memberService } from "../members/service";
 import { projectService } from "./service";
 
@@ -94,6 +94,19 @@ describe("ProjectService.list", () => {
     const result = await projectService.list(owner.id);
 
     expect(result.map((r) => r.project.id)).toEqual([newer.id, older.id]);
+  });
+
+  test("reports docUpdatedAt: null without a stored doc, a Date once one exists", async () => {
+    const owner = await userFactory.create();
+    const blank = await projectFactory.create({ ownerUserId: owner.id });
+    const withDoc = await projectFactory.create({ ownerUserId: owner.id });
+    await storeDocument(withDoc.id, Y.encodeStateAsUpdate(new Y.Doc()));
+
+    const result = await projectService.list(owner.id);
+    const byId = new Map(result.map((r) => [r.project.id, r]));
+
+    expect(byId.get(blank.id)!.docUpdatedAt).toBeNull();
+    expect(byId.get(withDoc.id)!.docUpdatedAt).toBeInstanceOf(Date);
   });
 });
 
@@ -333,5 +346,37 @@ describe("ProjectService.remove", () => {
     await projectService.remove(project.id);
 
     await expectThrows(() => projectService.remove(project.id), NotFoundError);
+  });
+});
+
+describe("ProjectService.snapshot", () => {
+  test("decodes files, assets, and entry from the stored doc", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+
+    const doc = new Y.Doc();
+    doc.transact(() => {
+      doc.getMap<Y.Text>(FILES_KEY).set("/main.typ", new Y.Text("= Hello"));
+      doc.getMap<string>(ASSETS_KEY).set("/logo.png", "blob-123");
+      doc.getMap<string>(META_KEY).set(ENTRY_KEY, "/report.typ");
+    });
+    await storeDocument(project.id, Y.encodeStateAsUpdate(doc));
+
+    const snap = await projectService.snapshot(project.id);
+
+    expect(snap).toEqual({
+      entry: "/report.typ",
+      files: { "/main.typ": "= Hello" },
+      assets: { "/logo.png": "blob-123" },
+    });
+  });
+
+  test("returns an empty snapshot with the default entry when no doc is stored", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+
+    const snap = await projectService.snapshot(project.id);
+
+    expect(snap).toEqual({ entry: MAIN_PATH, files: {}, assets: {} });
   });
 });
