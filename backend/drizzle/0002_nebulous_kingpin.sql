@@ -1,1 +1,0 @@
-ALTER TABLE "project" ADD COLUMN "thumbnail_blob_id" text;

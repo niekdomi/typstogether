@@ -106,9 +106,6 @@ export function ProjectProvider(props: { children: JSX.Element }) {
   useThumbnailUploader(
     projectId,
     () => typst.project,
-    (id) => {
-      collab.setThumbnail(id);
-    },
     () => !isReadOnly()
   );
 

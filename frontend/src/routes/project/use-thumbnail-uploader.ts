@@ -1,7 +1,7 @@
 import type { TypstProject } from "@vedivad/codemirror-typst";
 import { createEffect, onCleanup } from "solid-js";
 
-import { uploadAsset } from "../../lib/assets/upload";
+import { putThumbnail } from "../../lib/typst/thumbnail-cache";
 import { renderer } from "../../lib/typst/use-typst-project";
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -67,43 +67,38 @@ async function prepareSvgForStorage(raw: string): Promise<string> {
   return svg.outerHTML;
 }
 
-// Concurrent editors each upload once and race on the Yjs write. CRDT merge
-// picks one winner and blob-gc cleans up the loser's just-uploaded bytes, so
-// no orphans. The race only costs the loser one redundant upload.
+// Thumbnails are stored only on this device (IndexedDB), so there is no upload
+// race or server copy: a project shows a preview only where it has been opened.
 export function useThumbnailUploader(
   projectId: () => string,
   project: () => TypstProject | null,
-  setThumbnailBlobId: (blobId: string) => void,
   canEdit: () => boolean
 ) {
   createEffect(() => {
     const p = project();
     if (!p || !canEdit()) return;
 
-    const upload = async (vector: Uint8Array): Promise<void> => {
+    const store = async (vector: Uint8Array): Promise<void> => {
       const id = projectId();
       try {
         const pages = await renderer.renderSvgPages(vector);
         const svg = pages[0]?.svg;
         if (!svg) return;
-        const bytes = await prepareSvgForStorage(svg);
-        const file = new File([bytes], "thumbnail.svg", { type: "image/svg+xml" });
-        const { id: blobId } = await uploadAsset(id, file);
-        setThumbnailBlobId(blobId);
+        await putThumbnail(id, await prepareSvgForStorage(svg));
       } catch (error) {
-        console.error("Thumbnail upload failed:", error);
+        console.error("Thumbnail capture failed:", error);
       }
     };
 
     if (p.lastResult?.vector) {
-      void upload(p.lastResult.vector);
+      void store(p.lastResult.vector);
       return;
     }
 
     const off = p.onCompile((result) => {
       if (!result.vector) return;
       off();
-      void upload(result.vector);
+      void store(result.vector);
     });
     onCleanup(off);
   });

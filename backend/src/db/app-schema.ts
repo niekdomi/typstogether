@@ -41,7 +41,6 @@ export const project = pgTable(
     ownerUserId: text("owner_user_id")
       .notNull()
       .references(() => user.id, { onDelete: "restrict" }),
-    thumbnailBlobId: text("thumbnail_blob_id"),
     deletedAt: timestamp("deleted_at"),
     ...timestamps,
   },

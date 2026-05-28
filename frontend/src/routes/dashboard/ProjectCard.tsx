@@ -1,6 +1,6 @@
 import { useColorMode } from "@kobalte/core/color-mode";
 import { TbOutlineDots, TbOutlinePencil, TbOutlineShare, TbOutlineTrash } from "solid-icons/tb";
-import { Show } from "solid-js";
+import { createMemo, createResource, onCleanup, Show } from "solid-js";
 
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
@@ -11,9 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
-import { blobUrl } from "../../lib/assets/upload";
 import { formatDate, formatRelative } from "../../lib/format";
 import type { ProjectRow, Role } from "../../lib/projects/types";
+import { getThumbnail } from "../../lib/typst/thumbnail-cache";
 
 interface ProjectCardProps {
   project: ProjectRow;
@@ -27,6 +27,17 @@ interface ProjectCardProps {
 export default function ProjectCard(props: ProjectCardProps) {
   const { colorMode } = useColorMode();
   const isShared = () => props.role !== "owner";
+
+  const [svg] = createResource(() => props.project.id, getThumbnail);
+  const thumbnailUrl = createMemo(() => {
+    const markup = svg();
+    if (!markup) return null;
+    const url = URL.createObjectURL(new Blob([markup], { type: "image/svg+xml" }));
+    onCleanup(() => {
+      URL.revokeObjectURL(url);
+    });
+    return url;
+  });
 
   return (
     <Card
@@ -47,16 +58,16 @@ export default function ProjectCard(props: ProjectCardProps) {
           style={colorMode() === "dark" ? { filter: "invert(0.85) hue-rotate(180deg)" } : undefined}
         >
           <Show
-            when={props.project.thumbnailBlobId}
+            when={thumbnailUrl()}
             fallback={
               <span class="line-clamp-4 px-4 py-3 text-center text-[13px] leading-snug text-zinc-700">
                 {props.project.name}
               </span>
             }
           >
-            {(blobId) => (
+            {(url) => (
               <img
-                src={blobUrl(props.project.id, blobId())}
+                src={url()}
                 alt={props.project.name}
                 loading="lazy"
                 decoding="async"
