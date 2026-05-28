@@ -26,6 +26,9 @@ function db(): Promise<IDBDatabase> {
       resolve(req.result);
     });
     req.addEventListener("error", () => {
+      // Don't cache a transient open failure
+      // let the next call retry instead of disabling thumbnails for the session.
+      dbPromise = null;
       reject(req.error ?? new Error("Failed to open IndexedDB"));
     });
   });
@@ -96,11 +99,19 @@ export async function putThumbnail(projectId: string, svg: string): Promise<void
   await evict(conn);
 }
 
+// A cache read must never throw to the UI: ProjectCard reads this inside a memo
+// with no ErrorBoundary above it, so a failure (IndexedDB unavailable, corrupt
+// entry) degrades to the project-name fallback rather than breaking the render.
 export async function getThumbnail(projectId: string): Promise<string | null> {
-  const conn = await db();
-  const req = conn.transaction(STORE, "readonly").objectStore(STORE).get(projectId);
-  const record = (await promisify(req)) as ThumbnailRecord | undefined;
-  return record ? await gunzip(record.gz) : null;
+  try {
+    const conn = await db();
+    const req = conn.transaction(STORE, "readonly").objectStore(STORE).get(projectId);
+    const record = (await promisify(req)) as ThumbnailRecord | undefined;
+    return record ? await gunzip(record.gz) : null;
+  } catch (error) {
+    console.warn("[thumbnail] read failed", error);
+    return null;
+  }
 }
 
 export async function deleteThumbnail(projectId: string): Promise<void> {
