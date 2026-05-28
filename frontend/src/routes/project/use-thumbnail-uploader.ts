@@ -67,8 +67,9 @@ async function prepareSvgForStorage(raw: string): Promise<string> {
   return svg.outerHTML;
 }
 
-// Thumbnails are stored only on this device (IndexedDB), so there is no upload
-// race or server copy: a project shows a preview only where it has been opened.
+// Thumbnails are stored only on this device (IndexedDB), so a project shows a
+// preview only where it has been opened. We capture on every compile and lean
+// on the compiler's existing debounce for cadence rather than throttling here.
 export function useThumbnailUploader(
   projectId: () => string,
   project: () => TypstProject | null,
@@ -78,27 +79,24 @@ export function useThumbnailUploader(
     const p = project();
     if (!p || !canEdit()) return;
 
+    // Bound per activation so an in-flight capture can't write the old
+    // project's content under a switched-to id.
+    const id = projectId();
+
     const store = async (vector: Uint8Array): Promise<void> => {
-      const id = projectId();
       try {
         const pages = await renderer.renderSvgPages(vector);
         const svg = pages[0]?.svg;
-        if (!svg) return;
-        await putThumbnail(id, await prepareSvgForStorage(svg));
+        if (svg) await putThumbnail(id, await prepareSvgForStorage(svg));
       } catch (error) {
         console.error("Thumbnail capture failed:", error);
       }
     };
 
-    if (p.lastResult?.vector) {
-      void store(p.lastResult.vector);
-      return;
-    }
+    if (p.lastResult?.vector) void store(p.lastResult.vector);
 
     const off = p.onCompile((result) => {
-      if (!result.vector) return;
-      off();
-      void store(result.vector);
+      if (result.vector) void store(result.vector);
     });
     onCleanup(off);
   });
