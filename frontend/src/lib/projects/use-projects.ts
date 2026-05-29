@@ -2,6 +2,7 @@ import { createResource } from "solid-js";
 import { toast } from "somoto";
 
 import { api } from "../api";
+import { deleteThumbnail } from "../typst/thumbnail-cache";
 import type { Membership } from "./types";
 
 async function loadProjects(): Promise<Membership[]> {
@@ -32,7 +33,13 @@ export function useProjects() {
     mutate(() => api.projects({ id }).patch({ name: newName }), "Could not rename project.");
 
   const remove = (id: string) =>
-    mutate(() => api.projects({ id }).delete(), "Could not delete project.");
+    mutate(
+      () => api.projects({ id }).delete(),
+      "Could not delete project.",
+      () => {
+        void deleteThumbnail(id);
+      }
+    );
 
   const create = (
     name: string,

@@ -1,6 +1,6 @@
 import { createMemo, Match, Show, Switch } from "solid-js";
 
-import { assetBlobUrl } from "../../lib/assets/upload";
+import { blobUrl } from "../../lib/assets/upload";
 import { useProjectContext } from "./ProjectContext";
 
 export default function AssetPreview() {
@@ -11,7 +11,7 @@ export default function AssetPreview() {
     if (!r) return null;
     const sha = r.assets.get(ctx.activeFile());
     if (!sha) return null;
-    return assetBlobUrl(ctx.projectId(), sha);
+    return blobUrl(ctx.projectId(), sha);
   });
 
   const isPdf = createMemo(() => ctx.activeFile().toLowerCase().endsWith(".pdf"));

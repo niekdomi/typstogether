@@ -28,6 +28,12 @@ export const projectMembershipModel = t.Object({
   role: projectRoleModel,
 });
 
+export const projectSnapshotModel = t.Object({
+  entry: t.String(),
+  files: t.Record(t.String(), t.String()),
+  assets: t.Record(t.String(), t.String()),
+});
+
 export const projectModels = {
   "project.create": createProjectModel,
   "project.update": updateProjectModel,
@@ -37,3 +43,4 @@ export const projectModels = {
 export type CreateProjectInput = typeof createProjectModel.static;
 export type UpdateProjectInput = typeof updateProjectModel.static;
 export type ByIdProjectParams = typeof byIdProjectModel.static;
+export type ProjectSnapshot = typeof projectSnapshotModel.static;
