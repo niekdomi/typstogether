@@ -13,6 +13,18 @@ interface SearchMatch {
   matchEnd: number;
 }
 
+function snippetParts(lineText: string, matchStart: number, matchEnd: number) {
+  const CTX = 30;
+  const start = Math.max(0, matchStart - CTX);
+  const end = Math.min(lineText.length, matchEnd + CTX);
+    
+  return {
+    before: (start > 0 ? "…" : "") + lineText.slice(start, matchStart),
+    match: lineText.slice(matchStart, matchEnd),
+    after: lineText.slice(matchEnd, end) + (end < lineText.length ? "…" : ""),
+  };
+}
+
 export default function SearchPanel() {
   const ctx = useProjectContext();
   const [query, setQuery] = createSignal("");
@@ -104,26 +116,29 @@ export default function SearchPanel() {
                     {path}
                   </div>
                   <For each={matches}>
-                    {(m) => (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          jumpTo(m);
-                        }}
-                        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-center gap-2 rounded px-3 py-1.5 text-left"
-                      >
-                        <span class="text-muted-foreground w-7 shrink-0 text-right font-mono text-xs">
-                          {m.line + 1}
-                        </span>
-                        <span class="min-w-0 flex-1 truncate font-mono text-xs">
-                          {m.lineText.slice(0, m.matchStart)}
-                          <mark class="bg-yellow-200 text-inherit dark:bg-yellow-800">
-                            {m.lineText.slice(m.matchStart, m.matchEnd)}
-                          </mark>
-                          {m.lineText.slice(m.matchEnd)}
-                        </span>
-                      </button>
-                    )}
+                    {(m) => {
+                      const parts = snippetParts(m.lineText, m.matchStart, m.matchEnd);
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            jumpTo(m);
+                          }}
+                          class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-center gap-2 rounded px-3 py-1.5 text-left"
+                        >
+                          <span class="text-muted-foreground w-7 shrink-0 text-right font-mono text-xs">
+                            {m.line + 1}
+                          </span>
+                          <span class="min-w-0 flex-1 font-mono text-xs">
+                            {parts.before}
+                            <mark class="bg-yellow-200 text-inherit dark:bg-yellow-800">
+                              {parts.match}
+                            </mark>
+                            {parts.after}
+                          </span>
+                        </button>
+                      );
+                    }}
                   </For>
                 </div>
               )}
