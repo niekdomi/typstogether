@@ -18,7 +18,14 @@ import { Skeleton } from "../../components/ui/skeleton";
 import { Switch as SwitchInput } from "../../components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import UserMenu from "../../components/UserMenu";
-import { setVimMode, vimMode } from "../../lib/editor-prefs";
+import {
+  lineNumbers,
+  relativeLineNumbers,
+  setLineNumbers,
+  setRelativeLineNumbers,
+  setVimMode,
+  vimMode,
+} from "../../lib/editor-prefs";
 import AssetPreview from "./AssetPreview";
 import CodeMirrorEditor from "./CodeMirrorEditor";
 import CollaboratorAvatars from "./CollaboratorAvatars";
@@ -40,6 +47,25 @@ function EditorPrefsPanel() {
       <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
         <span>Vim mode</span>
         <SwitchInput checked={vimMode()} onChange={setVimMode} />
+      </label>
+      <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
+        <span>Line numbers</span>
+        <SwitchInput checked={lineNumbers()} onChange={setLineNumbers} />
+      </label>
+      <label
+        class={cx(
+          "flex items-center justify-between rounded-md px-2 py-1.5 text-sm",
+          lineNumbers()
+            ? "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer"
+            : "text-muted-foreground cursor-not-allowed"
+        )}
+      >
+        <span>Relative line numbers</span>
+        <SwitchInput
+          checked={relativeLineNumbers()}
+          onChange={setRelativeLineNumbers}
+          disabled={!lineNumbers()}
+        />
       </label>
     </div>
   );

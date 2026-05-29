@@ -24,15 +24,14 @@ import {
   highlightActiveLineGutter,
   highlightSpecialChars,
   keymap,
-  lineNumbers,
   rectangularSelection,
 } from "@codemirror/view";
 
 // `basicSetup` from `codemirror` with `history()` + `historyKeymap` removed:
 // `yCollab` + `Y.UndoManager` own undo/redo so the local CM history would
 // otherwise quietly accumulate state and risk shadowing collab-aware undo.
+// `lineNumbers()` is omitted here and managed per-editor via a compartment.
 export const editorSetup: Extension = [
-  lineNumbers(),
   highlightActiveLineGutter(),
   highlightSpecialChars(),
   foldGutter(),
