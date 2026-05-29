@@ -28,13 +28,6 @@ export const projectMembershipModel = t.Object({
   role: projectRoleModel,
 });
 
-// Membership plus the project's content-version for the dashboard list.
-export const projectListItemModel = t.Object({
-  project: projectModel,
-  role: projectRoleModel,
-  docUpdatedAt: t.Union([t.Date(), t.Null()]),
-});
-
 export const projectSnapshotModel = t.Object({
   entry: t.String(),
   files: t.Record(t.String(), t.String()),

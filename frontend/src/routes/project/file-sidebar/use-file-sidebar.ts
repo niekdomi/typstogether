@@ -43,7 +43,7 @@ export function useFileSidebar() {
   // Preview eligibility: .typ source files only, never the project's own entry
   // (that file shows the "entry" badge and is the default compile target), and
   // not the file already being previewed. Available to all sessions including
-  // viewers — preview is local-only.
+  // viewers, preview is local-only.
   const canPreview = (path: string) =>
     isTypFile(path) && files.has(path) && path !== ctx.collab.entry && !isPreviewing(path);
   const [paths, setPaths] = createSignal<string[]>([]);

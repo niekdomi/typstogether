@@ -19,7 +19,6 @@ import { getThumbnail } from "../../lib/typst/thumbnail-cache";
 interface ProjectCardProps {
   project: ProjectRow;
   role: Role;
-  docUpdatedAt: Date | null;
   onOpen: () => void;
   onShare: () => void;
   onRename: () => void;
@@ -30,9 +29,9 @@ export default function ProjectCard(props: ProjectCardProps) {
   const { colorMode } = useColorMode();
   const isShared = () => props.role !== "owner";
 
-  const [entry, { refetch }] = createResource(() => props.project.id, getThumbnail);
+  const [cachedThumb, { refetch }] = createResource(() => props.project.id, getThumbnail);
   const thumbnailUrl = createMemo(() => {
-    const svg = entry()?.svg;
+    const svg = cachedThumb();
     if (!svg) return null;
     const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
     onCleanup(() => {
@@ -41,27 +40,22 @@ export default function ProjectCard(props: ProjectCardProps) {
     return url;
   });
 
-  // Lazily (re)compile the preview when the card is on screen and the cached SVG
-  // is missing or older than the server's content-version. Compilation is heavy,
-  // so it's gated on visibility and triggered at most once per (id, version).
-  const currentVersion = () => (props.docUpdatedAt ? new Date(props.docUpdatedAt).getTime() : null);
+  // Cold-start fallback: a project that's never been opened on this device has no
+  // cached thumbnail, so compile one when the card scrolls into view. Projects
+  // you edit get their thumbnail from the editor, so this only fires on a miss.
+  // Compilation is heavy, hence the visibility gate.
   let thumbRef: HTMLDivElement | undefined;
   let visible = false;
-  let requested = "";
+  let requested = false;
 
   const maybeGenerate = () => {
-    if (!visible) return;
-    const version = currentVersion();
-    if (version === null) return; // no stored doc to compile
-    const cached = entry();
+    if (!visible || requested) return;
+    const cached = cachedThumb();
     if (cached === undefined) return; // cache read still in flight
-    if (cached?.version === version) return; // already fresh
-    const id = props.project.id;
-    const key = `${id}:${String(version)}`;
-    if (requested === key) return;
-    requested = key;
+    if (cached !== null) return; // already have a thumbnail
+    requested = true;
     void (async () => {
-      await generateThumbnail(id, version);
+      await generateThumbnail(props.project.id);
       await refetch();
     })();
   };
@@ -81,9 +75,10 @@ export default function ProjectCard(props: ProjectCardProps) {
     });
   });
 
+  // Retry once the cache read resolves, for the case where the card was already
+  // visible before getThumbnail() settled (the observer covers the reverse).
   createEffect(() => {
-    entry();
-    currentVersion();
+    cachedThumb();
     maybeGenerate();
   });
 

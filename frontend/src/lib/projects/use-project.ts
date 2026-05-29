@@ -1,9 +1,9 @@
 import { createResource } from "solid-js";
 
 import { api } from "../api";
-import type { ProjectDetail } from "./types";
+import type { Membership } from "./types";
 
-async function loadProject(id: string): Promise<ProjectDetail> {
+async function loadProject(id: string): Promise<Membership> {
   const { data, error } = await api.projects({ id }).get();
   if (error) throw new Error(`Failed to load project (${String(error.status)})`);
   return data;

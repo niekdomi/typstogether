@@ -95,19 +95,6 @@ describe("ProjectService.list", () => {
 
     expect(result.map((r) => r.project.id)).toEqual([newer.id, older.id]);
   });
-
-  test("reports docUpdatedAt: null without a stored doc, a Date once one exists", async () => {
-    const owner = await userFactory.create();
-    const blank = await projectFactory.create({ ownerUserId: owner.id });
-    const withDoc = await projectFactory.create({ ownerUserId: owner.id });
-    await storeDocument(withDoc.id, Y.encodeStateAsUpdate(new Y.Doc()));
-
-    const result = await projectService.list(owner.id);
-    const byId = new Map(result.map((r) => [r.project.id, r]));
-
-    expect(byId.get(blank.id)!.docUpdatedAt).toBeNull();
-    expect(byId.get(withDoc.id)!.docUpdatedAt).toBeInstanceOf(Date);
-  });
 });
 
 describe("ProjectService.findActive", () => {

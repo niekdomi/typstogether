@@ -1,13 +1,7 @@
 import { Elysia, t } from "elysia";
 
 import { projectAccessMacro } from "./macro";
-import {
-  projectListItemModel,
-  projectMembershipModel,
-  projectModel,
-  projectModels,
-  projectSnapshotModel,
-} from "./model";
+import { projectMembershipModel, projectModel, projectModels, projectSnapshotModel } from "./model";
 import { projectService } from "./service";
 
 export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/projects" })
@@ -16,7 +10,7 @@ export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/proj
 
   .get("/", ({ user }) => projectService.list(user.id), {
     auth: true,
-    response: t.Array(projectListItemModel),
+    response: t.Array(projectMembershipModel),
   })
 
   .post("/", ({ user, body }) => projectService.create(user.id, body), {

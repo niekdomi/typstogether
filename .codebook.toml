@@ -7,7 +7,6 @@ words = [
   "bytea",
   "collab",
   "cpuprofile",
-  "CRDT",
   "dedup",
   "dedupe",
   "dialog's",

@@ -1,7 +1,9 @@
-// Dashboard thumbnails live only in the client: each project's first compile
-// produces a self-contained SVG that we gzip and stash in IndexedDB, keyed by
+// Dashboard thumbnails live only in the client: a project's first page is
+// rendered to a self-contained SVG that we gzip and stash in IndexedDB, keyed by
 // projectId. There is no server copy, so a project shows a preview only on
 // devices where it has been opened.
+
+import { prepareSvgForStorage } from "./prepare-svg";
 
 const DB_NAME = "typstogether";
 const STORE = "thumbnails";
@@ -10,15 +12,7 @@ const MAX_ENTRIES = 50;
 interface ThumbnailRecord {
   projectId: string;
   gz: Blob;
-  // Server content-version (collab_document.updatedAt as epoch ms) the SVG was
-  // built from; null when unknown. The dashboard recompiles when it differs.
-  version: number | null;
   visitedAt: number;
-}
-
-export interface CachedThumbnail {
-  svg: string;
-  version: number | null;
 }
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -98,17 +92,12 @@ function evict(conn: IDBDatabase): Promise<void> {
   });
 }
 
-// visitedAt is set on write only — a "visit" is entering the project (when a
+// visitedAt is set on write only - a "visit" is entering the project (when a
 // fresh thumbnail is produced), so dashboard reads don't perturb LRU order.
-export async function putThumbnail(
-  projectId: string,
-  svg: string,
-  version: number | null
-): Promise<void> {
+async function putThumbnail(projectId: string, svg: string): Promise<void> {
   const record: ThumbnailRecord = {
     projectId,
     gz: await gzip(svg),
-    version,
     visitedAt: Date.now(),
   };
   const conn = await db();
@@ -116,16 +105,27 @@ export async function putThumbnail(
   await evict(conn);
 }
 
+// Sanitize a freshly-rendered SVG and cache it. Used by both the editor (on
+// every compile) and the dashboard cold path; errors are swallowed so a failed
+// write never disturbs the caller (the preview or the card name fallback).
+export async function storeThumbnail(projectId: string, rawSvg: string): Promise<void> {
+  try {
+    await putThumbnail(projectId, await prepareSvgForStorage(rawSvg));
+  } catch (error) {
+    console.warn("[thumbnail] write failed", error);
+  }
+}
+
 // A cache read must never throw to the UI: ProjectCard reads this inside a memo
 // with no ErrorBoundary above it, so a failure (IndexedDB unavailable, corrupt
 // entry) degrades to the project-name fallback rather than breaking the render.
-export async function getThumbnail(projectId: string): Promise<CachedThumbnail | null> {
+export async function getThumbnail(projectId: string): Promise<string | null> {
   try {
     const conn = await db();
     const req = conn.transaction(STORE, "readonly").objectStore(STORE).get(projectId);
     const record = (await promisify(req)) as ThumbnailRecord | undefined;
     if (!record) return null;
-    return { svg: await gunzip(record.gz), version: record.version ?? null };
+    return await gunzip(record.gz);
   } catch (error) {
     console.warn("[thumbnail] read failed", error);
     return null;

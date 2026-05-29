@@ -56,7 +56,6 @@ export default function Dashboard() {
                   <ProjectCard
                     project={m.project}
                     role={m.role}
-                    docUpdatedAt={m.docUpdatedAt}
                     onOpen={() => {
                       navigate(`/project/${m.project.id}`);
                     }}

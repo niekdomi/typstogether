@@ -1,16 +1,13 @@
 import { useColorMode } from "@kobalte/core/color-mode";
-import type { RenderedSvgPage } from "@vedivad/typst-web-service";
 import {
   TbOutlineArrowAutofitHeight,
   TbOutlineArrowAutofitWidth,
   TbOutlineZoomIn,
   TbOutlineZoomOut,
 } from "solid-icons/tb";
-import { createEffect, createSignal, For, Match, onCleanup, onMount, Switch } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createSignal, For, Match, onCleanup, onMount, Switch } from "solid-js";
 
 import { Button } from "../../components/ui/button";
-import { renderer } from "../../lib/typst/use-typst-project";
 import ExportPdfButton from "./ExportPdfButton";
 import { useProjectContext } from "./ProjectContext";
 
@@ -25,37 +22,12 @@ const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 export default function PreviewPane() {
   const ctx = useProjectContext();
   const { colorMode: theme } = useColorMode();
-  const [render, setRender] = createStore<{
-    pages: RenderedSvgPage[] | null;
-    error: string | null;
-  }>({ pages: null, error: null });
+  const render = ctx.preview;
   const [zoom, setZoom] = createSignal(1);
   const [panning, setPanning] = createSignal(false);
 
   let scroller: HTMLDivElement | undefined;
   let panOrigin: { x: number; y: number; scrollLeft: number; scrollTop: number } | null = null;
-
-  createEffect(() => {
-    const project = ctx.typst.project;
-    if (!project) return;
-
-    const off = project.onCompile((result) => {
-      const vector = result.vector;
-      if (!vector) {
-        setRender("error", result.diagnostics.find((d) => d.severity === "Error")?.message ?? null);
-        return;
-      }
-      void (async () => {
-        try {
-          setRender({ pages: await renderer.renderSvgPages(vector), error: null });
-        } catch (error) {
-          setRender("error", String(error));
-        }
-      })();
-    });
-
-    onCleanup(off);
-  });
 
   /**
    * Zoom around an anchor point (mouse cursor when ctrl+wheel; container

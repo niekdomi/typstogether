@@ -2,7 +2,7 @@ import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, MAIN_PATH, META_KEY } from "@typstoge
 import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
 import * as Y from "yjs";
 
-import { collabDocument, type Project, project, projectMember } from "../../db/app-schema";
+import { type Project, project, projectMember } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import { currentDb } from "../../transaction";
 import { blobService } from "../blobs/service";
@@ -17,30 +17,21 @@ export interface ProjectMembership {
   role: ProjectRole;
 }
 
-// A list row also carries the project's content-version (collab_document
-// updatedAt, null when no doc has been stored yet) so the dashboard can decide
-// whether its cached thumbnail is stale without fetching each project's doc.
-export interface ProjectListItem extends ProjectMembership {
-  docUpdatedAt: Date | null;
-}
-
 export class ProjectService {
   private membershipSelect(userId: string) {
     return currentDb()
       .select({
         project,
         memberRole: projectMember.role,
-        docUpdatedAt: collabDocument.updatedAt,
       })
       .from(project)
       .leftJoin(
         projectMember,
         and(eq(projectMember.projectId, project.id), eq(projectMember.userId, userId))
-      )
-      .leftJoin(collabDocument, eq(collabDocument.projectId, project.id));
+      );
   }
 
-  async list(userId: string): Promise<ProjectListItem[]> {
+  async list(userId: string): Promise<ProjectMembership[]> {
     const rows = await this.membershipSelect(userId)
       .where(
         and(
@@ -53,7 +44,6 @@ export class ProjectService {
     return rows.map((row) => ({
       project: row.project,
       role: row.project.ownerUserId === userId ? "owner" : row.memberRole!,
-      docUpdatedAt: row.docUpdatedAt,
     }));
   }
 
