@@ -130,12 +130,19 @@ export default function NewProjectModal(props: NewProjectModalProps) {
   });
 
   // Single-flight submit. The latch is set synchronously before the await, so a
-  // second near-simultaneous submit (Enter + clicking Create) is ignored.
+  // second near-simultaneous submit (Enter + clicking Create) is ignored. It is
+  // only released on failure; a success closes the modal (reopening resets it),
+  // which is what closes the race where a fast create resolves before the queued
+  // click is processed.
   const submit = async () => {
     if (submitting() || !trimmedName()) return;
     setSubmitting(true);
     const ok = await props.onSubmit(trimmedName(), resolveTemplate(template(), templates()));
-    if (!ok) setSubmitting(false);
+    if (ok) {
+      props.onClose();
+    } else {
+      setSubmitting(false);
+    }
   };
 
   const categories = createMemo(() => {

@@ -94,11 +94,7 @@ export default function Dashboard() {
         </footer>
       </main>
 
-      <NewProjectModal
-        open={modalOpen()}
-        onClose={() => setModalOpen(false)}
-        onSubmit={(name, template) => create(name, template, () => setModalOpen(false))}
-      />
+      <NewProjectModal open={modalOpen()} onClose={() => setModalOpen(false)} onSubmit={create} />
       <PromptDialog
         open={renameTarget() !== null}
         onClose={() => setRenameTarget(null)}
