@@ -140,6 +140,9 @@
   * {
     @apply border-border outline-ring/50;
     box-sizing: border-box;
+    /* Thin scrollbars app-wide (cards, editor, preview, sidebar). Standard
+       property: Firefox + Chromium 121+; no-op on elements that don't scroll. */
+    scrollbar-width: thin;
   }
 
   html,
@@ -147,10 +150,6 @@
   #app {
     height: 100%;
     margin: 0;
-  }
-
-  html {
-    overflow-y: scroll;
   }
 
   body {
@@ -185,20 +184,6 @@
 
   .mono {
     font-family: var(--mono);
-  }
-
-  /* Fade theme-driven colors on color-mode change. Gated to a brief window
-     (`<html class="theme-changing">`) so the transition only runs around the
-     toggle, otherwise it bleeds into every transient background change
-     (e.g. CodeMirror's active-line highlight as the cursor moves). */
-  html.theme-changing *,
-  html.theme-changing *::before,
-  html.theme-changing *::after {
-    transition:
-      background-color 200ms ease,
-      color 200ms ease,
-      border-color 200ms ease,
-      fill 200ms ease;
   }
 
   @keyframes fadeIn {
