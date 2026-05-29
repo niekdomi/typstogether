@@ -167,8 +167,8 @@ function ProjectView() {
                 <TbOutlineAlertTriangle size={16} color="red" />
               </Show>
             }
-          // NOTE: I commented this out, since it's in most cases just one, didn't add much value therefore
-          // badge={ctx.errorCount() > 0 ? ctx.errorCount() : undefined}
+            // NOTE: I commented this out, since it's in most cases just one, didn't add much value therefore
+            // badge={ctx.errorCount() > 0 ? ctx.errorCount() : undefined}
           />
           <div class="mt-auto" />
           <RailButton
