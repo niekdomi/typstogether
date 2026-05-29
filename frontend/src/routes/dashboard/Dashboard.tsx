@@ -37,9 +37,9 @@ export default function Dashboard() {
   });
 
   return (
-    <div class="bg-background flex min-h-screen flex-col">
+    <div class="bg-background flex h-screen flex-col overflow-hidden">
       <TopBar query={query()} onQuery={setQuery} />
-      <main class="mx-auto flex w-full max-w-310 flex-1 flex-col px-8 py-10">
+      <main class="mx-auto flex min-h-0 w-full max-w-310 flex-1 flex-col px-8 py-10">
         <h1 class="mt-2 mb-8 text-[44px] font-medium tracking-[-0.02em]">Projects</h1>
         <TabsBar
           tab={tab()}
@@ -48,36 +48,40 @@ export default function Dashboard() {
           sharedCount={shared().length}
           onNewProject={() => setModalOpen(true)}
         />
-        <Switch
-          fallback={
-            <div class="my-6 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-7">
-              <For each={list()}>
-                {(m) => (
-                  <ProjectCard
-                    project={m.project}
-                    role={m.role}
-                    onOpen={() => {
-                      navigate(`/project/${m.project.id}`);
-                    }}
-                    onShare={() => setShareTarget({ id: m.project.id, name: m.project.name })}
-                    onRename={() => setRenameTarget({ id: m.project.id, name: m.project.name })}
-                    onDelete={() => setDeleteTarget({ id: m.project.id, name: m.project.name })}
-                  />
-                )}
-              </For>
-            </div>
-          }
-        >
-          <Match when={projects.error !== undefined}>
-            <Alert variant="destructive" class="mt-6">
-              <AlertDescription>Could not load projects.</AlertDescription>
-            </Alert>
-          </Match>
-          <Match when={!projects.loading && list().length === 0}>
-            <p class="text-muted-foreground mt-6 py-16 text-center italic">No matching projects.</p>
-          </Match>
-        </Switch>
-        <footer class="border-border/60 mt-auto flex justify-end border-t pt-6">
+        <div class="min-h-0 flex-1 overflow-y-auto pr-3">
+          <Switch
+            fallback={
+              <div class="my-6 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-7">
+                <For each={list()}>
+                  {(m) => (
+                    <ProjectCard
+                      project={m.project}
+                      role={m.role}
+                      onOpen={() => {
+                        navigate(`/project/${m.project.id}`);
+                      }}
+                      onShare={() => setShareTarget({ id: m.project.id, name: m.project.name })}
+                      onRename={() => setRenameTarget({ id: m.project.id, name: m.project.name })}
+                      onDelete={() => setDeleteTarget({ id: m.project.id, name: m.project.name })}
+                    />
+                  )}
+                </For>
+              </div>
+            }
+          >
+            <Match when={projects.error !== undefined}>
+              <Alert variant="destructive" class="mt-6">
+                <AlertDescription>Could not load projects.</AlertDescription>
+              </Alert>
+            </Match>
+            <Match when={!projects.loading && list().length === 0}>
+              <p class="text-muted-foreground mt-6 py-16 text-center italic">
+                No matching projects.
+              </p>
+            </Match>
+          </Switch>
+        </div>
+        <footer class="border-border/60 flex justify-end border-t pt-6">
           <a
             href="https://github.com/niekdomi/typstogether"
             target="_blank"

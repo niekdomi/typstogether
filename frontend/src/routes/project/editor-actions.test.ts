@@ -7,6 +7,7 @@ import {
   wrapSelection,
   togglePrefix,
   insertLink,
+  insertPageBreak,
   insertTable,
   toggleCode,
   toggleMath,
@@ -217,6 +218,16 @@ describe("insertTable", () => {
     const v = mockView("hi ˅˅there");
     insertTable(v, 2, 1);
     expect(markDoc(v)).toBe("hi #table(\n  columns: 2,\n  [˅˅], [],\n)there");
+  });
+});
+
+// ─── insertPageBreak ─────────────────────────────────────────────────────────
+
+describe("insertPageBreak", () => {
+  test("inserts pagebreak at cursor with cursor after the call", () => {
+    const v = mockView("˅˅");
+    insertPageBreak(v);
+    expect(markDoc(v)).toBe("#pagebreak()˅˅");
   });
 });
 

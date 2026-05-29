@@ -1,5 +1,6 @@
 import { WebSocketStatus } from "@hocuspocus/provider";
 import { A } from "@solidjs/router";
+import { usePanelContext } from "corvu/resizable";
 import { FaSolidChevronLeft } from "solid-icons/fa";
 import {
   TbOutlineAdjustmentsHorizontal,
@@ -7,16 +8,24 @@ import {
   TbOutlineFiles,
   TbOutlineSettings,
 } from "solid-icons/tb";
-import { createSignal, type JSX, Match, Show, Switch } from "solid-js";
+import { createEffect, createSignal, type JSX, Match, Show, Switch } from "solid-js";
 
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Badge } from "../../components/ui/badge";
 import { cx } from "../../components/ui/cva";
+import { Resizable, ResizableHandle, ResizablePanel } from "../../components/ui/resizable";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Switch as SwitchInput } from "../../components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import UserMenu from "../../components/UserMenu";
-import { setVimMode, vimMode } from "../../lib/editor-prefs";
+import {
+  lineNumbers,
+  relativeLineNumbers,
+  setLineNumbers,
+  setRelativeLineNumbers,
+  setVimMode,
+  vimMode,
+} from "../../lib/editor-prefs";
 import AssetPreview from "./AssetPreview";
 import CodeMirrorEditor from "./CodeMirrorEditor";
 import CollaboratorAvatars from "./CollaboratorAvatars";
@@ -26,7 +35,6 @@ import FileSidebar from "./file-sidebar/FileSidebar";
 import PreviewPane from "./PreviewPane";
 import { ProjectProvider, useProjectContext } from "./ProjectContext";
 import ProjectSettingsDialog from "./ProjectSettingsDialog";
-import WorkspacePanel from "./WorkspacePanel";
 
 type Panel = "files" | "diagnostics" | "config" | null;
 
@@ -39,6 +47,25 @@ function EditorPrefsPanel() {
       <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
         <span>Vim mode</span>
         <SwitchInput checked={vimMode()} onChange={setVimMode} />
+      </label>
+      <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
+        <span>Line numbers</span>
+        <SwitchInput checked={lineNumbers()} onChange={setLineNumbers} />
+      </label>
+      <label
+        class={cx(
+          "flex items-center justify-between rounded-md px-2 py-1.5 text-sm",
+          lineNumbers()
+            ? "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer"
+            : "text-muted-foreground cursor-not-allowed"
+        )}
+      >
+        <span>Relative line numbers</span>
+        <SwitchInput
+          checked={relativeLineNumbers()}
+          onChange={setRelativeLineNumbers}
+          disabled={!lineNumbers()}
+        />
       </label>
     </div>
   );
@@ -93,6 +120,19 @@ function statusInfo(status: WebSocketStatus, synced: boolean, readOnly: boolean)
   if (status === WebSocketStatus.Connecting)
     return { label: "Connecting…", color: "bg-yellow-500" };
   return { label: "Disconnected", color: "bg-red-500" };
+}
+
+// Bridges the rail toggle to the resizable sidebar panel: collapsing/expanding
+function SidebarCollapseSync(props: { open: boolean }) {
+  const panel = usePanelContext();
+  createEffect(() => {
+    if (props.open) {
+      if (panel.collapsed()) panel.expand();
+    } else if (!panel.collapsed()) {
+      panel.collapse();
+    }
+  });
+  return null;
 }
 
 function ProjectView() {
@@ -234,20 +274,32 @@ function ProjectView() {
             )}
           </Match>
           <Match when={ctx.ready()}>
-            <>
-              <WorkspacePanel open={currentPanel() !== null}>
-                <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
-                  <FileSidebar />
-                </div>
-                <div class="h-full" classList={{ hidden: currentPanel() !== "diagnostics" }}>
-                  <DiagnosticsPanel />
-                </div>
-                <div class="h-full" classList={{ hidden: currentPanel() !== "config" }}>
-                  <EditorPrefsPanel />
-                </div>
-              </WorkspacePanel>
-              <main class="divide-border/60 grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x">
-                <div class="flex min-w-0 flex-col">
+            <div class="min-h-0 min-w-0 flex-1">
+              <Resizable orientation="horizontal">
+                <ResizablePanel
+                  initialSize={0.2}
+                  minSize="200px"
+                  collapsible
+                  collapsedSize={0}
+                  class="bg-sidebar overflow-hidden"
+                >
+                  <SidebarCollapseSync open={currentPanel() !== null} />
+                  <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
+                    <FileSidebar />
+                  </div>
+                  <div class="h-full" classList={{ hidden: currentPanel() !== "diagnostics" }}>
+                    <DiagnosticsPanel />
+                  </div>
+                  <div class="h-full" classList={{ hidden: currentPanel() !== "config" }}>
+                    <EditorPrefsPanel />
+                  </div>
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel
+                  initialSize={0.4}
+                  minSize="320px"
+                  class="flex min-w-0 flex-col overflow-hidden"
+                >
                   <Show when={!ctx.activeIsAsset()}>
                     <EditorToolbar />
                   </Show>
@@ -256,12 +308,13 @@ function ProjectView() {
                       <AssetPreview />
                     </Show>
                   </div>
-                </div>
-                <div class="min-w-0">
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel initialSize={0.4} minSize="280px" class="min-w-0 overflow-hidden">
                   <PreviewPane />
-                </div>
-              </main>
-            </>
+                </ResizablePanel>
+              </Resizable>
+            </div>
           </Match>
         </Switch>
       </div>
