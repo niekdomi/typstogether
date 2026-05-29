@@ -3,8 +3,9 @@ import { A } from "@solidjs/router";
 import { FaSolidChevronLeft } from "solid-icons/fa";
 import {
   TbOutlineAlertTriangle,
-  TbOutlineFiles,
   TbOutlineSearch,
+  TbOutlineAdjustmentsHorizontal,
+  TbOutlineFiles,
   TbOutlineSettings,
 } from "solid-icons/tb";
 import { createSignal, type JSX, Match, Show, Switch } from "solid-js";
@@ -13,8 +14,10 @@ import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Badge } from "../../components/ui/badge";
 import { cx } from "../../components/ui/cva";
 import { Skeleton } from "../../components/ui/skeleton";
+import { Switch as SwitchInput } from "../../components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import UserMenu from "../../components/UserMenu";
+import { setVimMode, vimMode } from "../../lib/editor-prefs";
 import AssetPreview from "./AssetPreview";
 import CodeMirrorEditor from "./CodeMirrorEditor";
 import CollaboratorAvatars from "./CollaboratorAvatars";
@@ -27,7 +30,21 @@ import ProjectSettingsDialog from "./ProjectSettingsDialog";
 import SearchPanel from "./SearchPanel";
 import WorkspacePanel from "./WorkspacePanel";
 
-type Panel = "files" | "search" | "diagnostics" | null;
+type Panel = "files" | "diagnostics" | "diagnostics" | "config" | null;
+
+function EditorPrefsPanel() {
+  return (
+    <div class="flex flex-col gap-1 p-3">
+      <p class="text-muted-foreground px-1 py-1.5 text-xs font-medium tracking-wide uppercase">
+        Editor
+      </p>
+      <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
+        <span>Vim mode</span>
+        <SwitchInput checked={vimMode()} onChange={setVimMode} />
+      </label>
+    </div>
+  );
+}
 
 interface RailButtonProps {
   label: string;
@@ -174,6 +191,14 @@ function ProjectView() {
           <div class="mt-auto" />
 
           <RailButton
+            label="Editor preferences"
+            active={currentPanel() === "config"}
+            onClick={() => {
+              togglePanel("config");
+            }}
+            icon={<TbOutlineAdjustmentsHorizontal size={16} />}
+          />
+          <RailButton
             label="Project settings"
             active={settingsOpen()}
             onClick={() => {
@@ -231,6 +256,9 @@ function ProjectView() {
                 </div>
                 <div class="h-full" classList={{ hidden: currentPanel() !== "diagnostics" }}>
                   <DiagnosticsPanel />
+                </div>
+                <div class="h-full" classList={{ hidden: currentPanel() !== "config" }}>
+                  <EditorPrefsPanel />
                 </div>
               </WorkspacePanel>
               <main class="divide-border/60 grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x">
