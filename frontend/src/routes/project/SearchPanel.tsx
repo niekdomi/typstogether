@@ -2,7 +2,6 @@ import { EditorView } from "@codemirror/view";
 import { TbOutlineChevronRight, TbOutlineSearch } from "solid-icons/tb";
 import { createMemo, createSignal, For, Show } from "solid-js";
 
-import { SidebarGroupLabel } from "../../components/ui/sidebar";
 import { useProjectContext } from "./ProjectContext";
 
 interface SearchMatch {
@@ -100,6 +99,7 @@ export default function SearchPanel() {
   });
 
   const totalCount = createMemo(() => results().reduce((s, [, ms]) => s + ms.length, 0));
+  const flatMatches = createMemo(() => results().flatMap(([, ms]) => ms));
 
   const jumpTo = (match: SearchMatch) => {
     ctx.setActiveFile(match.path);
@@ -129,6 +129,14 @@ export default function SearchPanel() {
     setVersion((v) => v + 1);
   }
 
+  function replaceNext() {
+    const match = flatMatches()[0];
+    if (!match) return;
+    replaceOne(match);
+    const next = flatMatches()[0];
+    if (next) jumpTo(next);
+  }
+
   function replaceAll() {
     const files = ctx.ready()?.files;
     if (!files) return;
@@ -149,10 +157,10 @@ export default function SearchPanel() {
   }
 
   return (
-    <div class="flex h-full flex-col">
+    <div class="flex h-full min-w-0 flex-col overflow-hidden">
       <div class="flex flex-col gap-1.5 p-2">
-        <div class="flex items-center">
-          <SidebarGroupLabel class="flex-1">Search</SidebarGroupLabel>
+        <div class="flex items-center px-1">
+          <span class="text-sidebar-foreground/70 flex-1 text-xs font-medium">Search</span>
           <OptionButton
             label="Aa"
             title="Match case"
@@ -171,7 +179,7 @@ export default function SearchPanel() {
           />
         </div>
 
-        <div class="flex items-center gap-1">
+        <div class="flex min-w-0 items-center gap-1">
           <button
             type="button"
             onClick={() => {
@@ -183,7 +191,7 @@ export default function SearchPanel() {
           >
             <TbOutlineChevronRight size={14} />
           </button>
-          <div class="border-border bg-background flex flex-1 items-center gap-2 rounded-md border px-2.5 py-1.5">
+          <div class="border-border bg-background flex min-w-0 flex-1 items-center gap-2 rounded-md border px-2.5 py-1.5">
             <TbOutlineSearch size={15} class="text-muted-foreground shrink-0" />
             <input
               type="text"
@@ -198,27 +206,37 @@ export default function SearchPanel() {
         </div>
 
         <Show when={showReplace()}>
-          <div class="flex items-center gap-1">
-            <div class="w-5 shrink-0" />
-            <div class="border-border bg-background flex flex-1 items-center rounded-md border px-2.5 py-1.5">
-              <input
-                type="text"
-                placeholder="Replace…"
-                class="text-foreground min-w-0 flex-1 bg-transparent text-sm outline-none"
-                value={replaceText()}
-                onInput={(e) => {
-                  setReplaceText(e.currentTarget.value);
-                }}
-              />
+          <div class="flex min-w-0 flex-col gap-1">
+            <div class="flex min-w-0 items-center gap-1">
+              <div class="w-5 shrink-0" />
+              <div class="border-border bg-background flex min-w-0 flex-1 items-center rounded-md border px-2.5 py-1.5">
+                <input
+                  type="text"
+                  placeholder="Replace…"
+                  class="text-foreground min-w-0 flex-1 bg-transparent text-sm outline-none"
+                  value={replaceText()}
+                  onInput={(e) => {
+                    setReplaceText(e.currentTarget.value);
+                  }}
+                />
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={replaceAll}
-              title="Replace all"
-              class="text-muted-foreground hover:text-foreground shrink-0 text-xs transition-colors"
-            >
-              All
-            </button>
+            <div class="flex items-center gap-2 pl-6">
+              <button
+                type="button"
+                onClick={replaceNext}
+                class="text-muted-foreground hover:text-foreground text-xs transition-colors"
+              >
+                Replace
+              </button>
+              <button
+                type="button"
+                onClick={replaceAll}
+                class="text-muted-foreground hover:text-foreground text-xs transition-colors"
+              >
+                Replace All
+              </button>
+            </div>
           </div>
         </Show>
       </div>

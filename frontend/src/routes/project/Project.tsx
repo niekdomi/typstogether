@@ -30,7 +30,7 @@ import ProjectSettingsDialog from "./ProjectSettingsDialog";
 import SearchPanel from "./SearchPanel";
 import WorkspacePanel from "./WorkspacePanel";
 
-type Panel = "files" | "diagnostics" | "diagnostics" | "config" | null;
+type Panel = "files" | "search" | "diagnostics" | "config" | null;
 
 function EditorPrefsPanel() {
   return (
