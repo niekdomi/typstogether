@@ -38,10 +38,19 @@ function EditorPrefsPanel() {
       <p class="text-muted-foreground px-1 py-1.5 text-xs font-medium tracking-wide uppercase">
         Editor
       </p>
-      <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
+      <div
+        onClick={() => setVimMode((v) => !v)}
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm"
+      >
         <span>Vim mode</span>
-        <SwitchInput checked={vimMode()} onChange={setVimMode} />
-      </label>
+        <SwitchInput
+          checked={vimMode()}
+          onChange={setVimMode}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+          }}
+        />
+      </div>
     </div>
   );
 }
