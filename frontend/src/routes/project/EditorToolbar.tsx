@@ -3,6 +3,7 @@ import {
   TbOutlineBold,
   TbOutlineChevronDown,
   TbOutlineCode,
+  TbOutlineFrame,
   TbOutlineMath,
   TbOutlineH1,
   TbOutlineH2,
@@ -12,12 +13,14 @@ import {
   TbOutlineLink,
   TbOutlineList,
   TbOutlineListNumbers,
+  TbOutlinePhoto,
+  TbOutlinePlus,
   TbOutlineStrikethrough,
   TbOutlineSubscript,
   TbOutlineSuperscript,
   TbOutlineUnderline,
 } from "solid-icons/tb";
-import { For, type JSX } from "solid-js";
+import { For, type JSX, Show } from "solid-js";
 
 import { Button } from "../../components/ui/button";
 import {
@@ -29,6 +32,8 @@ import {
 } from "../../components/ui/dropdown-menu";
 import {
   HEADING_GROUP,
+  insertFigure,
+  insertImage,
   insertLink,
   LIST_GROUP,
   toggleCode,
@@ -41,7 +46,8 @@ import { useProjectContext } from "./ProjectContext";
 interface ToolbarAction {
   icon: () => JSX.Element;
   label: string;
-  shortcut: string;
+  /** Optional — omit for actions that aren't bound to a keymap (e.g. snippets). */
+  shortcut?: string;
   run: (view: EditorView) => void;
 }
 
@@ -177,6 +183,19 @@ const linkAction: ToolbarAction = {
   run: insertLink,
 };
 
+const snippetItems: ToolbarAction[] = [
+  {
+    icon: () => <TbOutlinePhoto />,
+    label: "Image",
+    run: insertImage,
+  },
+  {
+    icon: () => <TbOutlineFrame />,
+    label: "Figure",
+    run: insertFigure,
+  },
+];
+
 function Divider() {
   return <div class="bg-border/60 mx-1 h-5 w-px" />;
 }
@@ -192,7 +211,11 @@ function ActionButton(props: ActionButtonProps) {
     <Button
       variant="ghost"
       size="icon-sm"
-      title={`${props.action.label} (${props.action.shortcut})`}
+      title={
+        props.action.shortcut
+          ? `${props.action.label} (${props.action.shortcut})`
+          : props.action.label
+      }
       aria-label={props.action.label}
       aria-keyshortcuts={props.action.shortcut}
       disabled={props.disabled}
@@ -238,7 +261,9 @@ function ActionMenu(props: ActionMenuProps) {
             >
               {item.icon()}
               <span class="flex-1">{item.label}</span>
-              <DropdownMenuShortcut>{item.shortcut}</DropdownMenuShortcut>
+              <Show when={item.shortcut}>
+                {(s) => <DropdownMenuShortcut>{s()}</DropdownMenuShortcut>}
+              </Show>
             </DropdownMenuItem>
           )}
         </For>
@@ -285,6 +310,13 @@ export default function EditorToolbar() {
         disabled={disabled()}
       />
       <Divider />
+      <ActionMenu
+        label="Insert"
+        trigger={() => <TbOutlinePlus />}
+        items={snippetItems}
+        onRun={run}
+        disabled={disabled()}
+      />
       <ActionButton action={linkAction} onRun={run} disabled={disabled()} />
     </div>
   );
