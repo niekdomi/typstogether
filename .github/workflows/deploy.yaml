@@ -5,7 +5,6 @@ on:
     branches:
       - main
       - caddy-tls
-      #
   workflow_dispatch:
 
 jobs:
@@ -23,7 +22,3 @@ jobs:
 
       - name: Build and deploy
         run: docker compose up --build -d
-
-      - name: Debug logs on failure
-        if: failure()
-        run: docker compose logs backend
