@@ -1,4 +1,6 @@
-{$FRONTEND_URL:http://localhost} {
+{$FRONTEND_URL:localhost} {
+    tls internal
+
     handle /api/* {
         reverse_proxy backend:3000
     }
