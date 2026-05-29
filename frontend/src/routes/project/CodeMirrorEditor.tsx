@@ -8,7 +8,11 @@ import { createEffect, getOwner, onCleanup, onMount, runWithOwner } from "solid-
 import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
-import { lineNumbers as showLineNumbers, relativeLineNumbers, vimMode } from "../../lib/editor-prefs";
+import {
+  lineNumbers as showLineNumbers,
+  relativeLineNumbers,
+  vimMode,
+} from "../../lib/editor-prefs";
 import { fileDropHandler, formatKeymap } from "./editor-actions";
 import { editorSetup } from "./editor-setup";
 import { editorTheme, fillHeight, getHighlighting, popupTheme } from "./editor-theme";
@@ -52,12 +56,18 @@ export default function CodeMirrorEditor() {
       const lineNumberCompartment = new Compartment();
 
       const buildLineNumbers = () => {
-        if (!showLineNumbers()) return [];
-        if (!relativeLineNumbers()) return lineNumbers();
+        if (!showLineNumbers()) {
+          return [];
+        }
+
+        if (!relativeLineNumbers()) {
+          return lineNumbers();
+        }
+
         return lineNumbers({
           formatNumber: (n, state) => {
-            const cur = state.doc.lineAt(state.selection.main.head).number;
-            return n === cur ? String(n) : String(Math.abs(n - cur));
+            const location = state.doc.lineAt(state.selection.main.head).number;
+            return n === location ? String(n) : String(Math.abs(n - location));
           },
         });
       };
