@@ -156,6 +156,27 @@ export function togglePrefix(view: EditorView, target: string, group?: RegExp): 
   view.focus();
 }
 
+/** Insert an empty Typst `#table` of `cols × rows` with the cursor in the first cell. */
+export function insertTable(view: EditorView, cols: number, rows: number): void {
+  const head = `#table(\n  columns: ${String(cols)},\n  [`;
+  const firstRowRest =
+    cols > 1 ? "], " + Array.from({ length: cols - 1 }, () => "[]").join(", ") + "," : "],";
+  const otherRows = Array.from(
+    { length: rows - 1 },
+    () => "  " + Array.from({ length: cols }, () => "[]").join(", ") + ","
+  ).join("\n");
+  const tail = firstRowRest + (otherRows ? "\n" + otherRows : "") + "\n)";
+
+  view.dispatch(
+    view.state.changeByRange((range) => ({
+      changes: { from: range.from, to: range.to, insert: head + tail },
+      range: EditorSelection.cursor(range.from + head.length),
+    })),
+    { userEvent: "input.insert" }
+  );
+  view.focus();
+}
+
 /** Insert a Typst `#link("url")[text]` template with cursor in the URL slot. */
 export function insertLink(view: EditorView): void {
   const before = '#link("';
