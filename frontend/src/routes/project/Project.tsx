@@ -1,12 +1,14 @@
 import { WebSocketStatus } from "@hocuspocus/provider";
 import { A } from "@solidjs/router";
+import { usePanelContext } from "corvu/resizable";
 import { FaSolidChevronLeft } from "solid-icons/fa";
 import { TbOutlineAlertTriangle, TbOutlineFiles, TbOutlineSettings } from "solid-icons/tb";
-import { createSignal, type JSX, Match, Show, Switch } from "solid-js";
+import { createEffect, createSignal, type JSX, Match, Show, Switch } from "solid-js";
 
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Badge } from "../../components/ui/badge";
 import { cx } from "../../components/ui/cva";
+import { Resizable, ResizableHandle, ResizablePanel } from "../../components/ui/resizable";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
 import UserMenu from "../../components/UserMenu";
@@ -19,7 +21,6 @@ import FileSidebar from "./file-sidebar/FileSidebar";
 import PreviewPane from "./PreviewPane";
 import { ProjectProvider, useProjectContext } from "./ProjectContext";
 import ProjectSettingsDialog from "./ProjectSettingsDialog";
-import WorkspacePanel from "./WorkspacePanel";
 
 type Panel = "files" | "diagnostics" | null;
 
@@ -72,6 +73,19 @@ function statusInfo(status: WebSocketStatus, synced: boolean, readOnly: boolean)
   if (status === WebSocketStatus.Connecting)
     return { label: "Connecting…", color: "bg-yellow-500" };
   return { label: "Disconnected", color: "bg-red-500" };
+}
+
+// Bridges the rail toggle to the resizable sidebar panel: collapsing/expanding
+function SidebarCollapseSync(props: { open: boolean }) {
+  const panel = usePanelContext();
+  createEffect(() => {
+    if (props.open) {
+      if (panel.collapsed()) panel.expand();
+    } else if (!panel.collapsed()) {
+      panel.collapse();
+    }
+  });
+  return null;
 }
 
 function ProjectView() {
@@ -153,8 +167,8 @@ function ProjectView() {
                 <TbOutlineAlertTriangle size={16} color="red" />
               </Show>
             }
-            // NOTE: I commented this out, since it's in most cases just one, didn't add much value therefore
-            // badge={ctx.errorCount() > 0 ? ctx.errorCount() : undefined}
+          // NOTE: I commented this out, since it's in most cases just one, didn't add much value therefore
+          // badge={ctx.errorCount() > 0 ? ctx.errorCount() : undefined}
           />
           <div class="mt-auto" />
           <RailButton
@@ -205,31 +219,42 @@ function ProjectView() {
             )}
           </Match>
           <Match when={ctx.ready()}>
-            <>
-              <WorkspacePanel open={currentPanel() !== null}>
+            <Resizable orientation="horizontal" class="min-h-0 flex-1">
+              <ResizablePanel
+                initialSize={0.2}
+                minSize="200px"
+                collapsible
+                collapsedSize={0}
+                class="bg-sidebar overflow-hidden"
+              >
+                <SidebarCollapseSync open={currentPanel() !== null} />
                 <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
                   <FileSidebar />
                 </div>
                 <div class="h-full" classList={{ hidden: currentPanel() !== "diagnostics" }}>
                   <DiagnosticsPanel />
                 </div>
-              </WorkspacePanel>
-              <main class="divide-border/60 grid min-h-0 flex-1 grid-cols-2 grid-rows-1 divide-x">
-                <div class="flex min-w-0 flex-col">
-                  <Show when={!ctx.activeIsAsset()}>
-                    <EditorToolbar />
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel
+                initialSize={0.4}
+                minSize="320px"
+                class="flex min-w-0 flex-col overflow-hidden"
+              >
+                <Show when={!ctx.activeIsAsset()}>
+                  <EditorToolbar />
+                </Show>
+                <div class="min-h-0 flex-1">
+                  <Show when={ctx.activeIsAsset()} fallback={<CodeMirrorEditor />}>
+                    <AssetPreview />
                   </Show>
-                  <div class="min-h-0 flex-1">
-                    <Show when={ctx.activeIsAsset()} fallback={<CodeMirrorEditor />}>
-                      <AssetPreview />
-                    </Show>
-                  </div>
                 </div>
-                <div class="min-w-0">
-                  <PreviewPane />
-                </div>
-              </main>
-            </>
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel initialSize={0.4} minSize="280px" class="min-w-0 overflow-hidden">
+                <PreviewPane />
+              </ResizablePanel>
+            </Resizable>
           </Match>
         </Switch>
       </div>
