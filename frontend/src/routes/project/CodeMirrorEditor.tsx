@@ -8,9 +8,9 @@ import { createEffect, getOwner, onCleanup, onMount, runWithOwner } from "solid-
 import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
-import { vimMode } from "../../lib/editor-prefs";
+import { relativeLineNumbers, showLineNumbers, vimMode } from "../../lib/editor-prefs";
 import { fileDropHandler, formatKeymap } from "./editor-actions";
-import { editorSetup } from "./editor-setup";
+import { buildLineNumbers, editorSetup } from "./editor-setup";
 import { editorTheme, fillHeight, getHighlighting, popupTheme } from "./editor-theme";
 import { useProjectContext } from "./ProjectContext";
 
@@ -49,6 +49,7 @@ export default function CodeMirrorEditor() {
       const readOnlyCompartment = new Compartment();
       const themeCompartment = new Compartment();
       const vimCompartment = new Compartment();
+      const lineNumbersCompartment = new Compartment();
       const setup = createTypstSetup({
         project: typstProject,
         sync: "external",
@@ -82,6 +83,7 @@ export default function CodeMirrorEditor() {
             Prec.high(formatKeymap),
             fileDropHandler,
             keymap.of([indentWithTab, ...yUndoManagerKeymap]),
+            lineNumbersCompartment.of(buildLineNumbers(showLineNumbers(), relativeLineNumbers())),
             editorSetup,
             ...setup,
             yCollab(text, ctx.collab.awareness, { undoManager: cache.undoManager }),
@@ -116,6 +118,9 @@ export default function CodeMirrorEditor() {
             themeCompartment.reconfigure(editorTheme(theme())),
             readOnlyCompartment.reconfigure(EditorState.readOnly.of(ctx.isReadOnly())),
             vimCompartment.reconfigure(vimMode() ? vim() : []),
+            lineNumbersCompartment.reconfigure(
+              buildLineNumbers(showLineNumbers(), relativeLineNumbers())
+            ),
           ],
         });
         controller.setTheme(view, theme());
@@ -150,10 +155,12 @@ export default function CodeMirrorEditor() {
         });
 
         createEffect(() => {
-          // Touch reactive deps (theme/readOnly/vim) so reconfigure runs on change.
+          // Touch reactive deps (theme/readOnly/vim/line-numbers) so reconfigure runs on change.
           theme();
           ctx.isReadOnly();
           vimMode();
+          showLineNumbers();
+          relativeLineNumbers();
           syncCompartments();
         });
 
