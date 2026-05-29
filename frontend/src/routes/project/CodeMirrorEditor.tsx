@@ -1,6 +1,6 @@
 import { indentWithTab } from "@codemirror/commands";
 import { Compartment, type EditorSelection, EditorState, Prec } from "@codemirror/state";
-import { EditorView, keymap } from "@codemirror/view";
+import { EditorView, keymap, lineNumbers } from "@codemirror/view";
 import { useColorMode } from "@kobalte/core/color-mode";
 import { Vim, vim } from "@replit/codemirror-vim";
 import { createTypstSetup, typstFilePath } from "@vedivad/codemirror-typst";
@@ -8,7 +8,7 @@ import { createEffect, getOwner, onCleanup, onMount, runWithOwner } from "solid-
 import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
-import { vimMode } from "../../lib/editor-prefs";
+import { lineNumbers as showLineNumbers, relativeLineNumbers, vimMode } from "../../lib/editor-prefs";
 import { fileDropHandler, formatKeymap } from "./editor-actions";
 import { editorSetup } from "./editor-setup";
 import { editorTheme, fillHeight, getHighlighting, popupTheme } from "./editor-theme";
@@ -49,6 +49,18 @@ export default function CodeMirrorEditor() {
       const readOnlyCompartment = new Compartment();
       const themeCompartment = new Compartment();
       const vimCompartment = new Compartment();
+      const lineNumberCompartment = new Compartment();
+
+      const buildLineNumbers = () => {
+        if (!showLineNumbers()) return [];
+        if (!relativeLineNumbers()) return lineNumbers();
+        return lineNumbers({
+          formatNumber: (n, state) => {
+            const cur = state.doc.lineAt(state.selection.main.head).number;
+            return n === cur ? String(n) : String(Math.abs(n - cur));
+          },
+        });
+      };
       const setup = createTypstSetup({
         project: typstProject,
         sync: "external",
@@ -82,6 +94,7 @@ export default function CodeMirrorEditor() {
             Prec.high(formatKeymap),
             fileDropHandler,
             keymap.of([indentWithTab, ...yUndoManagerKeymap]),
+            lineNumberCompartment.of(buildLineNumbers()),
             editorSetup,
             ...setup,
             yCollab(text, ctx.collab.awareness, { undoManager: cache.undoManager }),
@@ -116,6 +129,7 @@ export default function CodeMirrorEditor() {
             themeCompartment.reconfigure(editorTheme(theme())),
             readOnlyCompartment.reconfigure(EditorState.readOnly.of(ctx.isReadOnly())),
             vimCompartment.reconfigure(vimMode() ? vim() : []),
+            lineNumberCompartment.reconfigure(buildLineNumbers()),
           ],
         });
         controller.setTheme(view, theme());
@@ -150,10 +164,12 @@ export default function CodeMirrorEditor() {
         });
 
         createEffect(() => {
-          // Touch reactive deps (theme/readOnly/vim) so reconfigure runs on change.
+          // Touch reactive deps so reconfigure runs on change.
           theme();
           ctx.isReadOnly();
           vimMode();
+          showLineNumbers();
+          relativeLineNumbers();
           syncCompartments();
         });
 
