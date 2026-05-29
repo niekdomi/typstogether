@@ -1,5 +1,4 @@
 import type { EditorView } from "@codemirror/view";
-import { DropdownMenu as DropdownMenuPrimitive } from "@kobalte/core/dropdown-menu";
 import {
   TbOutlineBold,
   TbOutlineChevronDown,
@@ -28,8 +27,6 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
-import { Switch } from "../../components/ui/switch";
-import { setVimMode, vimMode } from "../../lib/editor-prefs";
 import {
   HEADING_GROUP,
   insertLink,
@@ -289,29 +286,6 @@ export default function EditorToolbar() {
       />
       <Divider />
       <ActionButton action={linkAction} onRun={run} disabled={disabled()} />
-      <DropdownMenu placement="bottom-end" gutter={4}>
-        <DropdownMenuTrigger
-          as={Button<"button">}
-          variant="ghost"
-          size="icon-sm"
-          class="group ml-auto"
-          title="Editor settings"
-          aria-label="Editor settings"
-        >
-          <TbOutlineChevronDown class="transition-transform duration-200 group-data-[expanded]:rotate-180" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent class="min-w-52">
-          <DropdownMenuPrimitive.CheckboxItem
-            checked={vimMode()}
-            onChange={setVimMode}
-            closeOnSelect={false}
-            class="data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground relative flex cursor-default items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-          >
-            <span>Vim mode</span>
-            <Switch checked={vimMode()} class="pointer-events-none" aria-hidden="true" />
-          </DropdownMenuPrimitive.CheckboxItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 }
