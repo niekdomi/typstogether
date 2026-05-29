@@ -14,9 +14,9 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 
 async function fetchAsDataUrl(href: string): Promise<string | null> {
   try {
-    const res = await fetch(href, { credentials: "include" });
-    if (!res.ok) return null;
-    return await blobToDataUrl(await res.blob());
+    const response = await fetch(href, { credentials: "include" });
+    if (!response.ok) return null;
+    return await blobToDataUrl(await response.blob());
   } catch (error) {
     console.warn("[thumbnail] failed to inline", href, error);
     return null;
