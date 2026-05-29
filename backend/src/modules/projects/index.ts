@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 
-import { enforceCooldown } from "../../rate-limit";
+import { cooldownMacro } from "../../rate-limit";
 import { projectAccessMacro } from "./macro";
 import { projectMembershipModel, projectModel, projectModels, projectSnapshotModel } from "./model";
 import { projectService } from "./service";
@@ -11,6 +11,7 @@ const CREATE_COOLDOWN_MS = 1000;
 
 export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/projects" })
   .use(projectAccessMacro)
+  .use(cooldownMacro)
   .model(projectModels)
 
   .get("/", ({ user }) => projectService.list(user.id), {
@@ -21,12 +22,10 @@ export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/proj
   .post("/", ({ user, body }) => projectService.create(user.id, body), {
     body: "project.create",
     auth: true,
-    beforeHandle: ({ user }) => {
-      enforceCooldown(
-        `project-create:${user.id}`,
-        CREATE_COOLDOWN_MS,
-        "You're creating projects too quickly. Try again in a moment."
-      );
+    cooldown: {
+      key: "project-create",
+      ms: CREATE_COOLDOWN_MS,
+      message: "You're creating projects too quickly. Try again in a moment.",
     },
     response: projectModel,
   })

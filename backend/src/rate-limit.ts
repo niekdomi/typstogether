@@ -1,4 +1,7 @@
+import { Elysia } from "elysia";
+
 import { TooManyRequestsError } from "./errors";
+import { authMacro } from "./modules/auth/macro";
 
 // Per-process, in-memory cooldown keyed by an arbitrary string (e.g. a userId).
 // Fine for the single backend instance; if it's ever horizontally scaled this
@@ -21,7 +24,9 @@ export function enforceCooldown(key: string, cooldownMs: number, message: string
   const now = Date.now();
 
   if (now - lastSweep > SWEEP_INTERVAL_MS) {
-    for (const [k, expiresAt] of expiry) if (expiresAt <= now) expiry.delete(k);
+    for (const [k, expiresAt] of expiry) {
+      if (expiresAt <= now) expiry.delete(k);
+    }
     lastSweep = now;
   }
 
@@ -29,3 +34,30 @@ export function enforceCooldown(key: string, cooldownMs: number, message: string
   if (expiresAt !== undefined && expiresAt > now) throw new TooManyRequestsError(message);
   expiry.set(key, now + cooldownMs);
 }
+
+export interface CooldownOptions {
+  /** Namespace for the cooldown key; combined with the caller's user id. */
+  key: string;
+  /** Minimum gap between accepted requests, in milliseconds. */
+  ms: number;
+  /** User-facing 429 message shown while the cooldown is active. */
+  message: string;
+}
+
+/**
+ * Per-route, per-user cooldown. Apply with `cooldown: { key, ms, message }` on a
+ * route; the key is namespaced by the caller's user id, so it implies `auth`.
+ * Mirrors the auth/authorization macro convention (see projects/macro.ts).
+ */
+export const cooldownMacro = new Elysia({ name: "cooldown-macro" })
+  .use(authMacro)
+  .macro("cooldown", (options: CooldownOptions) => ({
+    auth: true,
+    beforeHandle: (context) => {
+      // `auth: true` resolves the session before this runs, so `user` is present
+      // at runtime; Elysia's function-macro typing doesn't thread it into the
+      // context, hence the narrowing cast.
+      const { user } = context as typeof context & { user: { id: string } };
+      enforceCooldown(`${options.key}:${user.id}`, options.ms, options.message);
+    },
+  }));
