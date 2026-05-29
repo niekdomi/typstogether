@@ -12,6 +12,7 @@ import {
   TbOutlineLink,
   TbOutlineList,
   TbOutlineListNumbers,
+  TbOutlinePageBreak,
   TbOutlineStrikethrough,
   TbOutlineSubscript,
   TbOutlineSuperscript,
@@ -30,6 +31,7 @@ import {
 import {
   HEADING_GROUP,
   insertLink,
+  insertPageBreak,
   LIST_GROUP,
   toggleCode,
   toggleMath,
@@ -41,7 +43,8 @@ import { useProjectContext } from "./ProjectContext";
 interface ToolbarAction {
   icon: () => JSX.Element;
   label: string;
-  shortcut: string;
+  /** Optional — omit for actions that aren't bound to a keymap. */
+  shortcut?: string;
   run: (view: EditorView) => void;
 }
 
@@ -177,6 +180,12 @@ const linkAction: ToolbarAction = {
   run: insertLink,
 };
 
+const pageBreakAction: ToolbarAction = {
+  icon: () => <TbOutlinePageBreak />,
+  label: "Page break",
+  run: insertPageBreak,
+};
+
 function Divider() {
   return <div class="bg-border/60 mx-1 h-5 w-px" />;
 }
@@ -192,7 +201,11 @@ function ActionButton(props: ActionButtonProps) {
     <Button
       variant="ghost"
       size="icon-sm"
-      title={`${props.action.label} (${props.action.shortcut})`}
+      title={
+        props.action.shortcut
+          ? `${props.action.label} (${props.action.shortcut})`
+          : props.action.label
+      }
       aria-label={props.action.label}
       aria-keyshortcuts={props.action.shortcut}
       disabled={props.disabled}
@@ -286,6 +299,7 @@ export default function EditorToolbar() {
       />
       <Divider />
       <ActionButton action={linkAction} onRun={run} disabled={disabled()} />
+      <ActionButton action={pageBreakAction} onRun={run} disabled={disabled()} />
     </div>
   );
 }
