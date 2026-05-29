@@ -15,6 +15,13 @@
       "when": 1778848536694,
       "tag": "0001_serious_mandroid",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780048885956,
+      "tag": "0002_numerous_forgotten_one",
+      "breakpoints": true
     }
   ]
 }

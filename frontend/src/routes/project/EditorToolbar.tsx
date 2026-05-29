@@ -83,7 +83,7 @@ const headingItems: ToolbarAction[] = [
   },
 ];
 
-// Inline formatting stays flat — high-frequency actions worth keeping one click away.
+// Inline formatting stays flat, high-frequency actions worth keeping one click away.
 const inlineFormat: ToolbarAction[] = [
   {
     icon: () => <TbOutlineBold />,
