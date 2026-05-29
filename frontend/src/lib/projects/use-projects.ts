@@ -1,7 +1,7 @@
 import { createResource } from "solid-js";
 import { toast } from "somoto";
 
-import { api } from "../api";
+import { api, apiErrorMessage } from "../api";
 import { deleteThumbnail } from "../typst/thumbnail-cache";
 import type { Membership } from "./types";
 
@@ -21,7 +21,7 @@ export function useProjects() {
   ) {
     const { error } = await fn();
     if (error) {
-      toast.error(errorMsg);
+      toast.error(apiErrorMessage(error, errorMsg));
       return;
     }
 
@@ -41,25 +41,11 @@ export function useProjects() {
       }
     );
 
-  // Guard against multi submits (e.g. spamming Enter)
-  let creating = false;
-  const create = async (
+  const create = (
     name: string,
     template: { id: string; version: string } | undefined,
     onSuccess?: () => void
-  ) => {
-    if (creating) return;
-    creating = true;
-    try {
-      await mutate(
-        () => api.projects.post({ name, template }),
-        "Could not create project.",
-        onSuccess
-      );
-    } finally {
-      creating = false;
-    }
-  };
+  ) => mutate(() => api.projects.post({ name, template }), "Could not create project.", onSuccess);
 
   return { projects, rename, remove, create };
 }

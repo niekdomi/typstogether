@@ -1,4 +1,4 @@
-import { api, baseUrl } from "../api";
+import { api, apiErrorMessage, baseUrl } from "../api";
 
 export interface UploadedBlob {
   id: string;
@@ -18,8 +18,7 @@ export class AssetUploadError extends Error {
 export async function uploadAsset(projectId: string, file: File): Promise<UploadedBlob> {
   const { data, error } = await api.projects({ id: projectId }).blobs.post({ file });
   if (error) {
-    const message = typeof error.value === "string" ? error.value : JSON.stringify(error.value);
-    throw new AssetUploadError(message, error.status);
+    throw new AssetUploadError(apiErrorMessage(error, "Upload failed."), error.status);
   }
   return data;
 }

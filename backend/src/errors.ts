@@ -26,6 +26,10 @@ export class UnsupportedMediaTypeError extends HttpError {
   readonly status = 415;
 }
 
+export class TooManyRequestsError extends HttpError {
+  readonly status = 429;
+}
+
 export class BadGatewayError extends HttpError {
   readonly status = 502;
 }
