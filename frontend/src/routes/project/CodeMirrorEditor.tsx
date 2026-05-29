@@ -36,6 +36,23 @@ interface PerFileCache {
   selection?: EditorSelection;
 }
 
+const buildLineNumbers = () => {
+  if (!showLineNumbers()) {
+    return [];
+  }
+
+  if (!relativeLineNumbers()) {
+    return lineNumbers();
+  }
+
+  return lineNumbers({
+    formatNumber: (n, state) => {
+      const location = state.doc.lineAt(state.selection.main.head).number;
+      return n === location ? String(n) : String(Math.abs(n - location));
+    },
+  });
+};
+
 export default function CodeMirrorEditor() {
   const ctx = useProjectContext();
   const { colorMode: theme } = useColorMode();
@@ -55,22 +72,6 @@ export default function CodeMirrorEditor() {
       const vimCompartment = new Compartment();
       const lineNumberCompartment = new Compartment();
 
-      const buildLineNumbers = () => {
-        if (!showLineNumbers()) {
-          return [];
-        }
-
-        if (!relativeLineNumbers()) {
-          return lineNumbers();
-        }
-
-        return lineNumbers({
-          formatNumber: (n, state) => {
-            const location = state.doc.lineAt(state.selection.main.head).number;
-            return n === location ? String(n) : String(Math.abs(n - location));
-          },
-        });
-      };
       const setup = createTypstSetup({
         project: typstProject,
         sync: "external",
