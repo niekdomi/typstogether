@@ -188,6 +188,19 @@ export function insertFigure(view: EditorView): void {
   view.focus();
 }
 
+/** Insert a Typst `#pagebreak()` at the cursor. */
+export function insertPageBreak(view: EditorView): void {
+  const inserted = "#pagebreak()";
+  view.dispatch(
+    view.state.changeByRange((range) => ({
+      changes: { from: range.from, to: range.to, insert: inserted },
+      range: EditorSelection.cursor(range.from + inserted.length),
+    })),
+    { userEvent: "input.insert" }
+  );
+  view.focus();
+}
+
 /** Insert a Typst `#link("url")[text]` template with cursor in the URL slot. */
 export function insertLink(view: EditorView): void {
   const before = '#link("';

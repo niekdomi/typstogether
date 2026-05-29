@@ -9,6 +9,7 @@ import {
   insertFigure,
   insertImage,
   insertLink,
+  insertPageBreak,
   toggleCode,
   toggleMath,
   HEADING_GROUP,
@@ -216,6 +217,16 @@ describe("insertFigure", () => {
     const v = mockView("˅˅");
     insertFigure(v);
     expect(markDoc(v)).toBe("#figure(\n  ˅˅,\n  caption: [Caption],\n)");
+  });
+});
+
+// ─── insertPageBreak ─────────────────────────────────────────────────────────
+
+describe("insertPageBreak", () => {
+  test("inserts pagebreak at cursor with cursor after the call", () => {
+    const v = mockView("˅˅");
+    insertPageBreak(v);
+    expect(markDoc(v)).toBe("#pagebreak()˅˅");
   });
 });
 

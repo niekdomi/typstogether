@@ -13,6 +13,7 @@ import {
   TbOutlineLink,
   TbOutlineList,
   TbOutlineListNumbers,
+  TbOutlinePageBreak,
   TbOutlinePhoto,
   TbOutlinePlus,
   TbOutlineStrikethrough,
@@ -35,6 +36,7 @@ import {
   insertFigure,
   insertImage,
   insertLink,
+  insertPageBreak,
   LIST_GROUP,
   toggleCode,
   toggleMath,
@@ -46,7 +48,7 @@ import { useProjectContext } from "./ProjectContext";
 interface ToolbarAction {
   icon: () => JSX.Element;
   label: string;
-  /** Optional — omit for actions that aren't bound to a keymap (e.g. snippets). */
+  /** Optional — omit for actions that aren't bound to a keymap. */
   shortcut?: string;
   run: (view: EditorView) => void;
 }
@@ -196,6 +198,12 @@ const snippetItems: ToolbarAction[] = [
   },
 ];
 
+const pageBreakAction: ToolbarAction = {
+  icon: () => <TbOutlinePageBreak />,
+  label: "Page break",
+  run: insertPageBreak,
+};
+
 function Divider() {
   return <div class="bg-border/60 mx-1 h-5 w-px" />;
 }
@@ -318,6 +326,7 @@ export default function EditorToolbar() {
         disabled={disabled()}
       />
       <ActionButton action={linkAction} onRun={run} disabled={disabled()} />
+      <ActionButton action={pageBreakAction} onRun={run} disabled={disabled()} />
     </div>
   );
 }
