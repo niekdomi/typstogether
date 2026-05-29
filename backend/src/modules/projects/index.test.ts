@@ -154,6 +154,44 @@ describe("GET /projects/:id", () => {
   });
 });
 
+describe("GET /projects/:id/snapshot", () => {
+  test("401 when unauthenticated", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+
+    const res = await request(`/projects/${project.id}/snapshot`);
+
+    expect(res.status).toBe(401);
+  });
+
+  test("404 when caller is not a member", async () => {
+    const owner = await userFactory.create();
+    const stranger = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    setTestUser(stranger);
+
+    const res = await request(`/projects/${project.id}/snapshot`);
+
+    expect(res.status).toBe(404);
+  });
+
+  test("200 returns an empty snapshot for a member's blank project", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    setTestUser(owner);
+
+    const res = await request(`/projects/${project.id}/snapshot`);
+    const body = (await res.json()) as {
+      entry: string;
+      files: Record<string, string>;
+      assets: Record<string, string>;
+    };
+
+    expect(res.status).toBe(200);
+    expect(body).toEqual({ entry: "/main.typ", files: {}, assets: {} });
+  });
+});
+
 describe("PATCH /projects/:id", () => {
   test("401 when unauthenticated", async () => {
     const owner = await userFactory.create();
