@@ -99,7 +99,7 @@ export default function ProjectCard(props: ProjectCardProps) {
         ref={(el) => {
           thumbRef = el;
         }}
-        class="bg-muted border-border flex aspect-[1/1.1] border-b"
+        class="bg-muted border-border flex aspect-[1/1.1] min-h-0 border-b"
       >
         <div
           class="flex flex-1 items-center justify-center overflow-hidden rounded-t-xl bg-white"
