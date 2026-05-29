@@ -1,7 +1,12 @@
 import { WebSocketStatus } from "@hocuspocus/provider";
 import { A } from "@solidjs/router";
 import { FaSolidChevronLeft } from "solid-icons/fa";
-import { TbOutlineAlertTriangle, TbOutlineFiles, TbOutlineSettings } from "solid-icons/tb";
+import {
+  TbOutlineAlertTriangle,
+  TbOutlineFiles,
+  TbOutlineSearch,
+  TbOutlineSettings,
+} from "solid-icons/tb";
 import { createSignal, type JSX, Match, Show, Switch } from "solid-js";
 
 import { Alert, AlertDescription } from "../../components/ui/alert";
@@ -19,9 +24,10 @@ import FileSidebar from "./file-sidebar/FileSidebar";
 import PreviewPane from "./PreviewPane";
 import { ProjectProvider, useProjectContext } from "./ProjectContext";
 import ProjectSettingsDialog from "./ProjectSettingsDialog";
+import SearchPanel from "./SearchPanel";
 import WorkspacePanel from "./WorkspacePanel";
 
-type Panel = "files" | "diagnostics" | null;
+type Panel = "files" | "search" | "diagnostics" | null;
 
 interface RailButtonProps {
   label: string;
@@ -142,6 +148,16 @@ function ProjectView() {
             }}
             icon={<TbOutlineFiles size={16} />}
           />
+
+          <RailButton
+            label="Search"
+            active={currentPanel() === "search"}
+            onClick={() => {
+              togglePanel("search");
+            }}
+            icon={<TbOutlineSearch size={16} />}
+          />
+
           <RailButton
             label="Problems"
             active={currentPanel() === "diagnostics"}
@@ -153,10 +169,10 @@ function ProjectView() {
                 <TbOutlineAlertTriangle size={16} color="red" />
               </Show>
             }
-            // NOTE: I commented this out, since it's in most cases just one, didn't add much value therefore
-            // badge={ctx.errorCount() > 0 ? ctx.errorCount() : undefined}
           />
+
           <div class="mt-auto" />
+
           <RailButton
             label="Project settings"
             active={settingsOpen()}
@@ -209,6 +225,9 @@ function ProjectView() {
               <WorkspacePanel open={currentPanel() !== null}>
                 <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
                   <FileSidebar />
+                </div>
+                <div class="h-full" classList={{ hidden: currentPanel() !== "search" }}>
+                  <SearchPanel />
                 </div>
                 <div class="h-full" classList={{ hidden: currentPanel() !== "diagnostics" }}>
                   <DiagnosticsPanel />
