@@ -14,19 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-// Matches the 200ms transition declared in styles.css; +10ms slack so the
-// class outlives the actual paint.
-const THEME_TRANSITION_MS = 210;
-
-function toggleWithTransition(toggle: () => void) {
-  const html = document.documentElement;
-  html.classList.add("theme-changing");
-  toggle();
-  setTimeout(() => {
-    html.classList.remove("theme-changing");
-  }, THEME_TRANSITION_MS);
-}
-
 export default function UserMenu() {
   const current = useCurrentUser();
   const signOut = useSignOut();
@@ -67,7 +54,7 @@ export default function UserMenu() {
         <DropdownMenuItem
           closeOnSelect={false}
           onSelect={() => {
-            toggleWithTransition(toggleColorMode);
+            toggleColorMode();
           }}
         >
           <Show when={colorMode() === "dark"} fallback={<TbOutlineMoon size={14} />}>
