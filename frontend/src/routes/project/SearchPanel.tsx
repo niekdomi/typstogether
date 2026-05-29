@@ -17,7 +17,7 @@ function snippetParts(lineText: string, matchStart: number, matchEnd: number) {
   const CTX = 30;
   const start = Math.max(0, matchStart - CTX);
   const end = Math.min(lineText.length, matchEnd + CTX);
-    
+
   return {
     before: (start > 0 ? "…" : "") + lineText.slice(start, matchStart),
     match: lineText.slice(matchStart, matchEnd),
