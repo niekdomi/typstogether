@@ -8,7 +8,7 @@ export const api = treaty<App>(baseUrl, {
 }).api;
 
 // Eden Treaty surfaces failures as `{ status, value }`. Backend HttpErrors come
-// back as a plain-string body (app.ts's `onError`), and for client errors (4xx)
+// back as a plain-string body (mapped by `onError` in app.ts), and for client errors (4xx)
 // that message is written to be user-facing, so prefer it over the caller's
 // fallback. 5xx bodies and non-string values (e.g. 422 validation objects) are
 // leaky or unreadable, so they fall back to the generic message instead.
