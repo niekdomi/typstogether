@@ -41,11 +41,25 @@ export function useProjects() {
       }
     );
 
-  const create = (
+  // Guard against multi submits (e.g. spamming Enter)
+  let creating = false;
+  const create = async (
     name: string,
     template: { id: string; version: string } | undefined,
     onSuccess?: () => void
-  ) => mutate(() => api.projects.post({ name, template }), "Could not create project.", onSuccess);
+  ) => {
+    if (creating) return;
+    creating = true;
+    try {
+      await mutate(
+        () => api.projects.post({ name, template }),
+        "Could not create project.",
+        onSuccess
+      );
+    } finally {
+      creating = false;
+    }
+  };
 
   return { projects, rename, remove, create };
 }
