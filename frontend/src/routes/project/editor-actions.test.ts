@@ -7,6 +7,7 @@ import {
   wrapSelection,
   togglePrefix,
   insertLink,
+  insertPageBreak,
   toggleCode,
   toggleMath,
   HEADING_GROUP,
@@ -194,6 +195,16 @@ describe("insertLink", () => {
     const v = mockView("˅example˅");
     insertLink(v);
     expect(markDoc(v)).toBe('#link("https://˅˅")[example]');
+  });
+});
+
+// ─── insertPageBreak ─────────────────────────────────────────────────────────
+
+describe("insertPageBreak", () => {
+  test("inserts pagebreak at cursor with cursor after the call", () => {
+    const v = mockView("˅˅");
+    insertPageBreak(v);
+    expect(markDoc(v)).toBe("#pagebreak()˅˅");
   });
 });
 
