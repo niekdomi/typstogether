@@ -1,13 +1,15 @@
-import { useColorMode } from "@kobalte/core/color-mode";
 import {
   TbOutlineArrowAutofitHeight,
   TbOutlineArrowAutofitWidth,
+  TbOutlineMoon,
+  TbOutlineSun,
   TbOutlineZoomIn,
   TbOutlineZoomOut,
 } from "solid-icons/tb";
-import { createSignal, For, Match, onCleanup, onMount, Switch } from "solid-js";
+import { createSignal, For, Match, onCleanup, onMount, Show, Switch } from "solid-js";
 
 import { Button } from "../../components/ui/button";
+import { previewDark, setPreviewDark } from "../../lib/editor-prefs";
 import ExportPdfButton from "./ExportPdfButton";
 import { useProjectContext } from "./ProjectContext";
 
@@ -21,7 +23,6 @@ const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 
 export default function PreviewPane() {
   const ctx = useProjectContext();
-  const { colorMode: theme } = useColorMode();
   const render = ctx.preview;
   const [zoom, setZoom] = createSignal(1);
   const [panning, setPanning] = createSignal(false);
@@ -178,7 +179,21 @@ export default function PreviewPane() {
         >
           <TbOutlineArrowAutofitWidth />
         </Button>
-        <div class="ml-auto">
+        <div class="ml-auto flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title={previewDark() ? "Light preview" : "Dark preview"}
+            aria-label={previewDark() ? "Switch to light preview" : "Switch to dark preview"}
+            aria-pressed={previewDark()}
+            onClick={() => {
+              setPreviewDark((d) => !d);
+            }}
+          >
+            <Show when={previewDark()} fallback={<TbOutlineMoon />}>
+              <TbOutlineSun />
+            </Show>
+          </Button>
           <ExportPdfButton />
         </div>
       </div>
@@ -200,7 +215,7 @@ export default function PreviewPane() {
                 class="mx-auto flex flex-col items-center gap-6"
                 style={{
                   width: `${String(zoom() * BASE_WIDTH_PX)}px`,
-                  ...(theme() === "dark" ? { filter: "invert(0.85) hue-rotate(180deg)" } : {}),
+                  ...(previewDark() ? { filter: "invert(0.85) hue-rotate(180deg)" } : {}),
                 }}
               >
                 <For each={p()}>
