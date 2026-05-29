@@ -1,4 +1,4 @@
-import { baseUrl } from "../api";
+import { api, baseUrl } from "../api";
 
 export interface UploadedBlob {
   id: string;
@@ -16,20 +16,14 @@ export class AssetUploadError extends Error {
 }
 
 export async function uploadAsset(projectId: string, file: File): Promise<UploadedBlob> {
-  const form = new FormData();
-  form.append("file", file);
-  const res = await fetch(`${baseUrl}/api/projects/${projectId}/blobs`, {
-    method: "POST",
-    body: form,
-    credentials: "include",
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new AssetUploadError(text || res.statusText, res.status);
+  const { data, error } = await api.projects({ id: projectId }).blobs.post({ file });
+  if (error) {
+    const message = typeof error.value === "string" ? error.value : JSON.stringify(error.value);
+    throw new AssetUploadError(message, error.status);
   }
-  return (await res.json()) as UploadedBlob;
+  return data;
 }
 
-export function assetBlobUrl(projectId: string, blobId: string): string {
+export function blobUrl(projectId: string, blobId: string): string {
   return `${baseUrl}/api/projects/${projectId}/blobs/${blobId}`;
 }

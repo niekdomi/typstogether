@@ -1,6 +1,7 @@
 import type { EditorView } from "@codemirror/view";
 import { useParams } from "@solidjs/router";
 import type { DiagnosticMessage, TypstProject } from "@vedivad/codemirror-typst";
+import type { RenderedSvgPage } from "@vedivad/typst-web-service";
 import {
   type Accessor,
   createContext,
@@ -11,6 +12,7 @@ import {
   onCleanup,
   useContext,
 } from "solid-js";
+import { createStore } from "solid-js/store";
 import { toast } from "somoto";
 import * as Y from "yjs";
 
@@ -19,12 +21,18 @@ import { userColor } from "../../lib/collab/awareness-colors";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { useCurrentUser } from "../../lib/CurrentUserContext";
 import { useProject } from "../../lib/projects/use-project";
-import { useTypstProject } from "../../lib/typst/use-typst-project";
+import { storeThumbnail } from "../../lib/typst/thumbnail-cache";
+import { renderer, useTypstProject } from "../../lib/typst/use-typst-project";
 
 export interface Ready {
   files: Y.Map<Y.Text>;
   assets: Y.Map<string>;
   typstProject: TypstProject;
+}
+
+export interface PreviewState {
+  pages: RenderedSvgPage[] | null;
+  error: string | null;
 }
 
 interface ProjectContextValue {
@@ -34,6 +42,11 @@ interface ProjectContextValue {
   typst: ReturnType<typeof useTypstProject>;
 
   ready: Accessor<Ready | null>;
+  /**
+   * First-page render of the live preview. Owned here (not in PreviewPane) so a
+   * single render per compile feeds both the preview and the thumbnail cache.
+   */
+  preview: PreviewState;
   /**
    * VFS path of the file currently being compiled. Resolves to the per-user
    * preview override when set, falling back to the project's global entry
@@ -100,11 +113,12 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     () => collab.assets
   );
 
+  const isReadOnly = () => membership()?.role === "viewer" || collab.readOnly;
+
   const [requestedFile, setRequestedFile] = createSignal(entry());
   const [editorView, setEditorView] = createSignal<EditorView | null>(null);
   const [diagnostics, setDiagnostics] = createSignal<DiagnosticMessage[]>([]);
 
-  const isReadOnly = () => membership()?.role === "viewer" || collab.readOnly;
   const errorCount = createMemo(
     () => diagnostics().filter((d) => (d.severity as string) === "error").length
   );
@@ -175,6 +189,47 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     onCleanup(off);
   });
 
+  // Render every compile to SVG pages once, here, so PreviewPane and the
+  // thumbnail cache both consume a single render.
+  const [preview, setPreview] = createStore<PreviewState>({ pages: null, error: null });
+  let lastStored: string | undefined;
+  createEffect(() => {
+    const project = typst.project;
+    setPreview({ pages: null, error: null });
+    lastStored = undefined;
+    if (!project) return;
+    const off = project.onCompile((result) => {
+      const vector = result.vector;
+      if (!vector) {
+        setPreview(
+          "error",
+          result.diagnostics.find((d) => d.severity === "Error")?.message ?? null
+        );
+        return;
+      }
+      void (async () => {
+        // useTypstProject replaces the project on every change, so an identity
+        // check drops a render that resolves after we've switched away.
+        try {
+          const pages = await renderer.renderSvgPages(vector);
+          if (typst.project === project) setPreview({ pages, error: null });
+        } catch (error) {
+          if (typst.project === project) setPreview("error", String(error));
+        }
+      })();
+    });
+    onCleanup(off);
+  });
+
+  // Refresh the dashboard thumbnail from the live first-page render. Page 1
+  // rarely changes, so only write when its rendered SVG actually differs.
+  createEffect(() => {
+    const svg = preview.pages?.[0]?.svg;
+    if (!svg || svg === lastStored) return;
+    lastStored = svg;
+    void storeThumbnail(projectId(), svg);
+  });
+
   const jumpToRemoteUser = (clientId: number) => {
     const awareness = collab.awareness;
     const ydoc = collab.ydoc;
@@ -234,6 +289,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     collab,
     typst,
     ready,
+    preview,
     entry,
     previewEntry,
     setPreviewEntry,

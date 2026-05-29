@@ -24,8 +24,8 @@ const bytea = customType<{
 });
 
 const timestamps = {
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at")
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
@@ -41,7 +41,7 @@ export const project = pgTable(
     ownerUserId: text("owner_user_id")
       .notNull()
       .references(() => user.id, { onDelete: "restrict" }),
-    deletedAt: timestamp("deleted_at"),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => [index("project_owner_user_id_idx").on(table.ownerUserId)]
@@ -57,7 +57,7 @@ export const projectMember = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     role: projectRole("role").notNull().default("editor"),
-    joinedAt: timestamp("joined_at").notNull().defaultNow(),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     primaryKey({ columns: [table.projectId, table.userId] }),
@@ -79,8 +79,8 @@ export const projectInvite = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     role: inviteRole("role").notNull().default("editor"),
-    expiresAt: timestamp("expires_at").notNull(),
-    revokedAt: timestamp("revoked_at"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => [
@@ -116,7 +116,7 @@ export const projectBlob = pgTable(
     mime: text("mime").notNull(),
     size: integer("size").notNull(),
     bytes: bytea("bytes").notNull(),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [primaryKey({ columns: [table.projectId, table.blobId] })]
 );

@@ -1,4 +1,4 @@
-import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, META_KEY } from "@typstogether/shared";
+import { ASSETS_KEY, ENTRY_KEY, FILES_KEY, MAIN_PATH, META_KEY } from "@typstogether/shared";
 import { and, desc, eq, isNotNull, isNull, or } from "drizzle-orm";
 import * as Y from "yjs";
 
@@ -6,9 +6,9 @@ import { type Project, project, projectMember } from "../../db/app-schema";
 import { NotFoundError } from "../../errors";
 import { currentDb } from "../../transaction";
 import { blobService } from "../blobs/service";
-import { storeDocument } from "../collab/persistence";
+import { fetchDocument, storeDocument } from "../collab/persistence";
 import { fetchTemplateFiles } from "../templates/files";
-import type { CreateProjectInput, UpdateProjectInput } from "./model";
+import type { CreateProjectInput, ProjectSnapshot, UpdateProjectInput } from "./model";
 
 export type ProjectRole = "owner" | "editor" | "viewer";
 
@@ -20,7 +20,10 @@ export interface ProjectMembership {
 export class ProjectService {
   private membershipSelect(userId: string) {
     return currentDb()
-      .select({ project, memberRole: projectMember.role })
+      .select({
+        project,
+        memberRole: projectMember.role,
+      })
       .from(project)
       .leftJoin(
         projectMember,
@@ -68,6 +71,32 @@ export class ProjectService {
     }
 
     throw new NotFoundError("Project not found");
+  }
+
+  // Decode the persisted Y.Doc into a plain read-only view for callers (e.g. the
+  // dashboard) that need a project's files without joining the collab websocket.
+  // Authorization is the route's `projectMember` macro; this acts purely by id.
+  async snapshot(id: string): Promise<ProjectSnapshot> {
+    const state = await fetchDocument(id);
+    if (!state) {
+      return { entry: MAIN_PATH, files: {}, assets: {} };
+    }
+
+    const doc = new Y.Doc();
+    Y.applyUpdate(doc, state);
+
+    const files: Record<string, string> = {};
+    for (const [path, text] of doc.getMap<Y.Text>(FILES_KEY)) {
+      files[path] = text.toJSON();
+    }
+
+    const assets: Record<string, string> = {};
+    for (const [path, blobId] of doc.getMap<string>(ASSETS_KEY)) {
+      assets[path] = blobId;
+    }
+
+    const entry = doc.getMap<string>(META_KEY).get(ENTRY_KEY) ?? MAIN_PATH;
+    return { entry, files, assets };
   }
 
   async create(userId: string, input: CreateProjectInput): Promise<Project> {

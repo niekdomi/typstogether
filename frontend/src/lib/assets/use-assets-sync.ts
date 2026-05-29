@@ -2,7 +2,7 @@ import type { TypstProject } from "@vedivad/codemirror-typst";
 import { createEffect, onCleanup } from "solid-js";
 import type * as Y from "yjs";
 
-import { assetBlobUrl } from "./upload";
+import { blobUrl } from "./upload";
 
 // Observes the `assets` Y.Map (path -> blob_id) and keeps the Typst project's
 // virtual filesystem in sync by fetching binary blobs from the backend and
@@ -25,7 +25,7 @@ export function useAssetsSync(
     const apply = async (path: string, blobId: string) => {
       if (applied.get(path) === blobId) return;
       try {
-        const res = await fetch(assetBlobUrl(id, blobId), {
+        const res = await fetch(blobUrl(id, blobId), {
           credentials: "include",
           signal: aborter.signal,
         });
