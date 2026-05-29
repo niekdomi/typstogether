@@ -53,7 +53,7 @@ function FileRow(props: { node: FileNode }) {
         <SidebarMenuButton
           isActive={sb.activeFile() === path()}
           tooltip={path()}
-          draggable={!sb.isLocked(path())}
+          draggable={!sb.isReadOnly() && !sb.isLocked(path())}
           onClick={() => {
             sb.onSelectFile(path());
           }}
@@ -93,33 +93,35 @@ function FileRow(props: { node: FileNode }) {
           </button>
         </Show>
       </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem
-          disabled={sb.isLocked(path())}
-          onSelect={() => {
-            sb.setDialog({ type: "renameFile", path: path() });
-          }}
-        >
-          Rename
-        </ContextMenuItem>
-        <ContextMenuItem
-          onSelect={() => {
-            sb.setDialog({ type: "duplicateFile", path: path() });
-          }}
-        >
-          Duplicate
-        </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuItem
-          class="text-destructive focus:text-destructive"
-          disabled={!sb.canDeleteFile(path())}
-          onSelect={() => {
-            sb.setDialog({ type: "deleteFile", path: path() });
-          }}
-        >
-          Delete
-        </ContextMenuItem>
-      </ContextMenuContent>
+      <Show when={!sb.isReadOnly()}>
+        <ContextMenuContent>
+          <ContextMenuItem
+            disabled={sb.isLocked(path())}
+            onSelect={() => {
+              sb.setDialog({ type: "renameFile", path: path() });
+            }}
+          >
+            Rename
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={() => {
+              sb.setDialog({ type: "duplicateFile", path: path() });
+            }}
+          >
+            Duplicate
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem
+            class="text-destructive focus:text-destructive"
+            disabled={!sb.canDeleteFile(path())}
+            onSelect={() => {
+              sb.setDialog({ type: "deleteFile", path: path() });
+            }}
+          >
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </Show>
     </ContextMenu>
   );
 }
@@ -130,12 +132,17 @@ async function uploadOsFiles(
   upload: (dir: string, file: File) => Promise<string | undefined>
 ): Promise<boolean> {
   const list = e.dataTransfer?.files;
-  if (!list || list.length === 0) return false;
+  if (!list || list.length === 0) {
+    return false;
+  }
+
   e.preventDefault();
   e.stopPropagation();
+
   for (const file of list) {
     await upload(dir, file);
   }
+
   return true;
 }
 
@@ -149,16 +156,23 @@ function FolderRow(props: { node: FolderNode; onUpload: (dir: string) => void })
         <SidebarMenuButton
           tooltip={path()}
           class={cx(sb.drag.over === path() && sb.drag.source && "ring-2 ring-sidebar-ring")}
+          draggable={!sb.isFolderLocked(path())}
           onClick={() => {
             sb.toggleCollapsed(path());
           }}
+          onDragStart={(e: DragEvent) => {
+            sb.onFolderDragStart(e, path());
+          }}
+          onDragEnd={sb.onDragEnd}
           onDragOver={(e: DragEvent) => {
             sb.onFolderDragOver(e, path());
           }}
           onDragLeave={sb.clearDragOver}
           onDrop={(e: DragEvent) => {
             void (async () => {
-              if (await uploadOsFiles(e, path(), sb.handleUploadAsset)) return;
+              if (await uploadOsFiles(e, path(), sb.handleUploadAsset)) {
+                return;
+              }
               sb.onFolderDrop(e, path());
             })();
           }}
@@ -170,46 +184,48 @@ function FolderRow(props: { node: FolderNode; onUpload: (dir: string) => void })
           <span>{props.node.name}</span>
         </SidebarMenuButton>
       </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem
-          onSelect={() => {
-            sb.setDialog({ type: "newFile", dir: path() });
-          }}
-        >
-          New file
-        </ContextMenuItem>
-        <ContextMenuItem
-          onSelect={() => {
-            sb.setDialog({ type: "newFolder", dir: path() });
-          }}
-        >
-          New folder
-        </ContextMenuItem>
-        <ContextMenuItem
-          onSelect={() => {
-            props.onUpload(path());
-          }}
-        >
-          Upload asset
-        </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuItem
-          onSelect={() => {
-            sb.setDialog({ type: "renameFolder", path: path() });
-          }}
-        >
-          Rename
-        </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuItem
-          class="text-destructive focus:text-destructive"
-          onSelect={() => {
-            sb.setDialog({ type: "deleteFolder", path: path() });
-          }}
-        >
-          Delete
-        </ContextMenuItem>
-      </ContextMenuContent>
+      <Show when={!sb.isReadOnly()}>
+        <ContextMenuContent>
+          <ContextMenuItem
+            onSelect={() => {
+              sb.setDialog({ type: "newFile", dir: path() });
+            }}
+          >
+            New file
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={() => {
+              sb.setDialog({ type: "newFolder", dir: path() });
+            }}
+          >
+            New folder
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={() => {
+              props.onUpload(path());
+            }}
+          >
+            Upload asset
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem
+            onSelect={() => {
+              sb.setDialog({ type: "renameFolder", path: path() });
+            }}
+          >
+            Rename
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem
+            class="text-destructive focus:text-destructive"
+            onSelect={() => {
+              sb.setDialog({ type: "deleteFolder", path: path() });
+            }}
+          >
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </Show>
     </ContextMenu>
   );
 }
@@ -243,36 +259,43 @@ function RootDropZone(props: { children: JSX.Element; onUpload: (dir: string) =>
         onDragLeave={sb.onRootDragLeave}
         onDrop={(e: DragEvent) => {
           void (async () => {
-            if (await uploadOsFiles(e, "", sb.handleUploadAsset)) return;
+            if (await uploadOsFiles(e, "", sb.handleUploadAsset)) {
+              return;
+            }
             sb.onRootDrop(e);
           })();
         }}
       >
         {props.children}
       </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem
-          onSelect={() => {
-            sb.setDialog({ type: "newFile", dir: "" });
-          }}
-        >
-          New file
-        </ContextMenuItem>
-        <ContextMenuItem
-          onSelect={() => {
-            sb.setDialog({ type: "newFolder", dir: "" });
-          }}
-        >
-          New folder
-        </ContextMenuItem>
-        <ContextMenuItem
-          onSelect={() => {
-            props.onUpload("");
-          }}
-        >
-          Upload asset
-        </ContextMenuItem>
-      </ContextMenuContent>
+      <Show when={!sb.isReadOnly()}>
+        <ContextMenuContent>
+          <ContextMenuItem
+            onSelect={() => {
+              sb.setDialog({ type: "newFile", dir: "" });
+            }}
+          >
+            New file
+          </ContextMenuItem>
+
+          <ContextMenuItem
+            onSelect={() => {
+              sb.setDialog({ type: "newFolder", dir: "" });
+            }}
+          >
+            {" "}
+            New folder{" "}
+          </ContextMenuItem>
+
+          <ContextMenuItem
+            onSelect={() => {
+              props.onUpload("");
+            }}
+          >
+            Upload asset
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </Show>
     </ContextMenu>
   );
 }
@@ -286,8 +309,12 @@ function FileSidebarBody() {
   };
 
   const triggerUpload = (dir: string) => {
-    if (!fileInput) return;
+    if (!fileInput) {
+      return;
+    }
+
     setUploadDir(dir);
+
     fileInput.value = "";
     fileInput.click();
   };
@@ -295,7 +322,10 @@ function FileSidebarBody() {
   const onFilesPicked = async (e: Event) => {
     const target = e.currentTarget as HTMLInputElement;
     const list = target.files;
-    if (!list || list.length === 0) return;
+    if (!list || list.length === 0) {
+      return;
+    }
+
     const dir = uploadDir();
     for (const file of list) {
       await sb.handleUploadAsset(dir, file);
@@ -309,17 +339,19 @@ function FileSidebarBody() {
           <SidebarGroup>
             <SidebarGroupLabel class="flex items-center justify-between gap-1">
               <span>Files</span>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                title="Upload asset"
-                aria-label="Upload asset"
-                onClick={() => {
-                  triggerUpload("");
-                }}
-              >
-                <TbOutlineUpload />
-              </Button>
+              <Show when={!sb.isReadOnly()}>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  title="Upload asset"
+                  aria-label="Upload asset"
+                  onClick={() => {
+                    triggerUpload("");
+                  }}
+                >
+                  <TbOutlineUpload />
+                </Button>
+              </Show>
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>

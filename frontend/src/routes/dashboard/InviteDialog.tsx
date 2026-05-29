@@ -3,6 +3,7 @@ import {
   TbOutlineChevronRight,
   TbOutlineCopy,
   TbOutlineLink,
+  TbOutlineX,
 } from "solid-icons/tb";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
@@ -27,8 +28,14 @@ import { Separator } from "../../components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
 import { api } from "../../lib/api";
 import { formatDate, formatRelative, userInitial } from "../../lib/format";
+import ConfirmDialog from "./ConfirmDialog";
 
 type InviteRole = "editor" | "viewer";
+
+interface PendingRemoval {
+  userId: string;
+  name: string;
+}
 
 interface InviteDialogProps {
   open: boolean;
@@ -61,7 +68,8 @@ export default function InviteDialog(props: InviteDialogProps) {
   });
 
   const [invites, { refetch: refetchInvites }] = createResource(() => props.projectId, loadInvites);
-  const [members] = createResource(() => props.projectId, loadMembers);
+  const [members, { refetch: refetchMembers }] = createResource(() => props.projectId, loadMembers);
+  const [pendingRemoval, setPendingRemoval] = createSignal<PendingRemoval | null>(null);
 
   const linkUrl = () => (link.token ? `${location.origin}/invite/${link.token}` : "");
 
@@ -107,6 +115,37 @@ export default function InviteDialog(props: InviteDialogProps) {
     }
   }
 
+  async function changeMemberRole(userId: string, newRole: InviteRole) {
+    if (!props.projectId) {
+      return;
+    }
+
+    const { error } = await api
+      .projects({ id: props.projectId })
+      .members({ userId })
+      .patch({ role: newRole });
+    if (error) {
+      toast.error("Could not update member role.");
+      return;
+    }
+
+    void refetchMembers();
+  }
+
+  async function removeMember(userId: string) {
+    if (!props.projectId) {
+      return;
+    }
+
+    const { error } = await api.projects({ id: props.projectId }).members({ userId }).delete();
+    if (error) {
+      toast.error("Could not remove member.");
+      return;
+    }
+
+    void refetchMembers();
+  }
+
   async function revoke(inviteId: string) {
     if (!props.projectId) {
       return;
@@ -142,13 +181,35 @@ export default function InviteDialog(props: InviteDialogProps) {
           <ul class="flex flex-col gap-2">
             <For each={members() ?? []}>
               {(m) => (
-                <li class="flex items-center gap-3 text-sm">
+                <li class="flex items-center gap-2 text-sm">
                   <Avatar class="size-7">
                     <AvatarImage src={m.user.image ?? undefined} alt="" />
                     <AvatarFallback class="text-[10px]">{userInitial(m.user.name)}</AvatarFallback>
                   </Avatar>
-                  <span class="text-foreground flex-1">{m.user.name}</span>
-                  <Badge variant="outline">{m.member.role}</Badge>
+                  <span class="text-foreground min-w-0 flex-1 truncate">{m.user.name}</span>
+                  <ToggleGroup
+                    variant="outline"
+                    size="sm"
+                    value={m.member.role}
+                    onChange={(v) => {
+                      if (v && v !== m.member.role) {
+                        void changeMemberRole(m.member.userId, v as InviteRole);
+                      }
+                    }}
+                  >
+                    <ToggleGroupItem value="editor">Editor</ToggleGroupItem>
+                    <ToggleGroupItem value="viewer">Viewer</ToggleGroupItem>
+                  </ToggleGroup>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Remove ${m.user.name}`}
+                    onClick={() => {
+                      setPendingRemoval({ userId: m.member.userId, name: m.user.name });
+                    }}
+                  >
+                    <TbOutlineX size={14} />
+                  </Button>
                 </li>
               )}
             </For>
@@ -250,6 +311,18 @@ export default function InviteDialog(props: InviteDialogProps) {
           </Button>
         </DialogFooter>
       </DialogContent>
+      <ConfirmDialog
+        open={pendingRemoval() !== null}
+        onClose={() => setPendingRemoval(null)}
+        onConfirm={() => {
+          const target = pendingRemoval();
+          if (target) void removeMember(target.userId);
+        }}
+        title="Remove collaborator"
+        message={`${pendingRemoval()?.name ?? ""} will lose access to this project.`}
+        confirmLabel="Remove"
+        danger
+      />
     </Dialog>
   );
 }
