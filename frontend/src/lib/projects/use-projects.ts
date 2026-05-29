@@ -13,20 +13,24 @@ async function loadProjects(): Promise<Membership[]> {
 export function useProjects() {
   const [projects, { refetch }] = createResource(loadProjects);
 
-  /** Runs an API call, shows a toast on error, and refetches the list on success. */
+  /**
+   * Runs an API call, shows a toast on error, and refetches the list on success.
+   * Returns whether the call succeeded so callers can gate UI on the outcome.
+   */
   async function mutate(
     fn: () => Promise<{ error: unknown }>,
     errorMsg: string,
     onSuccess?: () => void
-  ) {
+  ): Promise<boolean> {
     const { error } = await fn();
     if (error) {
       toast.error(apiErrorMessage(error, errorMsg));
-      return;
+      return false;
     }
 
     void refetch();
     onSuccess?.();
+    return true;
   }
 
   const rename = (id: string, newName: string) =>

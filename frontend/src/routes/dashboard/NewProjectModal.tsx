@@ -30,7 +30,10 @@ import { api } from "../../lib/api";
 interface NewProjectModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (name: string, template: { id: string; version: string } | undefined) => void;
+  onSubmit: (
+    name: string,
+    template: { id: string; version: string } | undefined
+  ) => Promise<boolean>;
 }
 
 type Template = NonNullable<Awaited<ReturnType<typeof api.templates.get>>["data"]>[number];
@@ -113,6 +116,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
   const [search, setSearch] = createSignal("");
   const [category, setCategory] = createSignal("all");
   const [templates] = createResource(loadTemplates);
+  const [submitting, setSubmitting] = createSignal(false);
   const trimmedName = createMemo(() => name().trim());
 
   createEffect(() => {
@@ -121,8 +125,18 @@ export default function NewProjectModal(props: NewProjectModalProps) {
       setTemplate(BLANK_ID);
       setSearch("");
       setCategory("all");
+      setSubmitting(false);
     }
   });
+
+  // Single-flight submit. The latch is set synchronously before the await, so a
+  // second near-simultaneous submit (Enter + clicking Create) is ignored.
+  const submit = async () => {
+    if (submitting() || !trimmedName()) return;
+    setSubmitting(true);
+    const ok = await props.onSubmit(trimmedName(), resolveTemplate(template(), templates()));
+    if (!ok) setSubmitting(false);
+  };
 
   const categories = createMemo(() => {
     const all = templates() ?? [];
@@ -158,8 +172,7 @@ export default function NewProjectModal(props: NewProjectModalProps) {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (!trimmedName()) return;
-            props.onSubmit(trimmedName(), resolveTemplate(template(), templates()));
+            void submit();
           }}
           class="flex flex-col gap-4"
         >
@@ -249,10 +262,10 @@ export default function NewProjectModal(props: NewProjectModalProps) {
               <TooltipTrigger as="div" tabIndex={-1}>
                 <Button
                   type="submit"
-                  disabled={!trimmedName()}
+                  disabled={!trimmedName() || submitting()}
                   class={trimmedName() ? undefined : "pointer-events-none"}
                 >
-                  Create
+                  {submitting() ? "Creating…" : "Create"}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>A project name is required</TooltipContent>
