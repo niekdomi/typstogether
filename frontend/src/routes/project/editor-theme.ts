@@ -9,7 +9,9 @@ import { createTypstHighlighting } from "@vedivad/codemirror-typst";
 // `controller.setTheme(view, theme())` on mount and on every theme change.
 let highlightingPromise: ReturnType<typeof createTypstHighlighting> | undefined;
 export const getHighlighting = (initial: Theme) => {
-  highlightingPromise ??= createTypstHighlighting({ theme: initial });
+  // Oniguruma (WASM) tokenizes the TextMate grammar far faster than shiki's
+  // default JS regex engine.
+  highlightingPromise ??= createTypstHighlighting({ theme: initial, engine: "oniguruma" });
   return highlightingPromise;
 };
 
