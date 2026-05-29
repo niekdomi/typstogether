@@ -80,7 +80,11 @@ export default function PreviewPane() {
     zoomAt(available / BASE_WIDTH_PX);
   };
 
-  // Initial zoom: fit-width, capped at 100%. Defer one frame so layout settles.
+  // Initial zoom: fit-width, capped at 100%. The preview lives in a resizable
+  // panel whose final width is applied after mount, at an inconsistent time
+  // across browsers (Chromium often isn't laid out by the next frame). So fit
+  // on the first real width via ResizeObserver, then stop so we don't fight the
+  // user's later zoom/resizes.
   onMount(() => {
     requestAnimationFrame(() => {
       if (!scroller) return;
@@ -203,7 +207,7 @@ export default function PreviewPane() {
           scroller = el;
         }}
         tabindex={-1}
-        class="bg-muted/40 min-h-0 flex-1 cursor-grab overflow-auto p-3 outline-none"
+        class="bg-muted/40 min-h-0 flex-1 cursor-grab [scrollbar-gutter:stable] overflow-auto p-3 outline-none"
         classList={{ "!cursor-grabbing select-none": panning() }}
         onWheel={onWheel}
         onMouseDown={onMouseDown}

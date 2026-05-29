@@ -219,42 +219,44 @@ function ProjectView() {
             )}
           </Match>
           <Match when={ctx.ready()}>
-            <Resizable orientation="horizontal" class="min-h-0 flex-1">
-              <ResizablePanel
-                initialSize={0.2}
-                minSize="200px"
-                collapsible
-                collapsedSize={0}
-                class="bg-sidebar overflow-hidden"
-              >
-                <SidebarCollapseSync open={currentPanel() !== null} />
-                <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
-                  <FileSidebar />
-                </div>
-                <div class="h-full" classList={{ hidden: currentPanel() !== "diagnostics" }}>
-                  <DiagnosticsPanel />
-                </div>
-              </ResizablePanel>
-              <ResizableHandle />
-              <ResizablePanel
-                initialSize={0.4}
-                minSize="320px"
-                class="flex min-w-0 flex-col overflow-hidden"
-              >
-                <Show when={!ctx.activeIsAsset()}>
-                  <EditorToolbar />
-                </Show>
-                <div class="min-h-0 flex-1">
-                  <Show when={ctx.activeIsAsset()} fallback={<CodeMirrorEditor />}>
-                    <AssetPreview />
+            <div class="min-h-0 min-w-0 flex-1">
+              <Resizable orientation="horizontal">
+                <ResizablePanel
+                  initialSize={0.2}
+                  minSize="200px"
+                  collapsible
+                  collapsedSize={0}
+                  class="bg-sidebar overflow-hidden"
+                >
+                  <SidebarCollapseSync open={currentPanel() !== null} />
+                  <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
+                    <FileSidebar />
+                  </div>
+                  <div class="h-full" classList={{ hidden: currentPanel() !== "diagnostics" }}>
+                    <DiagnosticsPanel />
+                  </div>
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel
+                  initialSize={0.4}
+                  minSize="320px"
+                  class="flex min-w-0 flex-col overflow-hidden"
+                >
+                  <Show when={!ctx.activeIsAsset()}>
+                    <EditorToolbar />
                   </Show>
-                </div>
-              </ResizablePanel>
-              <ResizableHandle />
-              <ResizablePanel initialSize={0.4} minSize="280px" class="min-w-0 overflow-hidden">
-                <PreviewPane />
-              </ResizablePanel>
-            </Resizable>
+                  <div class="min-h-0 flex-1">
+                    <Show when={ctx.activeIsAsset()} fallback={<CodeMirrorEditor />}>
+                      <AssetPreview />
+                    </Show>
+                  </div>
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel initialSize={0.4} minSize="280px" class="min-w-0 overflow-hidden">
+                  <PreviewPane />
+                </ResizablePanel>
+              </Resizable>
+            </div>
           </Match>
         </Switch>
       </div>

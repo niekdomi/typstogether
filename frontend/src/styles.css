@@ -140,6 +140,9 @@
   * {
     @apply border-border outline-ring/50;
     box-sizing: border-box;
+    /* Thin scrollbars app-wide (cards, editor, preview, sidebar). Standard
+       property: Firefox + Chromium 121+; no-op on elements that don't scroll. */
+    scrollbar-width: thin;
   }
 
   html,
@@ -147,10 +150,6 @@
   #app {
     height: 100%;
     margin: 0;
-  }
-
-  html {
-    overflow-y: scroll;
   }
 
   body {
