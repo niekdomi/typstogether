@@ -6,6 +6,8 @@ import type { EditorView } from "@codemirror/view";
 import {
   wrapSelection,
   togglePrefix,
+  insertFigure,
+  insertImage,
   insertLink,
   insertPageBreak,
   toggleCode,
@@ -195,6 +197,26 @@ describe("insertLink", () => {
     const v = mockView("˅example˅");
     insertLink(v);
     expect(markDoc(v)).toBe('#link("https://˅˅")[example]');
+  });
+});
+
+// ─── insertImage ─────────────────────────────────────────────────────────────
+
+describe("insertImage", () => {
+  test("inserts image with the path placeholder selected", () => {
+    const v = mockView("˅˅");
+    insertImage(v);
+    expect(markDoc(v)).toBe('#image("˅path˅")');
+  });
+});
+
+// ─── insertFigure ────────────────────────────────────────────────────────────
+
+describe("insertFigure", () => {
+  test("inserts figure wrapper with cursor in body slot", () => {
+    const v = mockView("˅˅");
+    insertFigure(v);
+    expect(markDoc(v)).toBe("#figure(\n  ˅˅,\n  caption: [Caption],\n)");
   });
 });
 

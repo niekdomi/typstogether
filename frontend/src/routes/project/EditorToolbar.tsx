@@ -3,6 +3,7 @@ import {
   TbOutlineBold,
   TbOutlineChevronDown,
   TbOutlineCode,
+  TbOutlineFrame,
   TbOutlineMath,
   TbOutlineH1,
   TbOutlineH2,
@@ -13,12 +14,14 @@ import {
   TbOutlineList,
   TbOutlineListNumbers,
   TbOutlinePageBreak,
+  TbOutlinePhoto,
+  TbOutlinePlus,
   TbOutlineStrikethrough,
   TbOutlineSubscript,
   TbOutlineSuperscript,
   TbOutlineUnderline,
 } from "solid-icons/tb";
-import { For, type JSX } from "solid-js";
+import { For, type JSX, Show } from "solid-js";
 
 import { Button } from "../../components/ui/button";
 import {
@@ -30,6 +33,8 @@ import {
 } from "../../components/ui/dropdown-menu";
 import {
   HEADING_GROUP,
+  insertFigure,
+  insertImage,
   insertLink,
   insertPageBreak,
   LIST_GROUP,
@@ -180,6 +185,19 @@ const linkAction: ToolbarAction = {
   run: insertLink,
 };
 
+const snippetItems: ToolbarAction[] = [
+  {
+    icon: () => <TbOutlinePhoto />,
+    label: "Image",
+    run: insertImage,
+  },
+  {
+    icon: () => <TbOutlineFrame />,
+    label: "Figure",
+    run: insertFigure,
+  },
+];
+
 const pageBreakAction: ToolbarAction = {
   icon: () => <TbOutlinePageBreak />,
   label: "Page break",
@@ -251,7 +269,9 @@ function ActionMenu(props: ActionMenuProps) {
             >
               {item.icon()}
               <span class="flex-1">{item.label}</span>
-              <DropdownMenuShortcut>{item.shortcut}</DropdownMenuShortcut>
+              <Show when={item.shortcut}>
+                {(s) => <DropdownMenuShortcut>{s()}</DropdownMenuShortcut>}
+              </Show>
             </DropdownMenuItem>
           )}
         </For>
@@ -298,6 +318,13 @@ export default function EditorToolbar() {
         disabled={disabled()}
       />
       <Divider />
+      <ActionMenu
+        label="Insert"
+        trigger={() => <TbOutlinePlus />}
+        items={snippetItems}
+        onRun={run}
+        disabled={disabled()}
+      />
       <ActionButton action={linkAction} onRun={run} disabled={disabled()} />
       <ActionButton action={pageBreakAction} onRun={run} disabled={disabled()} />
     </div>
