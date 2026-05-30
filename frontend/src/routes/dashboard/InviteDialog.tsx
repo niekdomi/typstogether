@@ -26,7 +26,7 @@ import {
 } from "../../components/ui/dialog";
 import { Separator } from "../../components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "../../components/ui/toggle-group";
-import { api } from "../../lib/api";
+import { api, apiErrorMessage } from "../../lib/api";
 import { formatDate, formatRelative, userInitial } from "../../lib/format";
 import ConfirmDialog from "./ConfirmDialog";
 
@@ -91,7 +91,7 @@ export default function InviteDialog(props: InviteDialogProps) {
     });
 
     if (error) {
-      toast.error("Could not create invite link.");
+      toast.error(apiErrorMessage(error, "Could not create invite link."));
       return;
     }
 
@@ -125,7 +125,7 @@ export default function InviteDialog(props: InviteDialogProps) {
       .members({ userId })
       .patch({ role: newRole });
     if (error) {
-      toast.error("Could not update member role.");
+      toast.error(apiErrorMessage(error, "Could not update member role."));
       return;
     }
 
@@ -139,7 +139,7 @@ export default function InviteDialog(props: InviteDialogProps) {
 
     const { error } = await api.projects({ id: props.projectId }).members({ userId }).delete();
     if (error) {
-      toast.error("Could not remove member.");
+      toast.error(apiErrorMessage(error, "Could not remove member."));
       return;
     }
 
@@ -153,7 +153,7 @@ export default function InviteDialog(props: InviteDialogProps) {
 
     const { error } = await api.projects({ id: props.projectId }).invites({ inviteId }).delete();
     if (error) {
-      toast.error("Could not revoke link.");
+      toast.error(apiErrorMessage(error, "Could not revoke link."));
       return;
     }
 
