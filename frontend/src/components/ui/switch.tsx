@@ -11,12 +11,9 @@ export type SwitchProps<T extends ValidComponent = "label"> = ComponentProps<
 export const Switch = <T extends ValidComponent = "label">(props: SwitchProps<T>) => {
   const [local, rest] = splitProps(props as SwitchProps, ["class", "children"]);
   return (
-    <SwitchPrimitive
-      data-slot="switch"
-      class={cx("inline-flex shrink-0 items-center", local.class)}
-      {...rest}
-    >
+    <SwitchPrimitive data-slot="switch" class={cx("items-center", local.class)} {...rest}>
       <SwitchPrimitive.Input class="peer sr-only" />
+      {local.children}
       <SwitchPrimitive.Control
         class={cx(
           "bg-input data-[checked]:bg-primary inline-flex h-5 w-9 cursor-pointer items-center rounded-full border-2 border-transparent",
@@ -32,7 +29,6 @@ export const Switch = <T extends ValidComponent = "label">(props: SwitchProps<T>
           )}
         />
       </SwitchPrimitive.Control>
-      {local.children}
     </SwitchPrimitive>
   );
 };
