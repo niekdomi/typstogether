@@ -92,6 +92,17 @@ describe("POST /projects", () => {
 
     expect(res.status).toBe(422);
   });
+
+  test("429 when a second create lands within the cooldown", async () => {
+    const user = await userFactory.create();
+    setTestUser(user);
+
+    const first = await request("/projects", jsonInit("POST", { name: "One" }));
+    const second = await request("/projects", jsonInit("POST", { name: "Two" }));
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(429);
+  });
 });
 
 describe("GET /projects/:id", () => {

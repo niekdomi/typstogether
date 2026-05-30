@@ -1,11 +1,17 @@
 import { Elysia, t } from "elysia";
 
+import { cooldownMacro } from "../../rate-limit";
 import { projectAccessMacro } from "./macro";
 import { projectMembershipModel, projectModel, projectModels, projectSnapshotModel } from "./model";
 import { projectService } from "./service";
 
+// Per-user cooldown between creates: collapses accidental double-submits
+// (spamming Enter, Enter+click) into a single project.
+const CREATE_COOLDOWN_MS = 1000;
+
 export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/projects" })
   .use(projectAccessMacro)
+  .use(cooldownMacro)
   .model(projectModels)
 
   .get("/", ({ user }) => projectService.list(user.id), {
@@ -16,6 +22,11 @@ export const projectRoutes = new Elysia({ name: "project-routes", prefix: "/proj
   .post("/", ({ user, body }) => projectService.create(user.id, body), {
     body: "project.create",
     auth: true,
+    cooldown: {
+      key: "project-create",
+      ms: CREATE_COOLDOWN_MS,
+      message: "You're creating projects too quickly. Try again in a moment.",
+    },
     response: projectModel,
   })
 

@@ -6,6 +6,7 @@ words = [
   "bunx",
   "bytea",
   "collab",
+  "cooldown",
   "corvu",
   "cpuprofile",
   "dedup",
@@ -56,5 +57,8 @@ words = [
   "yjs",
 ]
 include_paths = ["**/*.md", "**/*.ts", "**/*.tsx"]
-ignore_paths = ["**/components/ui/**", "frontend/src/routes/project/editor-actions.test.ts"]
+ignore_paths = [
+  "**/components/ui/**",
+  "frontend/src/routes/project/editor-actions.test.ts"
+]
 use_global = false
