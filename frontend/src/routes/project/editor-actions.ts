@@ -161,6 +161,7 @@ export function insertImage(view: EditorView): void {
   const before = '#image("';
   const placeholder = "path";
   const after = '")';
+
   view.dispatch(
     view.state.changeByRange((range) => ({
       changes: { from: range.from, to: range.to, insert: before + placeholder + after },
@@ -178,6 +179,7 @@ export function insertImage(view: EditorView): void {
 export function insertFigure(view: EditorView): void {
   const before = "#figure(\n  ";
   const after = ",\n  caption: [Caption],\n)";
+
   view.dispatch(
     view.state.changeByRange((range) => ({
       changes: { from: range.from, to: range.to, insert: before + after },
@@ -188,6 +190,7 @@ export function insertFigure(view: EditorView): void {
   view.focus();
 }
 
+/** Insert an empty Typst `#table` of `cols × rows`. */
 export function insertTable(view: EditorView, cols: number, rows: number): void {
   const header = `#table(\n  columns: ${String(cols)},\n`;
   const row = "  " + Array.from({ length: cols }, () => "[]").join(", ") + ",";
