@@ -211,6 +211,28 @@ export function insertTable(view: EditorView, cols: number, rows: number): void 
   view.focus();
 }
 
+/**
+ * Insert a Typst math `token` (e.g. "alpha", "sum", "arrow.r") at the cursor.
+ * When the cursor is not already inside a `$…$` pair, the token is wrapped in
+ * inline math so it renders; the cursor is left just after the token (still
+ * inside the math) so symbols can be chained.
+ */
+export function insertSymbol(view: EditorView, token: string): void {
+  view.dispatch(
+    view.state.changeByRange((range) => {
+      const inMath = findEnclosingPair(view.state, "$", "$", range.from, range.to) !== null;
+      const insert = inMath ? token : `$${token}$`;
+      const cursor = range.from + token.length + (inMath ? 0 : 1);
+      return {
+        changes: { from: range.from, to: range.to, insert },
+        range: EditorSelection.cursor(cursor),
+      };
+    }),
+    { userEvent: "input.insert" }
+  );
+  view.focus();
+}
+
 /** Insert a Typst `#pagebreak()` at the cursor. */
 export function insertPageBreak(view: EditorView): void {
   const inserted = "#pagebreak()";

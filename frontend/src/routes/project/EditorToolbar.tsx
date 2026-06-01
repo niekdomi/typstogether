@@ -13,6 +13,7 @@ import {
   TbOutlineLink,
   TbOutlineList,
   TbOutlineListNumbers,
+  TbOutlineMathSymbols,
   TbOutlinePageBreak,
   TbOutlinePhoto,
   TbOutlinePlus,
@@ -38,6 +39,7 @@ import {
   insertImage,
   insertLink,
   insertPageBreak,
+  insertSymbol,
   insertTable,
   LIST_GROUP,
   toggleCode,
@@ -45,6 +47,7 @@ import {
   togglePrefix,
   wrapSelection,
 } from "./editor-actions";
+import { MATH_SYMBOLS } from "./math-symbols";
 import { useProjectContext } from "./ProjectContext";
 
 interface ToolbarAction {
@@ -362,6 +365,61 @@ function TablePicker(props: TablePickerProps) {
   );
 }
 
+interface SymbolPickerProps {
+  disabled: boolean;
+  onPick: (token: string) => void;
+}
+
+function SymbolPicker(props: SymbolPickerProps) {
+  const [open, setOpen] = createSignal(false);
+
+  return (
+    <DropdownMenu placement="bottom-start" gutter={4} open={open()} onOpenChange={setOpen}>
+      <DropdownMenuTrigger
+        as={Button<"button">}
+        variant="ghost"
+        size="sm"
+        class="h-8 gap-0.5 px-1.5"
+        title="Insert symbol"
+        aria-label="Insert math symbol"
+        disabled={props.disabled}
+      >
+        <TbOutlineMathSymbols />
+        <TbOutlineChevronDown size={12} class="text-muted-foreground" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent class="max-h-80 w-64 overflow-y-auto p-2">
+        <For each={MATH_SYMBOLS}>
+          {(group) => (
+            <div class="mb-2 last:mb-0">
+              <div class="text-muted-foreground mb-1 px-1 text-xs font-medium">
+                {group.category}
+              </div>
+              <div class="grid grid-cols-7 gap-0.5">
+                <For each={group.symbols}>
+                  {(sym) => (
+                    <button
+                      type="button"
+                      class="hover:bg-accent hover:text-accent-foreground flex size-7 items-center justify-center rounded-sm text-sm"
+                      title={`${sym.name} (${sym.token})`}
+                      aria-label={sym.name}
+                      onClick={() => {
+                        props.onPick(sym.token);
+                        setOpen(false);
+                      }}
+                    >
+                      {sym.glyph}
+                    </button>
+                  )}
+                </For>
+              </div>
+            </div>
+          )}
+        </For>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export default function EditorToolbar() {
   const ctx = useProjectContext();
   const disabled = () => !ctx.editorView() || ctx.isReadOnly();
@@ -375,6 +433,13 @@ export default function EditorToolbar() {
     const v = ctx.editorView();
     if (v) {
       insertTable(v, cols, rows);
+    }
+  };
+
+  const runInsertSymbol = (token: string) => {
+    const v = ctx.editorView();
+    if (v) {
+      insertSymbol(v, token);
     }
   };
 
@@ -399,6 +464,7 @@ export default function EditorToolbar() {
         onRun={run}
         disabled={disabled()}
       />
+      <SymbolPicker disabled={disabled()} onPick={runInsertSymbol} />
       <ActionMenu
         label="Lists"
         trigger={() => <TbOutlineList />}
