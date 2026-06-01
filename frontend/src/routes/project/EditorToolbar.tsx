@@ -262,7 +262,7 @@ function ActionMenu(props: ActionMenuProps) {
   );
 }
 
-const TABLE_PICKER_MAX = 8;
+const TABLE_PICKER_MAX_SIZE = 8;
 
 interface TablePickerProps {
   disabled: boolean;
@@ -279,7 +279,7 @@ function TablePicker(props: TablePickerProps) {
     setHoverRows(0);
   };
 
-  const cells = Array.from({ length: TABLE_PICKER_MAX * TABLE_PICKER_MAX }, (_, i) => i);
+  const cells = Array.from({ length: TABLE_PICKER_MAX_SIZE * TABLE_PICKER_MAX_SIZE }, (_, i) => i);
 
   return (
     <DropdownMenu
@@ -307,8 +307,8 @@ function TablePicker(props: TablePickerProps) {
         <div class="grid grid-cols-8 gap-0.5" onMouseLeave={reset}>
           <For each={cells}>
             {(i) => {
-              const col = i % TABLE_PICKER_MAX;
-              const row = Math.floor(i / TABLE_PICKER_MAX);
+              const col = i % TABLE_PICKER_MAX_SIZE;
+              const row = Math.floor(i / TABLE_PICKER_MAX_SIZE);
               const active = () => col < hoverCols() && row < hoverRows();
               return (
                 <button
@@ -353,7 +353,9 @@ export default function EditorToolbar() {
 
   const runInsertTable = (cols: number, rows: number) => {
     const v = ctx.editorView();
-    if (v) insertTable(v, cols, rows);
+    if (v) {
+      insertTable(v, cols, rows);
+    }
   };
 
   return (

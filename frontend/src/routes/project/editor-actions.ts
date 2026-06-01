@@ -156,21 +156,21 @@ export function togglePrefix(view: EditorView, target: string, group?: RegExp): 
   view.focus();
 }
 
-/** Insert an empty Typst `#table` of `cols × rows` with the cursor in the first cell. */
+/** Insert an empty Typst `#table` of `cols × rows`. */
 export function insertTable(view: EditorView, cols: number, rows: number): void {
-  const head = `#table(\n  columns: ${String(cols)},\n  [`;
-  const firstRowRest =
-    cols > 1 ? "], " + Array.from({ length: cols - 1 }, () => "[]").join(", ") + "," : "],";
-  const otherRows = Array.from(
-    { length: rows - 1 },
-    () => "  " + Array.from({ length: cols }, () => "[]").join(", ") + ","
-  ).join("\n");
-  const tail = firstRowRest + (otherRows ? "\n" + otherRows : "") + "\n)";
+  const header = `#table(\n  columns: ${String(cols)},\n`;
+  const row = "  " + Array.from({ length: cols }, () => "[]").join(", ") + ",";
+  const body = Array.from({ length: rows }, () => row).join("\n");
+
+  const insert = `${header}${body}\n)`;
+
+  // cursor goes between the brackets of the first "[]"
+  const cursorOffset = header.length + "  [".length;
 
   view.dispatch(
     view.state.changeByRange((range) => ({
-      changes: { from: range.from, to: range.to, insert: head + tail },
-      range: EditorSelection.cursor(range.from + head.length),
+      changes: { from: range.from, to: range.to, insert },
+      range: EditorSelection.cursor(range.from + cursorOffset),
     })),
     { userEvent: "input.insert" }
   );
