@@ -156,6 +156,27 @@ export function togglePrefix(view: EditorView, target: string, group?: RegExp): 
   view.focus();
 }
 
+/** Insert an empty Typst `#table` of `cols × rows`. */
+export function insertTable(view: EditorView, cols: number, rows: number): void {
+  const header = `#table(\n  columns: ${String(cols)},\n`;
+  const row = "  " + Array.from({ length: cols }, () => "[]").join(", ") + ",";
+  const body = Array.from({ length: rows }, () => row).join("\n");
+
+  const insert = `${header}${body}\n)`;
+
+  // cursor goes between the brackets of the first "[]"
+  const cursorOffset = header.length + "  [".length;
+
+  view.dispatch(
+    view.state.changeByRange((range) => ({
+      changes: { from: range.from, to: range.to, insert },
+      range: EditorSelection.cursor(range.from + cursorOffset),
+    })),
+    { userEvent: "input.insert" }
+  );
+  view.focus();
+}
+
 /** Insert a Typst `#pagebreak()` at the cursor. */
 export function insertPageBreak(view: EditorView): void {
   const inserted = "#pagebreak()";
