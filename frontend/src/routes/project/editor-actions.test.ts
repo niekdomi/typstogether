@@ -10,6 +10,7 @@ import {
   insertImage,
   insertLink,
   insertPageBreak,
+  insertTable,
   toggleCode,
   toggleMath,
   HEADING_GROUP,
@@ -227,6 +228,28 @@ describe("insertPageBreak", () => {
     const v = mockView("˅˅");
     insertPageBreak(v);
     expect(markDoc(v)).toBe("#pagebreak()˅˅");
+  });
+});
+
+// ─── insertTable ─────────────────────────────────────────────────────────────
+
+describe("insertTable", () => {
+  test("1x1 inserts a single-cell table with cursor inside", () => {
+    const v = mockView("˅˅");
+    insertTable(v, 1, 1);
+    expect(markDoc(v)).toBe("#table(\n  columns: 1,\n  [˅˅],\n)");
+  });
+
+  test("3x2 inserts six empty cells with cursor in the first cell", () => {
+    const v = mockView("˅˅");
+    insertTable(v, 3, 2);
+    expect(markDoc(v)).toBe("#table(\n  columns: 3,\n  [˅˅], [], [],\n  [], [], [],\n)");
+  });
+
+  test("inserts at cursor position inside surrounding text", () => {
+    const v = mockView("hi ˅˅there");
+    insertTable(v, 2, 1);
+    expect(markDoc(v)).toBe("hi #table(\n  columns: 2,\n  [˅˅], [],\n)there");
   });
 });
 
