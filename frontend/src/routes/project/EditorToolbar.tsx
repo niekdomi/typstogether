@@ -3,6 +3,7 @@ import {
   TbOutlineBold,
   TbOutlineChevronDown,
   TbOutlineCode,
+  TbOutlineFrame,
   TbOutlineMath,
   TbOutlineH1,
   TbOutlineH2,
@@ -13,12 +14,15 @@ import {
   TbOutlineList,
   TbOutlineListNumbers,
   TbOutlinePageBreak,
+  TbOutlinePhoto,
+  TbOutlinePlus,
   TbOutlineStrikethrough,
   TbOutlineSubscript,
   TbOutlineSuperscript,
+  TbOutlineTable,
   TbOutlineUnderline,
 } from "solid-icons/tb";
-import { For, type JSX } from "solid-js";
+import { createSignal, For, type JSX, Show } from "solid-js";
 
 import { Button } from "../../components/ui/button";
 import {
@@ -30,8 +34,11 @@ import {
 } from "../../components/ui/dropdown-menu";
 import {
   HEADING_GROUP,
+  insertFigure,
+  insertImage,
   insertLink,
   insertPageBreak,
+  insertTable,
   LIST_GROUP,
   toggleCode,
   toggleMath,
@@ -180,6 +187,19 @@ const linkAction: ToolbarAction = {
   run: insertLink,
 };
 
+const snippetItems: ToolbarAction[] = [
+  {
+    icon: () => <TbOutlinePhoto />,
+    label: "Image",
+    run: insertImage,
+  },
+  {
+    icon: () => <TbOutlineFrame />,
+    label: "Figure",
+    run: insertFigure,
+  },
+];
+
 const pageBreakAction: ToolbarAction = {
   icon: () => <TbOutlinePageBreak />,
   label: "Page break",
@@ -251,10 +271,92 @@ function ActionMenu(props: ActionMenuProps) {
             >
               {item.icon()}
               <span class="flex-1">{item.label}</span>
-              <DropdownMenuShortcut>{item.shortcut}</DropdownMenuShortcut>
+              <Show when={item.shortcut}>
+                {(s) => <DropdownMenuShortcut>{s()}</DropdownMenuShortcut>}
+              </Show>
             </DropdownMenuItem>
           )}
         </For>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+const TABLE_PICKER_MAX_SIZE = 8;
+
+interface TablePickerProps {
+  disabled: boolean;
+  onPick: (cols: number, rows: number) => void;
+}
+
+function TablePicker(props: TablePickerProps) {
+  const [open, setOpen] = createSignal(false);
+  const [hoverCols, setHoverCols] = createSignal(0);
+  const [hoverRows, setHoverRows] = createSignal(0);
+
+  const reset = () => {
+    setHoverCols(0);
+    setHoverRows(0);
+  };
+
+  const cells = Array.from({ length: TABLE_PICKER_MAX_SIZE * TABLE_PICKER_MAX_SIZE }, (_, i) => i);
+
+  return (
+    <DropdownMenu
+      placement="bottom-start"
+      gutter={4}
+      open={open()}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) reset();
+      }}
+    >
+      <DropdownMenuTrigger
+        as={Button<"button">}
+        variant="ghost"
+        size="sm"
+        class="h-8 gap-0.5 px-1.5"
+        title="Insert table"
+        aria-label="Insert table"
+        disabled={props.disabled}
+      >
+        <TbOutlineTable />
+        <TbOutlineChevronDown size={12} class="text-muted-foreground" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent class="p-2">
+        <div class="grid grid-cols-8 gap-0.5" onMouseLeave={reset}>
+          <For each={cells}>
+            {(i) => {
+              const col = i % TABLE_PICKER_MAX_SIZE;
+              const row = Math.floor(i / TABLE_PICKER_MAX_SIZE);
+              const active = () => col < hoverCols() && row < hoverRows();
+              return (
+                <button
+                  type="button"
+                  class={
+                    active()
+                      ? "bg-primary border-primary size-4 rounded-sm border"
+                      : "bg-background border-border size-4 rounded-sm border"
+                  }
+                  onMouseEnter={() => {
+                    setHoverCols(col + 1);
+                    setHoverRows(row + 1);
+                  }}
+                  onClick={() => {
+                    props.onPick(col + 1, row + 1);
+                    setOpen(false);
+                  }}
+                  aria-label={`${String(col + 1)} by ${String(row + 1)} table`}
+                />
+              );
+            }}
+          </For>
+        </div>
+        <div class="text-muted-foreground mt-2 text-center text-xs">
+          {hoverCols() > 0
+            ? `${String(hoverCols())} × ${String(hoverRows())} Table`
+            : "Insert table"}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -267,6 +369,13 @@ export default function EditorToolbar() {
   const run = (action: ToolbarAction) => {
     const v = ctx.editorView();
     if (v) action.run(v);
+  };
+
+  const runInsertTable = (cols: number, rows: number) => {
+    const v = ctx.editorView();
+    if (v) {
+      insertTable(v, cols, rows);
+    }
   };
 
   return (
@@ -297,7 +406,15 @@ export default function EditorToolbar() {
         onRun={run}
         disabled={disabled()}
       />
+      <TablePicker disabled={disabled()} onPick={runInsertTable} />
       <Divider />
+      <ActionMenu
+        label="Insert"
+        trigger={() => <TbOutlinePlus />}
+        items={snippetItems}
+        onRun={run}
+        disabled={disabled()}
+      />
       <ActionButton action={linkAction} onRun={run} disabled={disabled()} />
       <ActionButton action={pageBreakAction} onRun={run} disabled={disabled()} />
     </div>
