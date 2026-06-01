@@ -138,7 +138,9 @@ function SidebarCollapseSync(props: { open: boolean }) {
   const panel = usePanelContext();
   createEffect(() => {
     if (props.open) {
-      if (panel.collapsed()) panel.expand();
+      if (panel.collapsed()) {
+        panel.expand();
+      }
     } else if (!panel.collapsed()) {
       panel.collapse();
     }
@@ -247,6 +249,7 @@ function ProjectView() {
             }}
             icon={<TbOutlineAdjustmentsHorizontal size={16} />}
           />
+
           <RailButton
             label="Project settings"
             active={settingsOpen()}

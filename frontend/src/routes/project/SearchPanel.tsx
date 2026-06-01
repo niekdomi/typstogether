@@ -23,14 +23,16 @@ function snippetParts(lineText: string, matchStart: number, matchEnd: number) {
   };
 }
 
-function absoluteOffset(text: string, line: number, col: number): number {
-  const lines = text.split("\n");
-  let offset = 0;
-  for (let i = 0; i < line; i++) {
-    offset += (lines[i]?.length ?? 0) + 1;
+function lineStarts(text: string): number[] {
+  const starts = [0];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "\n") starts.push(i + 1);
   }
-  return offset + col;
+  return starts;
 }
+
+const WORD = /\w/;
+const isBoundary = (s: string, i: number) => !WORD.test(s[i] ?? "");
 
 function OptionButton(props: {
   label: string;
@@ -72,30 +74,30 @@ export default function SearchPanel() {
     const caseSensitive = matchCase();
     const needWholeWord = wholeWord();
     const needle = caseSensitive ? q : q.toLowerCase();
-    const groups = new Map<string, SearchMatch[]>();
+    const groups: [string, SearchMatch[]][] = [];
 
     for (const [path, yText] of files.entries()) {
-      const lines = yText.toJSON().split("\n");
-      for (let i = 0; i < lines.length; i++) {
-        const lineText = lines[i] ?? "";
+      const matches: SearchMatch[] = [];
+      for (const [line, lineText] of yText.toJSON().split("\n").entries()) {
         const haystack = caseSensitive ? lineText : lineText.toLowerCase();
-        let col = haystack.indexOf(needle);
-        while (col !== -1) {
-          const nextCol = haystack.indexOf(needle, col + needle.length);
-          if (
-            !needWholeWord ||
-            (!/\w/.test(haystack[col - 1] ?? "") && !/\w/.test(haystack[col + needle.length] ?? ""))
-          ) {
-            const arr = groups.get(path) ?? [];
-            arr.push({ path, line: i, lineText, matchStart: col, matchEnd: col + q.length });
-            groups.set(path, arr);
+        for (
+          let col = haystack.indexOf(needle);
+          col !== -1;
+          col = haystack.indexOf(needle, col + needle.length)
+        ) {
+          const end = col + needle.length;
+          if (needWholeWord && !(isBoundary(haystack, col - 1) && isBoundary(haystack, end))) {
+            continue;
           }
-          col = nextCol;
+          matches.push({ path, line, lineText, matchStart: col, matchEnd: end });
         }
+      }
+      if (matches.length > 0) {
+        groups.push([path, matches]);
       }
     }
 
-    return [...groups.entries()].toSorted(([a], [b]) => a.localeCompare(b));
+    return groups.toSorted(([a], [b]) => a.localeCompare(b));
   });
 
   const totalCount = createMemo(() => results().reduce((s, [, ms]) => s + ms.length, 0));
@@ -105,10 +107,14 @@ export default function SearchPanel() {
     ctx.setActiveFile(match.path);
     queueMicrotask(() => {
       const view = ctx.editorView();
-      if (!view) return;
+      if (!view) {
+        return;
+      }
+
       const doc = view.state.doc;
       const lineInfo = doc.line(Math.min(match.line + 1, doc.lines));
       const from = Math.min(lineInfo.from + match.matchStart, lineInfo.to);
+
       view.dispatch({
         selection: {
           anchor: from,
@@ -122,33 +128,53 @@ export default function SearchPanel() {
 
   function replaceOne(match: SearchMatch) {
     const yText = ctx.ready()?.files.get(match.path);
-    if (!yText) return;
-    const from = absoluteOffset(yText.toJSON(), match.line, match.matchStart);
+    if (!yText) {
+      return;
+    }
+
+    const from = lineStarts(yText.toJSON())[match.line]! + match.matchStart;
+
     yText.delete(from, match.matchEnd - match.matchStart);
     yText.insert(from, replaceText());
+
     setVersion((v) => v + 1);
   }
 
   function replaceNext() {
     const match = flatMatches()[0];
-    if (!match) return;
+    if (!match) {
+      return;
+    }
+
     replaceOne(match);
+
     const next = flatMatches()[0];
-    if (next) jumpTo(next);
+    if (next) {
+      jumpTo(next);
+    }
   }
 
   function replaceAll() {
     const files = ctx.ready()?.files;
-    if (!files) return;
+    if (!files) {
+      return;
+    }
+
     const replacement = replaceText();
     for (const [path, matches] of results()) {
       const yText = files.get(path);
-      if (!yText) continue;
-      const snapshot = yText.toJSON();
+      if (!yText) {
+        continue;
+      }
+
+      const starts = lineStarts(yText.toJSON());
       for (let i = matches.length - 1; i >= 0; i--) {
         const m = matches[i];
-        if (!m) continue;
-        const from = absoluteOffset(snapshot, m.line, m.matchStart);
+        if (!m) {
+          continue;
+        }
+
+        const from = starts[m.line]! + m.matchStart;
         yText.delete(from, m.matchEnd - m.matchStart);
         yText.insert(from, replacement);
       }
