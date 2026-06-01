@@ -6,6 +6,8 @@ import type { EditorView } from "@codemirror/view";
 import {
   wrapSelection,
   togglePrefix,
+  insertFigure,
+  insertImage,
   insertLink,
   insertPageBreak,
   insertTable,
@@ -199,6 +201,36 @@ describe("insertLink", () => {
   });
 });
 
+// ─── insertImage ─────────────────────────────────────────────────────────────
+
+describe("insertImage", () => {
+  test("inserts image with the path placeholder selected", () => {
+    const v = mockView("˅˅");
+    insertImage(v);
+    expect(markDoc(v)).toBe('#image("˅path˅")');
+  });
+});
+
+// ─── insertFigure ────────────────────────────────────────────────────────────
+
+describe("insertFigure", () => {
+  test("inserts figure wrapper with cursor in body slot", () => {
+    const v = mockView("˅˅");
+    insertFigure(v);
+    expect(markDoc(v)).toBe("#figure(\n  ˅˅,\n  caption: [Caption],\n)");
+  });
+});
+
+// ─── insertPageBreak ─────────────────────────────────────────────────────────
+
+describe("insertPageBreak", () => {
+  test("inserts pagebreak at cursor with cursor after the call", () => {
+    const v = mockView("˅˅");
+    insertPageBreak(v);
+    expect(markDoc(v)).toBe("#pagebreak()˅˅");
+  });
+});
+
 // ─── insertTable ─────────────────────────────────────────────────────────────
 
 describe("insertTable", () => {
@@ -218,16 +250,6 @@ describe("insertTable", () => {
     const v = mockView("hi ˅˅there");
     insertTable(v, 2, 1);
     expect(markDoc(v)).toBe("hi #table(\n  columns: 2,\n  [˅˅], [],\n)there");
-  });
-});
-
-// ─── insertPageBreak ─────────────────────────────────────────────────────────
-
-describe("insertPageBreak", () => {
-  test("inserts pagebreak at cursor with cursor after the call", () => {
-    const v = mockView("˅˅");
-    insertPageBreak(v);
-    expect(markDoc(v)).toBe("#pagebreak()˅˅");
   });
 });
 

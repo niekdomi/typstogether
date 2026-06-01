@@ -156,6 +156,40 @@ export function togglePrefix(view: EditorView, target: string, group?: RegExp): 
   view.focus();
 }
 
+/** Insert a Typst `#image("path")` with the path placeholder selected. */
+export function insertImage(view: EditorView): void {
+  const before = '#image("';
+  const placeholder = "path";
+  const after = '")';
+
+  view.dispatch(
+    view.state.changeByRange((range) => ({
+      changes: { from: range.from, to: range.to, insert: before + placeholder + after },
+      range: EditorSelection.range(
+        range.from + before.length,
+        range.from + before.length + placeholder.length
+      ),
+    })),
+    { userEvent: "input.insert" }
+  );
+  view.focus();
+}
+
+/** Insert a Typst `#figure(...)` wrapper with the cursor in the body slot. */
+export function insertFigure(view: EditorView): void {
+  const before = "#figure(\n  ";
+  const after = ",\n  caption: [Caption],\n)";
+
+  view.dispatch(
+    view.state.changeByRange((range) => ({
+      changes: { from: range.from, to: range.to, insert: before + after },
+      range: EditorSelection.cursor(range.from + before.length),
+    })),
+    { userEvent: "input.insert" }
+  );
+  view.focus();
+}
+
 /** Insert an empty Typst `#table` of `cols × rows`. */
 export function insertTable(view: EditorView, cols: number, rows: number): void {
   const header = `#table(\n  columns: ${String(cols)},\n`;
