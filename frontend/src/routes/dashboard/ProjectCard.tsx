@@ -1,5 +1,11 @@
 import { useColorMode } from "@kobalte/core/color-mode";
-import { TbOutlineDots, TbOutlinePencil, TbOutlineShare, TbOutlineTrash } from "solid-icons/tb";
+import {
+  TbOutlineDoorExit,
+  TbOutlineDots,
+  TbOutlinePencil,
+  TbOutlineShare,
+  TbOutlineTrash,
+} from "solid-icons/tb";
 import { createEffect, createMemo, createResource, onCleanup, onMount, Show } from "solid-js";
 
 import { Badge } from "../../components/ui/badge";
@@ -23,6 +29,7 @@ interface ProjectCardProps {
   onShare: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onLeave: () => void;
 }
 
 export default function ProjectCard(props: ProjectCardProps) {
@@ -99,7 +106,7 @@ export default function ProjectCard(props: ProjectCardProps) {
         ref={(el) => {
           thumbRef = el;
         }}
-        class="bg-muted border-border flex aspect-[1/1.1] min-h-0 border-b"
+        class="bg-muted border-border relative flex aspect-[1/1.1] min-h-0 border-b"
       >
         <div
           class="flex flex-1 items-center justify-center overflow-hidden rounded-t-xl bg-white"
@@ -124,6 +131,14 @@ export default function ProjectCard(props: ProjectCardProps) {
             )}
           </Show>
         </div>
+        <Show when={isShared()}>
+          <div class="absolute right-2 bottom-2 flex items-center gap-1.5">
+            <Badge variant="secondary">shared</Badge>
+            <Badge variant="outline" class="bg-background/80 backdrop-blur-sm">
+              {props.role}
+            </Badge>
+          </div>
+        </Show>
       </div>
       <div class="flex items-start gap-3 px-5 py-4">
         <div class="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -143,40 +158,42 @@ export default function ProjectCard(props: ProjectCardProps) {
             e.stopPropagation();
           }}
         >
-          <Show
-            when={isShared()}
-            fallback={
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  as={Button<"button">}
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Project actions"
-                >
-                  <TbOutlineDots size={14} />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="min-w-36">
-                  <DropdownMenuItem onSelect={props.onShare}>
-                    <TbOutlineShare size={14} />
-                    Share
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={props.onRename}>
-                    <TbOutlinePencil size={14} />
-                    Rename
-                  </DropdownMenuItem>
-                  <DropdownMenuItem variant="destructive" onSelect={props.onDelete}>
-                    <TbOutlineTrash size={14} />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            }
-          >
-            <div class="flex items-center gap-1.5">
-              <Badge variant="secondary">shared</Badge>
-              <Badge variant="outline">{props.role}</Badge>
-            </div>
-          </Show>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              as={Button<"button">}
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Project actions"
+            >
+              <TbOutlineDots size={14} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="min-w-36">
+              <Show
+                when={isShared()}
+                fallback={
+                  <>
+                    <DropdownMenuItem onSelect={props.onShare}>
+                      <TbOutlineShare size={14} />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={props.onRename}>
+                      <TbOutlinePencil size={14} />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem variant="destructive" onSelect={props.onDelete}>
+                      <TbOutlineTrash size={14} />
+                      Delete
+                    </DropdownMenuItem>
+                  </>
+                }
+              >
+                <DropdownMenuItem variant="destructive" onSelect={props.onLeave}>
+                  <TbOutlineDoorExit size={14} />
+                  Leave
+                </DropdownMenuItem>
+              </Show>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </Card>

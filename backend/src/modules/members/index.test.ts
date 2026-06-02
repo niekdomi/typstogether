@@ -146,6 +146,70 @@ describe("DELETE /projects/:id/members/:userId", () => {
   });
 });
 
+describe("DELETE /projects/:id/members/me (leave)", () => {
+  test("401 when unauthenticated", async () => {
+    const owner = await userFactory.create();
+    const member = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    await memberService.create(project.id, member.id, "editor");
+
+    const res = await request(`/projects/${project.id}/members/me`, { method: "DELETE" });
+
+    expect(res.status).toBe(401);
+  });
+
+  test("404 when caller is not a member", async () => {
+    const owner = await userFactory.create();
+    const stranger = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    setTestUser(stranger);
+
+    const res = await request(`/projects/${project.id}/members/me`, { method: "DELETE" });
+
+    expect(res.status).toBe(404);
+  });
+
+  test("403 when caller is the owner", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    setTestUser(owner);
+
+    const res = await request(`/projects/${project.id}/members/me`, { method: "DELETE" });
+
+    expect(res.status).toBe(403);
+  });
+
+  test("200 editor leaves and the row is gone", async () => {
+    const owner = await userFactory.create();
+    const editor = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    await memberService.create(project.id, editor.id, "editor");
+    setTestUser(editor);
+
+    const res = await request(`/projects/${project.id}/members/me`, { method: "DELETE" });
+
+    expect(res.status).toBe(200);
+    expect(await memberService.list(project.id)).toEqual([]);
+  });
+
+  test("200 viewer leaves and only that row is removed", async () => {
+    const owner = await userFactory.create();
+    const editor = await userFactory.create();
+    const viewer = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    await memberService.create(project.id, editor.id, "editor");
+    await memberService.create(project.id, viewer.id, "viewer");
+    setTestUser(viewer);
+
+    const res = await request(`/projects/${project.id}/members/me`, { method: "DELETE" });
+    const remaining = await memberService.list(project.id);
+
+    expect(res.status).toBe(200);
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]!.member.userId).toBe(editor.id);
+  });
+});
+
 describe("PATCH /projects/:id/members/:userId", () => {
   test("401 when unauthenticated", async () => {
     const owner = await userFactory.create();

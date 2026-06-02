@@ -14,7 +14,7 @@ import TopBar from "./TopBar";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { projects, rename, remove, create, join } = useProjects();
+  const { projects, rename, remove, create, join, leave } = useProjects();
 
   const [query, setQuery] = createSignal("");
   const [modalOpen, setModalOpen] = createSignal(false);
@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [renameTarget, setRenameTarget] = createSignal<{ id: string; name: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = createSignal<{ id: string; name: string } | null>(null);
   const [shareTarget, setShareTarget] = createSignal<{ id: string; name: string } | null>(null);
+  const [leaveTarget, setLeaveTarget] = createSignal<{ id: string; name: string } | null>(null);
 
   const all = () => projects() ?? [];
 
@@ -57,6 +58,7 @@ export default function Dashboard() {
                       onShare={() => setShareTarget({ id: m.project.id, name: m.project.name })}
                       onRename={() => setRenameTarget({ id: m.project.id, name: m.project.name })}
                       onDelete={() => setDeleteTarget({ id: m.project.id, name: m.project.name })}
+                      onLeave={() => setLeaveTarget({ id: m.project.id, name: m.project.name })}
                     />
                   )}
                 </For>
@@ -124,6 +126,19 @@ export default function Dashboard() {
         title="Delete project"
         message={`Delete "${deleteTarget()?.name ?? ""}"? This cannot be undone.`}
         confirmLabel="Delete"
+        danger
+      />
+
+      <ConfirmDialog
+        open={leaveTarget() !== null}
+        onClose={() => setLeaveTarget(null)}
+        onConfirm={() => {
+          const target = leaveTarget();
+          if (target) void leave(target.id);
+        }}
+        title="Leave project"
+        message={`Leave "${leaveTarget()?.name ?? ""}"? You'll lose access until you're invited again.`}
+        confirmLabel="Leave"
         danger
       />
 
