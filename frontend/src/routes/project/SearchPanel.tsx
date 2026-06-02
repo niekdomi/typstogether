@@ -225,7 +225,7 @@ export default function SearchPanel() {
   return (
     <div class="flex h-full min-w-0 flex-col overflow-hidden">
       <div class="flex flex-col gap-1.5 p-2">
-        <div class="flex items-center px-1">
+        <div class="flex h-8 items-center px-2">
           <span class="text-sidebar-foreground/70 flex-1 text-xs font-medium">Search</span>
 
           <OptionButton
