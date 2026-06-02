@@ -1,5 +1,5 @@
 import { EditorView } from "@codemirror/view";
-import { TbOutlineChevronRight } from "solid-icons/tb";
+import { TbOutlineChevronRight, TbOutlineReplace } from "solid-icons/tb";
 import { createMemo, createSignal, For, Show } from "solid-js";
 
 import { useProjectContext } from "./ProjectContext";
@@ -354,9 +354,9 @@ export default function SearchPanel() {
                                 replaceOne(m);
                               }}
                               title="Replace"
-                              class="text-muted-foreground hover:text-foreground invisible shrink-0 text-xs group-hover:visible"
+                              class="text-muted-foreground hover:text-foreground invisible shrink-0 group-hover:visible"
                             >
-                              ↵
+                              <TbOutlineReplace size={14} />
                             </button>
                           </Show>
                         </div>
