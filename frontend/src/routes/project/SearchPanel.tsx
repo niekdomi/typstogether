@@ -347,6 +347,7 @@ export default function SearchPanel() {
                               {parts.after}
                             </span>
                           </button>
+
                           <Show when={showReplace()}>
                             <button
                               type="button"
