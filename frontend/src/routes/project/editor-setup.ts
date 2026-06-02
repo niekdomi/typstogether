@@ -20,6 +20,7 @@ import {
   crosshairCursor,
   drawSelection,
   dropCursor,
+  EditorView,
   highlightActiveLine,
   highlightActiveLineGutter,
   highlightSpecialChars,
@@ -47,6 +48,8 @@ export const editorSetup: Extension = [
   crosshairCursor(),
   highlightActiveLine(),
   highlightSelectionMatches(),
+  // Enable the browser's native spellchecker on the editable content.
+  EditorView.contentAttributes.of({ spellcheck: "true" }),
   keymap.of([
     ...closeBracketsKeymap,
     ...defaultKeymap,
