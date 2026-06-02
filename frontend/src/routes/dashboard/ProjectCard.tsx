@@ -128,7 +128,7 @@ export default function ProjectCard(props: ProjectCardProps) {
       <div class="flex items-start gap-3 px-5 py-4">
         <div class="flex min-w-0 flex-1 flex-col gap-1.5">
           <div class="text-muted-foreground text-xs">
-            {isShared() ? "shared" : `created ${formatDate(props.project.createdAt)}`}
+            created {formatDate(props.project.createdAt)}
           </div>
           <div class="text-foreground truncate text-[15px] leading-tight font-medium">
             {props.project.name}
@@ -172,7 +172,10 @@ export default function ProjectCard(props: ProjectCardProps) {
               </DropdownMenu>
             }
           >
-            <Badge variant="outline">{props.role}</Badge>
+            <div class="flex items-center gap-1.5">
+              <Badge variant="secondary">shared</Badge>
+              <Badge variant="outline">{props.role}</Badge>
+            </div>
           </Show>
         </div>
       </div>
