@@ -48,5 +48,8 @@ export function useProjects() {
   const create = (name: string, template: { id: string; version: string } | undefined) =>
     mutate(() => api.projects.post({ name, template }), "Could not create project.");
 
-  return { projects, rename, remove, create };
+  const join = (token: string) =>
+    mutate(() => api.invites({ token }).redeem.post(), "This invite link is invalid or expired.");
+
+  return { projects, rename, remove, create, join };
 }
