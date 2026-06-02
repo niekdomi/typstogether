@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 
+import { ForbiddenError } from "../../errors";
 import { projectAccessMacro } from "../projects/macro";
 import { memberModels, memberWithUserModel, projectMemberModel } from "./model";
 import { memberService } from "./service";
@@ -12,6 +13,17 @@ export const memberRoutes = new Elysia({ name: "member-routes" })
     projectMember: true,
     response: t.Array(memberWithUserModel),
   })
+
+  .delete(
+    "/projects/:id/members/me",
+    ({ project, role, user }) => {
+      if (role === "owner") {
+        throw new ForbiddenError("Owners cannot leave their own project");
+      }
+      return memberService.remove(project.id, user.id);
+    },
+    { projectMember: true, response: projectMemberModel }
+  )
 
   .delete(
     "/projects/:id/members/:userId",

@@ -51,5 +51,14 @@ export function useProjects() {
   const join = (token: string) =>
     mutate(() => api.invites({ token }).redeem.post(), "This invite link is invalid or expired.");
 
-  return { projects, rename, remove, create, join };
+  const leave = (id: string) =>
+    mutate(
+      () => api.projects({ id }).members.me.delete(),
+      "Could not leave project.",
+      () => {
+        void deleteThumbnail(id);
+      }
+    );
+
+  return { projects, rename, remove, create, join, leave };
 }
