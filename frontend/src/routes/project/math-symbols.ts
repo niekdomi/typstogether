@@ -1,9 +1,3 @@
-// Curated Typst math symbols for the toolbar symbol picker.
-//
-// `token` is the exact text inserted into math mode (Typst uses bare names, not
-// LaTeX backslash commands). `glyph` is the rendered character shown on the
-// button, and `name` is the human label used for the tooltip / aria-label.
-//
 // REF: https://typst.app/docs/reference/symbols/sym/
 
 export interface MathSymbol {

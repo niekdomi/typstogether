@@ -223,6 +223,7 @@ export function insertSymbol(view: EditorView, token: string): void {
       const inMath = findEnclosingPair(view.state, "$", "$", range.from, range.to) !== null;
       const insert = inMath ? token : `$${token}$`;
       const cursor = range.from + token.length + (inMath ? 0 : 1);
+
       return {
         changes: { from: range.from, to: range.to, insert },
         range: EditorSelection.cursor(cursor),
