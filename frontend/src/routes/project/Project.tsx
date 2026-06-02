@@ -48,42 +48,40 @@ function EditorPrefsPanel() {
       <p class="text-muted-foreground px-1 py-1.5 text-xs font-medium tracking-wide uppercase">
         Editor
       </p>
-      <div
-        onClick={() => setVimMode((v) => !v)}
-        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm"
+      <SwitchInput
+        checked={vimMode()}
+        onChange={setVimMode}
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full cursor-pointer justify-between rounded-md px-2 py-1.5 text-sm"
       >
         <span>Vim mode</span>
-        <SwitchInput
-          checked={vimMode()}
-          onChange={setVimMode}
-          onClick={(e: MouseEvent) => {
-            e.stopPropagation();
-          }}
-        />
-      </div>
-      <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
+      </SwitchInput>
+      <SwitchInput
+        checked={lineNumbers()}
+        onChange={setLineNumbers}
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full cursor-pointer justify-between rounded-md px-2 py-1.5 text-sm"
+      >
         <span>Line numbers</span>
-        <SwitchInput checked={lineNumbers()} onChange={setLineNumbers} />
-      </label>
-      <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
+      </SwitchInput>
+      <SwitchInput
+        checked={spellcheck()}
+        onChange={setSpellcheck}
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full cursor-pointer justify-between rounded-md px-2 py-1.5 text-sm"
+      >
         <span>Spell check</span>
-        <SwitchInput checked={spellcheck()} onChange={setSpellcheck} />
-      </label>
-      <label
+      </SwitchInput>
+      <SwitchInput
+        checked={relativeLineNumbers()}
+        onChange={setRelativeLineNumbers}
+        disabled={!lineNumbers()}
         class={cx(
-          "flex items-center justify-between rounded-md px-2 py-1.5 text-sm",
+          "flex w-full justify-between rounded-md px-2 py-1.5 text-sm",
           lineNumbers()
             ? "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer"
             : "text-muted-foreground cursor-not-allowed"
         )}
       >
         <span>Relative line numbers</span>
-        <SwitchInput
-          checked={relativeLineNumbers()}
-          onChange={setRelativeLineNumbers}
-          disabled={!lineNumbers()}
-        />
-      </label>
+      </SwitchInput>
     </div>
   );
 }
