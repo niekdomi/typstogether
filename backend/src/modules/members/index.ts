@@ -14,8 +14,6 @@ export const memberRoutes = new Elysia({ name: "member-routes" })
     response: t.Array(memberWithUserModel),
   })
 
-  // A member leaves a project on their own. Owners have no `project_member` row
-  // and own the project, so they delete it instead of leaving.
   .delete(
     "/projects/:id/members/me",
     ({ project, role, user }) => {
