@@ -7,16 +7,15 @@ import { useProjects } from "../../lib/projects/use-projects";
 import ConfirmDialog from "./ConfirmDialog";
 import InviteDialog from "./InviteDialog";
 import NewProjectModal from "./NewProjectModal";
+import DashboardHeader from "./DashboardHeader";
 import ProjectCard from "./ProjectCard";
 import PromptDialog from "./PromptDialog";
-import TabsBar, { type Tab } from "./TabsBar";
 import TopBar from "./TopBar";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { projects, rename, remove, create } = useProjects();
 
-  const [tab, setTab] = createSignal<Tab>("owned");
   const [query, setQuery] = createSignal("");
   const [modalOpen, setModalOpen] = createSignal(false);
   const [renameTarget, setRenameTarget] = createSignal<{ id: string; name: string } | null>(null);
@@ -24,13 +23,12 @@ export default function Dashboard() {
   const [shareTarget, setShareTarget] = createSignal<{ id: string; name: string } | null>(null);
 
   const all = () => projects() ?? [];
-  const owned = () => all().filter((p) => p.role === "owner");
-  const shared = () => all().filter((p) => p.role !== "owner");
 
   const list = createMemo(() => {
-    const base = tab() === "owned" ? owned() : shared();
     const q = query().toLowerCase().trim();
-    const filtered = q ? base.filter((p) => p.project.name.toLowerCase().includes(q)) : base;
+    const filtered = q
+      ? all().filter((p) => p.project.name.toLowerCase().includes(q))
+      : all();
     return filtered.toSorted(
       (a, b) => new Date(b.project.updatedAt).getTime() - new Date(a.project.updatedAt).getTime()
     );
@@ -41,13 +39,7 @@ export default function Dashboard() {
       <TopBar query={query()} onQuery={setQuery} />
       <main class="mx-auto flex min-h-0 w-full max-w-310 flex-1 flex-col px-8 py-10">
         <h1 class="mt-2 mb-8 text-[44px] font-medium tracking-[-0.02em]">Projects</h1>
-        <TabsBar
-          tab={tab()}
-          onTab={setTab}
-          ownedCount={owned().length}
-          sharedCount={shared().length}
-          onNewProject={() => setModalOpen(true)}
-        />
+        <DashboardHeader onNewProject={() => setModalOpen(true)} />
         <div class="min-h-0 flex-1 overflow-y-auto pr-3">
           <Switch
             fallback={

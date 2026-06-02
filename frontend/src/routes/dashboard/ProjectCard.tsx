@@ -172,7 +172,10 @@ export default function ProjectCard(props: ProjectCardProps) {
               </DropdownMenu>
             }
           >
-            <Badge variant="outline">{props.role}</Badge>
+            <div class="flex items-center gap-1.5">
+              <Badge variant="secondary">shared</Badge>
+              <Badge variant="outline">{props.role}</Badge>
+            </div>
           </Show>
         </div>
       </div>
