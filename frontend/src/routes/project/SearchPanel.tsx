@@ -1,5 +1,5 @@
 import { EditorView } from "@codemirror/view";
-import { TbOutlineChevronRight, TbOutlineSearch } from "solid-icons/tb";
+import { TbOutlineChevronRight } from "solid-icons/tb";
 import { createMemo, createSignal, For, Show } from "solid-js";
 
 import { useProjectContext } from "./ProjectContext";
@@ -12,10 +12,15 @@ interface SearchMatch {
   matchEnd: number;
 }
 
+/**
+ * Splits a line into before/match/after for a result snippet, truncating the surrounding context with an ellipsis.
+ */
 function snippetParts(lineText: string, matchStart: number, matchEnd: number) {
-  const CTX = 30;
-  const start = Math.max(0, matchStart - CTX);
-  const end = Math.min(lineText.length, matchEnd + CTX);
+  const CONTEXT_LENGTH = 30;
+
+  const start = Math.max(0, matchStart - CONTEXT_LENGTH);
+  const end = Math.min(lineText.length, matchEnd + CONTEXT_LENGTH);
+
   return {
     before: (start > 0 ? "…" : "") + lineText.slice(start, matchStart),
     match: lineText.slice(matchStart, matchEnd),
@@ -23,17 +28,33 @@ function snippetParts(lineText: string, matchStart: number, matchEnd: number) {
   };
 }
 
+/**
+ * Returns the absolute offset where each line begins, to convert a (line, column) match into an offset for editing the Yjs text.
+ *
+ * @returns An array indexed by line number, where each entry is that line's start offset in the text.
+ */
 function lineStarts(text: string): number[] {
   const starts = [0];
+
   for (let i = 0; i < text.length; i++) {
-    if (text[i] === "\n") starts.push(i + 1);
+    if (text[i] === "\n") {
+      starts.push(i + 1);
+    }
   }
+
   return starts;
 }
 
 const WORD = /\w/;
+
+/**
+ * True if position `i` in `s` is a word boundary (a non-word char or off the string's edge), used to enforce whole-word matching.
+ */
 const isBoundary = (s: string, i: number) => !WORD.test(s[i] ?? "");
 
+/**
+ * Toggle button for a search option (e.g. match case), styled by active state.
+ */
 function OptionButton(props: {
   label: string;
   title: string;
@@ -65,11 +86,14 @@ export default function SearchPanel() {
   const [wholeWord, setWholeWord] = createSignal(false);
   const [version, setVersion] = createSignal(0);
 
+  // Scans every file for the query, grouping matches by path (sorted).
   const results = createMemo<[string, SearchMatch[]][]>(() => {
     version();
     const q = query().trim();
     const files = ctx.ready()?.files;
-    if (!q || !files) return [];
+    if (!q || !files) {
+      return [];
+    }
 
     const caseSensitive = matchCase();
     const needWholeWord = wholeWord();
@@ -80,18 +104,22 @@ export default function SearchPanel() {
       const matches: SearchMatch[] = [];
       for (const [line, lineText] of yText.toJSON().split("\n").entries()) {
         const haystack = caseSensitive ? lineText : lineText.toLowerCase();
+
         for (
           let col = haystack.indexOf(needle);
           col !== -1;
           col = haystack.indexOf(needle, col + needle.length)
         ) {
           const end = col + needle.length;
+
           if (needWholeWord && !(isBoundary(haystack, col - 1) && isBoundary(haystack, end))) {
             continue;
           }
+
           matches.push({ path, line, lineText, matchStart: col, matchEnd: end });
         }
       }
+
       if (matches.length > 0) {
         groups.push([path, matches]);
       }
@@ -103,6 +131,9 @@ export default function SearchPanel() {
   const totalCount = createMemo(() => results().reduce((s, [, ms]) => s + ms.length, 0));
   const flatMatches = createMemo(() => results().flatMap(([, ms]) => ms));
 
+  /**
+   * Opens the match's file and selects + scrolls to the matched range.
+   */
   const jumpTo = (match: SearchMatch) => {
     ctx.setActiveFile(match.path);
     queueMicrotask(() => {
@@ -126,6 +157,9 @@ export default function SearchPanel() {
     });
   };
 
+  /**
+   * Replaces a single match in place with the current replace text.
+   */
   function replaceOne(match: SearchMatch) {
     const yText = ctx.ready()?.files.get(match.path);
     if (!yText) {
@@ -140,6 +174,9 @@ export default function SearchPanel() {
     setVersion((v) => v + 1);
   }
 
+  /**
+   * Replaces the first remaining match, then jumps to the next one.
+   */
   function replaceNext() {
     const match = flatMatches()[0];
     if (!match) {
@@ -154,6 +191,9 @@ export default function SearchPanel() {
     }
   }
 
+  /**
+   * Replaces every match across all files (right-to-left to keep offsets valid).
+   */
   function replaceAll() {
     const files = ctx.ready()?.files;
     if (!files) {
@@ -187,6 +227,7 @@ export default function SearchPanel() {
       <div class="flex flex-col gap-1.5 p-2">
         <div class="flex items-center px-1">
           <span class="text-sidebar-foreground/70 flex-1 text-xs font-medium">Search</span>
+
           <OptionButton
             label="Aa"
             title="Match case"
@@ -195,6 +236,7 @@ export default function SearchPanel() {
               setMatchCase((s) => !s);
             }}
           />
+
           <OptionButton
             label="ab|"
             title="Whole word"
@@ -212,13 +254,12 @@ export default function SearchPanel() {
               setShowReplace((s) => !s);
             }}
             title="Toggle replace"
-            class="text-muted-foreground hover:text-foreground shrink-0 transition-transform"
+            class="text-muted-foreground hover:text-foreground flex w-5 shrink-0 justify-center transition-transform"
             classList={{ "rotate-90": showReplace() }}
           >
             <TbOutlineChevronRight size={14} />
           </button>
-          <div class="border-border bg-background flex min-w-0 flex-1 items-center gap-2 rounded-md border px-2.5 py-1.5">
-            <TbOutlineSearch size={15} class="text-muted-foreground shrink-0" />
+          <div class="border-border bg-background flex min-w-0 flex-1 items-center rounded-md border px-2.5 py-1.5">
             <input
               type="text"
               placeholder="Search in files…"
@@ -255,6 +296,7 @@ export default function SearchPanel() {
               >
                 Replace
               </button>
+
               <button
                 type="button"
                 onClick={replaceAll}
