@@ -55,6 +55,7 @@ function EditorPrefsPanel() {
       >
         <span>Vim mode</span>
       </SwitchInput>
+
       <SwitchInput
         checked={lineNumbers()}
         onChange={setLineNumbers}
@@ -62,6 +63,7 @@ function EditorPrefsPanel() {
       >
         <span>Line numbers</span>
       </SwitchInput>
+
       <SwitchInput
         checked={spellcheck()}
         onChange={setSpellcheck}
@@ -69,6 +71,7 @@ function EditorPrefsPanel() {
       >
         <span>Spell check</span>
       </SwitchInput>
+
       <SwitchInput
         checked={relativeLineNumbers()}
         onChange={setRelativeLineNumbers}
