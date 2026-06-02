@@ -11,6 +11,7 @@ import * as Y from "yjs";
 import {
   lineNumbers as showLineNumbers,
   relativeLineNumbers,
+  spellcheck,
   vimMode,
 } from "../../lib/editor-prefs";
 import { fileDropHandler, formatKeymap } from "./editor-actions";
@@ -53,6 +54,10 @@ const buildLineNumbers = () => {
   });
 };
 
+// Toggle the browser's native spellchecker via the content element's attribute.
+const buildSpellcheck = () =>
+  EditorView.contentAttributes.of({ spellcheck: spellcheck() ? "true" : "false" });
+
 export default function CodeMirrorEditor() {
   const ctx = useProjectContext();
   const { colorMode: theme } = useColorMode();
@@ -71,6 +76,7 @@ export default function CodeMirrorEditor() {
       const themeCompartment = new Compartment();
       const vimCompartment = new Compartment();
       const lineNumberCompartment = new Compartment();
+      const spellcheckCompartment = new Compartment();
 
       const setup = createTypstSetup({
         project: typstProject,
@@ -106,6 +112,7 @@ export default function CodeMirrorEditor() {
             fileDropHandler,
             keymap.of([indentWithTab, ...yUndoManagerKeymap]),
             lineNumberCompartment.of(buildLineNumbers()),
+            spellcheckCompartment.of(buildSpellcheck()),
             editorSetup,
             ...setup,
             yCollab(text, ctx.collab.awareness, { undoManager: cache.undoManager }),
@@ -141,6 +148,7 @@ export default function CodeMirrorEditor() {
             readOnlyCompartment.reconfigure(EditorState.readOnly.of(ctx.isReadOnly())),
             vimCompartment.reconfigure(vimMode() ? vim() : []),
             lineNumberCompartment.reconfigure(buildLineNumbers()),
+            spellcheckCompartment.reconfigure(buildSpellcheck()),
           ],
         });
         controller.setTheme(view, theme());
@@ -181,6 +189,7 @@ export default function CodeMirrorEditor() {
           vimMode();
           showLineNumbers();
           relativeLineNumbers();
+          spellcheck();
           syncCompartments();
         });
 

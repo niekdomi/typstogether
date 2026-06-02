@@ -24,7 +24,9 @@ import {
   relativeLineNumbers,
   setLineNumbers,
   setRelativeLineNumbers,
+  setSpellcheck,
   setVimMode,
+  spellcheck,
   vimMode,
 } from "../../lib/editor-prefs";
 import AssetPreview from "./AssetPreview";
@@ -62,6 +64,10 @@ function EditorPrefsPanel() {
       <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
         <span>Line numbers</span>
         <SwitchInput checked={lineNumbers()} onChange={setLineNumbers} />
+      </label>
+      <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
+        <span>Spell check</span>
+        <SwitchInput checked={spellcheck()} onChange={setSpellcheck} />
       </label>
       <label
         class={cx(

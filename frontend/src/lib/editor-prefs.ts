@@ -13,6 +13,11 @@ export const [relativeLineNumbers, setRelativeLineNumbers] = makePersisted(creat
   name: "editor.relativeLineNumbers",
 });
 
+// Toggles the browser's native spellchecker on the editor content. On by default.
+export const [spellcheck, setSpellcheck] = makePersisted(createSignal(true), {
+  name: "editor.spellcheck",
+});
+
 // Dark preview inverts the rendered document; independent of the app theme so a
 // dark-mode user can still preview on a white page (and vice versa).
 export const [previewDark, setPreviewDark] = makePersisted(createSignal(false), {
