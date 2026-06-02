@@ -3,8 +3,9 @@ import { A } from "@solidjs/router";
 import { usePanelContext } from "corvu/resizable";
 import { FaSolidChevronLeft } from "solid-icons/fa";
 import {
-  TbOutlineAdjustmentsHorizontal,
   TbOutlineAlertTriangle,
+  TbOutlineSearch,
+  TbOutlineAdjustmentsHorizontal,
   TbOutlineFiles,
   TbOutlineSettings,
 } from "solid-icons/tb";
@@ -35,8 +36,9 @@ import FileSidebar from "./file-sidebar/FileSidebar";
 import PreviewPane from "./PreviewPane";
 import { ProjectProvider, useProjectContext } from "./ProjectContext";
 import ProjectSettingsDialog from "./ProjectSettingsDialog";
+import SearchPanel from "./SearchPanel";
 
-type Panel = "files" | "diagnostics" | "config" | null;
+type Panel = "files" | "search" | "diagnostics" | "config" | null;
 
 function EditorPrefsPanel() {
   return (
@@ -44,10 +46,19 @@ function EditorPrefsPanel() {
       <p class="text-muted-foreground px-1 py-1.5 text-xs font-medium tracking-wide uppercase">
         Editor
       </p>
-      <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
+      <div
+        onClick={() => setVimMode((v) => !v)}
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm"
+      >
         <span>Vim mode</span>
-        <SwitchInput checked={vimMode()} onChange={setVimMode} />
-      </label>
+        <SwitchInput
+          checked={vimMode()}
+          onChange={setVimMode}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+          }}
+        />
+      </div>
       <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm">
         <span>Line numbers</span>
         <SwitchInput checked={lineNumbers()} onChange={setLineNumbers} />
@@ -127,7 +138,9 @@ function SidebarCollapseSync(props: { open: boolean }) {
   const panel = usePanelContext();
   createEffect(() => {
     if (props.open) {
-      if (panel.collapsed()) panel.expand();
+      if (panel.collapsed()) {
+        panel.expand();
+      }
     } else if (!panel.collapsed()) {
       panel.collapse();
     }
@@ -203,6 +216,16 @@ function ProjectView() {
             }}
             icon={<TbOutlineFiles size={16} />}
           />
+
+          <RailButton
+            label="Search"
+            active={currentPanel() === "search"}
+            onClick={() => {
+              togglePanel("search");
+            }}
+            icon={<TbOutlineSearch size={16} />}
+          />
+
           <RailButton
             label="Problems"
             active={currentPanel() === "diagnostics"}
@@ -214,10 +237,10 @@ function ProjectView() {
                 <TbOutlineAlertTriangle size={16} color="red" />
               </Show>
             }
-            // NOTE: I commented this out, since it's in most cases just one, didn't add much value therefore
-            // badge={ctx.errorCount() > 0 ? ctx.errorCount() : undefined}
           />
+
           <div class="mt-auto" />
+
           <RailButton
             label="Editor preferences"
             active={currentPanel() === "config"}
@@ -226,6 +249,7 @@ function ProjectView() {
             }}
             icon={<TbOutlineAdjustmentsHorizontal size={16} />}
           />
+
           <RailButton
             label="Project settings"
             active={settingsOpen()}
@@ -286,6 +310,9 @@ function ProjectView() {
                   <SidebarCollapseSync open={currentPanel() !== null} />
                   <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
                     <FileSidebar />
+                  </div>
+                  <div class="h-full" classList={{ hidden: currentPanel() !== "search" }}>
+                    <SearchPanel />
                   </div>
                   <div class="h-full" classList={{ hidden: currentPanel() !== "diagnostics" }}>
                     <DiagnosticsPanel />
