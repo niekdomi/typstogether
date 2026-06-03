@@ -1,26 +1,26 @@
-import { TypstCompiler, TypstProject } from "@vedivad/codemirror-typst";
+import { TypstProject } from "@vedivad/codemirror-typst";
 
 import { api } from "../api";
 import { blobUrl } from "../assets/upload";
 import { storeThumbnail } from "./thumbnail-cache";
-import { renderer } from "./use-typst-project";
 
-// One compiler/project for the whole dashboard, created on first use. The
-// instance is reused across projects, so jobs are serialized and the VFS is
-// cleared between them (the API has no file enumeration - see clear() below).
+// One project for the whole dashboard, created on first use. The instance is
+// reused across projects, so jobs are serialized and the VFS is cleared between
+// them (the API has no file enumeration, see clear() below).
 let enginePromise: Promise<TypstProject> | null = null;
 
+async function createEngine(): Promise<TypstProject> {
+  try {
+    return await TypstProject.create();
+  } catch (error) {
+    // Don't cache a failed init; reset so the next card retries.
+    enginePromise = null;
+    throw error;
+  }
+}
+
 function engine(): Promise<TypstProject> {
-  enginePromise ??= (async () => {
-    try {
-      const compiler = await TypstCompiler.create();
-      return new TypstProject({ compiler });
-    } catch (error) {
-      // Don't cache a failed compiler init; reset so the next card retries.
-      enginePromise = null;
-      throw error;
-    }
-  })();
+  enginePromise ??= createEngine();
   return enginePromise;
 }
 
@@ -50,11 +50,10 @@ async function compileThumbnail(projectId: string): Promise<void> {
   await project.setMany({ ...data.files, ...binaries });
   project.entry = data.entry;
 
-  const { vector } = await project.compile();
-  if (!vector) return;
+  const result = await project.compile();
+  if (result.pages.length === 0) return;
 
-  const pages = await renderer.renderSvgPages(vector);
-  const svg = pages[0]?.svg;
+  const svg = await project.renderPage(0);
   if (!svg) return;
 
   await storeThumbnail(projectId, svg);

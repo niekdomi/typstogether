@@ -2,18 +2,14 @@ import { type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import type { ColorMode as Theme } from "@kobalte/core/color-mode";
 import { githubDark, githubLight } from "@uiw/codemirror-theme-github";
-import { createTypstHighlighting } from "@vedivad/codemirror-typst";
+import { createTypstHighlighting, type TypstProject } from "@vedivad/codemirror-typst";
 
-// Lazy-load the Typst highlighting controller on first editor mount. The
-// `initial` theme is only the controller's starting state, the editor calls
-// `controller.setTheme(view, theme())` on mount and on every theme change.
-let highlightingPromise: ReturnType<typeof createTypstHighlighting> | undefined;
-export const getHighlighting = (initial: Theme) => {
-  // Oniguruma (WASM) tokenizes the TextMate grammar far faster than shiki's
-  // default JS regex engine.
-  highlightingPromise ??= createTypstHighlighting({ theme: initial, engine: "oniguruma" });
-  return highlightingPromise;
-};
+// The Typst highlighting controller is bound to a project's worker (it runs
+// typst-syntax there), so it is created per editor mount. `initial` is only the
+// starting theme; the editor calls `controller.setTheme(view, theme())` on
+// mount and on every theme change.
+export const getHighlighting = (project: TypstProject, initial: Theme) =>
+  createTypstHighlighting({ project, theme: initial });
 
 export const editorTheme = (t: Theme): Extension => (t === "dark" ? githubDark : githubLight);
 

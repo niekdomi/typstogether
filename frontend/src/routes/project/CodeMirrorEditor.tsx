@@ -65,12 +65,12 @@ export default function CodeMirrorEditor() {
 
   onMount(() => {
     const owner = getOwner();
-    void (async () => {
+    (() => {
       if (!parent || !owner) return;
       // Editor only mounts inside `ctx.ready()`, so files + typst project are non-null.
       const files = ctx.collab.files!;
       const typstProject = ctx.typst.project!;
-      const controller = await getHighlighting(theme());
+      const controller = getHighlighting(typstProject, theme());
 
       const readOnlyCompartment = new Compartment();
       const themeCompartment = new Compartment();

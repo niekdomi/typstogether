@@ -1,6 +1,6 @@
 import type { EditorView } from "@codemirror/view";
 import { useParams } from "@solidjs/router";
-import type { DiagnosticMessage, TypstProject } from "@vedivad/codemirror-typst";
+import type { Diagnostic, TypstProject } from "@vedivad/codemirror-typst";
 import type { RenderedSvgPage } from "@vedivad/typst-web-service";
 import {
   type Accessor,
@@ -22,7 +22,7 @@ import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { useCurrentUser } from "../../lib/CurrentUserContext";
 import { useProject } from "../../lib/projects/use-project";
 import { storeThumbnail } from "../../lib/typst/thumbnail-cache";
-import { renderer, useTypstProject } from "../../lib/typst/use-typst-project";
+import { useTypstProject } from "../../lib/typst/use-typst-project";
 
 export interface Ready {
   files: Y.Map<Y.Text>;
@@ -69,7 +69,7 @@ interface ProjectContextValue {
   setEditorView: (view: EditorView | null) => void;
   jumpToRemoteUser: (clientId: number) => void;
 
-  diagnostics: Accessor<DiagnosticMessage[]>;
+  diagnostics: Accessor<Diagnostic[]>;
   errorCount: Accessor<number>;
 }
 
@@ -117,7 +117,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
 
   const [requestedFile, setRequestedFile] = createSignal(entry());
   const [editorView, setEditorView] = createSignal<EditorView | null>(null);
-  const [diagnostics, setDiagnostics] = createSignal<DiagnosticMessage[]>([]);
+  const [diagnostics, setDiagnostics] = createSignal<Diagnostic[]>([]);
 
   const errorCount = createMemo(
     () => diagnostics().filter((d) => (d.severity as string) === "error").length
@@ -199,11 +199,10 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     lastStored = undefined;
     if (!project) return;
     const off = project.onCompile((result) => {
-      const vector = result.vector;
-      if (!vector) {
+      if (result.pages.length === 0) {
         setPreview(
           "error",
-          result.diagnostics.find((d) => d.severity === "Error")?.message ?? null
+          result.diagnostics.find((d) => d.severity === "error")?.message ?? null
         );
         return;
       }
@@ -211,7 +210,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
         // useTypstProject replaces the project on every change, so an identity
         // check drops a render that resolves after we've switched away.
         try {
-          const pages = await renderer.renderSvgPages(vector);
+          const pages = await project.renderedPages(0, result.pages.length);
           if (typst.project === project) setPreview({ pages, error: null });
         } catch (error) {
           if (typst.project === project) setPreview("error", String(error));
