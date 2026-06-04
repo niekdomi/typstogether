@@ -1,6 +1,6 @@
 import { TypstProject } from "@vedivad/codemirror-typst";
 import { syncYMapToTypstProject, type TypstYjsSync } from "@vedivad/typst-web-yjs";
-import { createEffect, onCleanup } from "solid-js";
+import { createEffect, onCleanup, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
 import type * as Y from "yjs";
 
@@ -29,7 +29,10 @@ export function useTypstProject(files: () => Y.Map<Y.Text> | null, entry: () => 
     void (async () => {
       try {
         project = await TypstProject.create({
-          entry: entry(),
+          // This effect should rebuild only when `files` changes. Entry
+          // changes (e.g. the preview eye) are applied by the effect below
+          // without rebuilding the worker.
+          entry: untrack(entry),
           autoCompile: { debounceMs: 200, maxWaitMs: 1000 },
         });
 
