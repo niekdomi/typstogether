@@ -44,14 +44,47 @@ interface EditorThemeEntry {
   base: { bg: string; fg: string };
 }
 
-// @uiw's Settings type marks background/foreground optional; every theme we use
-// sets both, so fall back to plain black/white only to satisfy the type. `fg`
-// overrides the chrome foreground when a theme's editor body text is too low
-// contrast for UI (Solarized ships its muted base color as foreground).
-const base = (s: { background?: string; foreground?: string }, fg?: string) => ({
-  bg: s.background ?? "#ffffff",
-  fg: fg ?? s.foreground ?? "#000000",
-});
+// WCAG 2.x relative luminance + contrast ratio, used to nudge low-contrast
+// theme foregrounds (e.g. Solarized's base0, Material's muted blue-gray) into
+// readable territory for the app chrome without hardcoded per-theme overrides.
+const parseHex = (hex: string): [number, number, number] => {
+  const h = hex.replace("#", "");
+  const s = h.length === 3 ? [...h].map((c) => c + c).join("") : h;
+  return [parseInt(s.slice(0, 2), 16), parseInt(s.slice(2, 4), 16), parseInt(s.slice(4, 6), 16)];
+};
+const toHex = (r: number, g: number, b: number): string =>
+  "#" + [r, g, b].map((n) => Math.round(n).toString(16).padStart(2, "0")).join("");
+const luminance = (hex: string): number => {
+  const toLinear = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  const [r, g, b] = parseHex(hex);
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+};
+const contrastRatio = (a: string, b: string): number => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+// Step `fg` toward black or white (away from `bg`'s polarity) until it meets
+// `min` contrast against `bg`. Linear-RGB stepping drifts toward gray as it
+// approaches the limits, which is fine for UI chrome (the editor body keeps
+// the theme's own color). 4.5:1 is WCAG AA for normal text and matches the
+// targets the prior hand-picked overrides hit.
+const adjustForContrast = (bg: string, fg: string, min = 4.5): string => {
+  if (contrastRatio(bg, fg) >= min) return fg;
+  const step = luminance(bg) > 0.5 ? -4 : 4;
+  const clamp = (n: number) => Math.max(0, Math.min(255, n));
+  let [r, g, b] = parseHex(fg);
+  for (let i = 0; i < 64; i++) {
+    const [nr, ng, nb] = [clamp(r + step), clamp(g + step), clamp(b + step)];
+    if (nr === r && ng === g && nb === b) break;
+    [r, g, b] = [nr, ng, nb];
+    if (contrastRatio(bg, toHex(r, g, b)) >= min) break;
+  }
+  return toHex(r, g, b);
+};
 
 // Bridge a CodeMirror highlight style to Typst `typ-*` colors, then guarantee an
 // emphasis baseline: `*strong*` is bold, `_emph_` italic, headings bold, exactly
@@ -83,14 +116,14 @@ const defineTheme = (
   dark: boolean,
   editor: Extension,
   style: HighlightStyle,
-  settings: { background?: string; foreground?: string },
-  fgOverride?: string
-): EditorThemeEntry => ({
-  label,
-  dark,
-  spec: { editor, tokens: buildTokens(style) },
-  base: base(settings, fgOverride),
-});
+  settings: { background?: string; foreground?: string }
+): EditorThemeEntry => {
+  // @uiw's Settings marks both optional; the themes we use set both, so fall
+  // back to plain black/white only to satisfy the type.
+  const bg = settings.background ?? "#ffffff";
+  const fg = adjustForContrast(bg, settings.foreground ?? "#000000");
+  return { label, dark, spec: { editor, tokens: buildTokens(style) }, base: { bg, fg } };
+};
 
 export const EDITOR_THEMES = {
   "github-light": defineTheme(
@@ -108,14 +141,12 @@ export const EDITOR_THEMES = {
     defaultSettingsGithubDark
   ),
   dracula: defineTheme("Dracula", true, dracula, draculaDarkStyle, defaultSettingsDracula),
-  // Material Light's body text is a muted blue-gray; too low contrast for UI chrome.
   "material-light": defineTheme(
     "Material Light",
     false,
     materialLight,
     materialLightStyle,
-    defaultSettingsMaterialLight,
-    "#37474F"
+    defaultSettingsMaterialLight
   ),
   "material-dark": defineTheme(
     "Material Dark",
