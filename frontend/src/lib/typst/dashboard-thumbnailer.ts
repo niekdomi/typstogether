@@ -51,6 +51,10 @@ async function compileThumbnail(projectId: string): Promise<void> {
   project.entry = data.entry;
 
   const result = await project.compile();
+  // On error the engine keeps the previous compile cached, so `pages` and
+  // `renderPage` would return the prior project's document and bleed into
+  // this thumbnail.
+  if (result.diagnostics.some((d) => d.severity === "error")) return;
   if (result.pages.length === 0) return;
 
   const svg = await project.renderPage(0);
