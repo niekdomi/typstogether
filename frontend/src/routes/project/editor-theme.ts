@@ -1,17 +1,26 @@
-import { type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import type { ColorMode as Theme } from "@kobalte/core/color-mode";
-import { githubDark, githubLight } from "@uiw/codemirror-theme-github";
-import { createTypstHighlighting, type TypstProject } from "@vedivad/codemirror-typst";
+import {
+  githubDark,
+  githubDarkStyle,
+  githubLight,
+  githubLightStyle,
+} from "@uiw/codemirror-theme-github";
+import { typstThemes } from "@vedivad/codemirror-typst";
 
-// The Typst highlighting controller is bound to a project's worker (it runs
-// typst-syntax there), so it is created per editor mount. `initial` is only the
-// starting theme; the editor calls `controller.setTheme(view, theme())` on
-// mount and on every theme change.
-export const getHighlighting = (project: TypstProject, initial: Theme) =>
-  createTypstHighlighting({ project, theme: initial });
-
-export const editorTheme = (t: Theme): Extension => (t === "dark" ? githubDark : githubLight);
+// GitHub light/dark for the editor: chrome plus Typst token colors bridged from
+// the same GitHub HighlightStyle. Built per editor mount; spread the returned
+// `.extension` into the editor (via createTypstSetup's `theme`) and call
+// `.set(view, mode)` on color-mode change. Highlighting decorations themselves
+// come from createTypstSetup; this only carries the theme.
+export const createEditorTheming = (initial: Theme) =>
+  typstThemes(
+    {
+      light: { editor: githubLight, tokens: githubLightStyle },
+      dark: { editor: githubDark, tokens: githubDarkStyle },
+    },
+    initial
+  );
 
 export const fillHeight = EditorView.theme({
   "&": { height: "100%" },
@@ -89,91 +98,19 @@ export const popupTheme = EditorView.theme({
     backgroundColor: "var(--muted)",
   },
 
-  // Typst function/symbol hover popup (custom DOM from @vedivad/codemirror-typst).
-  ".cm-typst-hover": { maxWidth: "32rem", padding: "0" },
-  ".cm-typst-hover-content": { padding: "0" },
-  ".cm-typst-hover-header": {
-    padding: "6px 10px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-  },
-  ".cm-typst-hover-header-main": { display: "flex", flexDirection: "column", gap: "6px" },
-
-  // Shiki-rendered code. Since @vedivad/codemirror-typst@0.12, the wrapper
-  // class lives directly on shiki's <pre> and its inline background-color is
-  // stripped, we own the bg here.
+  // Typst hover popup (custom DOM from @vedivad/codemirror-typst): a container
+  // with either a plain-text description or a syntax-highlighted code snippet.
+  // Token colors inside the snippet come from the editor's typstTheme via the
+  // typ-* cascade. Container padding comes from `.cm-tooltip-hover > div` above.
+  ".cm-typst-hover": { maxWidth: "32rem" },
   ".cm-typst-hover-code": {
-    margin: "0",
-    padding: "6px 8px",
-    borderRadius: "calc(var(--radius) - 4px)",
+    // Bleed past the container padding so the muted code box fills the popup.
+    margin: "-8px -10px",
+    padding: "8px 10px",
     backgroundColor: "var(--muted)",
-    fontSize: "12px",
-    overflowX: "auto",
-  },
-  // Fallback (no shiki): a single styled box.
-  ".cm-typst-hover-pre": {
-    margin: "0",
-    padding: "6px 8px",
-    backgroundColor: "var(--muted)",
-    borderRadius: "calc(var(--radius) - 4px)",
     fontFamily: "var(--mono)",
     fontSize: "12px",
     overflowX: "auto",
-  },
-
-  ".cm-typst-hover-summary": { fontSize: "12.5px" },
-  ".cm-typst-hover-summary p": { margin: "0 0 4px" },
-  ".cm-typst-hover-summary p:last-child": { marginBottom: "0" },
-  ".cm-typst-hover-open-docs": {
-    fontSize: "12px",
-    color: "var(--brand)",
-    textDecoration: "none",
-  },
-  ".cm-typst-hover-open-docs:hover": { textDecoration: "underline" },
-
-  // Collapsible sections, visible toggle with rotating chevron.
-  ".cm-typst-hover-section": {
-    borderTop: "1px solid color-mix(in oklch, var(--border) 60%, transparent)",
-  },
-  ".cm-typst-hover-section > summary": {
-    listStyle: "none",
-    cursor: "pointer",
-    userSelect: "none",
-    padding: "6px 10px",
-    fontSize: "12px",
-    fontWeight: "500",
-    color: "var(--muted-foreground)",
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-  },
-  ".cm-typst-hover-section > summary::-webkit-details-marker": { display: "none" },
-  ".cm-typst-hover-section > summary::before": {
-    content: '"›"',
-    display: "inline-block",
-    fontSize: "13px",
-    lineHeight: "1",
-    transition: "transform 120ms ease",
-    color: "var(--muted-foreground)",
-  },
-  ".cm-typst-hover-section[open] > summary::before": { transform: "rotate(90deg)" },
-  ".cm-typst-hover-section > summary:hover": { color: "var(--foreground)" },
-  ".cm-typst-hover-section > *:not(summary)": { margin: "0 10px" },
-  ".cm-typst-hover-section > *:not(summary):last-child": { marginBottom: "8px" },
-  ".cm-typst-hover-section > *:not(summary) + *:not(summary)": { marginTop: "8px" },
-  ".cm-typst-hover-section h2": {
-    fontSize: "12.5px",
-    fontWeight: "600",
-    color: "var(--foreground)",
-  },
-  ".cm-typst-hover-section p": { fontSize: "12.5px" },
-  ".cm-typst-hover-section code": {
-    fontFamily: "var(--mono)",
-    fontSize: "12px",
-    padding: "1px 4px",
-    borderRadius: "4px",
-    backgroundColor: "var(--muted)",
   },
 
   ".cm-ySelectionInfo": {

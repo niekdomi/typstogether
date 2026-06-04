@@ -63,9 +63,9 @@
         "@typstogether/backend": "workspace:*",
         "@typstogether/shared": "workspace:*",
         "@uiw/codemirror-theme-github": "^4.25.10",
-        "@vedivad/codemirror-typst": "^0.17.2",
-        "@vedivad/typst-web-service": "^0.17.2",
-        "@vedivad/typst-web-yjs": "^0.17.2",
+        "@vedivad/codemirror-typst": "^0.18.0",
+        "@vedivad/typst-web-service": "^0.18.0",
+        "@vedivad/typst-web-yjs": "^0.18.0",
         "better-auth": "^1.6.11",
         "codemirror": "^6.0.2",
         "corvu": "^0.7.2",
@@ -533,11 +533,11 @@
 
     "@uiw/codemirror-themes": ["@uiw/codemirror-themes@4.25.10", "", { "dependencies": { "@codemirror/language": "^6.0.0", "@codemirror/state": "^6.0.0", "@codemirror/view": "^6.0.0" } }, "sha512-Fqiz1HIuDlDftcL+/O53V333UOH6MqQ84VbiQB5egn6u+uDwAqACp1FrdAoi4wgpR3b3TGW4Gr0wIYcrJSSz1A=="],
 
-    "@vedivad/codemirror-typst": ["@vedivad/codemirror-typst@0.17.2", "", { "dependencies": { "@vedivad/typst-web-service": "^0.17.2" }, "peerDependencies": { "@codemirror/autocomplete": "^6", "@codemirror/lint": "^6", "@codemirror/state": "^6", "@codemirror/view": "^6" } }, "sha512-wp+U+ymNAYqx9/V2bFwrahFWyTuwG6XO0wiV5fU5xCkRg9N6ghAJ8zG7Y5uKz4FC0g2UrYZ2ax4kJ4pMgWjN5A=="],
+    "@vedivad/codemirror-typst": ["@vedivad/codemirror-typst@0.18.0", "", { "dependencies": { "@lezer/highlight": "^1.2.0", "@vedivad/typst-web-service": "^0.18.0" }, "peerDependencies": { "@codemirror/autocomplete": "^6", "@codemirror/language": "^6", "@codemirror/lint": "^6", "@codemirror/state": "^6", "@codemirror/view": "^6" } }, "sha512-4RKvNwfmP+ZrFMw0Aj8GjxfQhAg3nOveHP6K0xHGibkPcIIyWTcO8t6iJpI9yGlAgenDq2SBwtLGjlKnYJXsEw=="],
 
-    "@vedivad/typst-web-service": ["@vedivad/typst-web-service@0.17.2", "", { "dependencies": { "comlink": "^4.4.2", "fflate": "^0.8.2", "nanotar": "^0.2.0" } }, "sha512-LtOAxYG6f/SLo/ryY0vsvEJ5toGsE8Nd7TWWXwGfKZvIMv9XpHyrfagmBf/27SvnyFoA4jwN4qjBQugdPy2WjA=="],
+    "@vedivad/typst-web-service": ["@vedivad/typst-web-service@0.18.0", "", { "dependencies": { "comlink": "^4.4.2", "fflate": "^0.8.2", "nanotar": "^0.2.0" } }, "sha512-ch/0WHCvyhVpHo6tTq58BtTwxKOToe5agQ/htwmi66lLFfexF0YsC1lKzDhRU92psUnrv0A2YruaATBxMXTANA=="],
 
-    "@vedivad/typst-web-yjs": ["@vedivad/typst-web-yjs@0.17.2", "", { "peerDependencies": { "@vedivad/typst-web-service": "^0.17.2", "yjs": "^13.6.0" } }, "sha512-Aq7N3orgJma2v0EMAUu6F15bjhWOuZwkcumSqj8ntwfjEgklIWquHeNX2WBipQXB2BbeGlvTjAO7bI5KWxrGAA=="],
+    "@vedivad/typst-web-yjs": ["@vedivad/typst-web-yjs@0.18.0", "", { "peerDependencies": { "@vedivad/typst-web-service": "^0.18.0", "yjs": "^13.6.0" } }, "sha512-0ajQgdl2ZIPM2+9eO9ogec6bATxrLCxtylmxK91yWQ6oaeOSgS0cc6/JNrUTU5zrgdI6sKg7F8MrBO6Sxx3LVw=="],
 
     "ansi-regex": ["ansi-regex@5.0.1", "", {}, "sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ=="],
 
