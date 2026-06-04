@@ -68,73 +68,97 @@ const base = (s: { background?: string; foreground?: string }, fg?: string) => (
   fg: fg ?? s.foreground ?? "#000000",
 });
 
+// Bridge a CodeMirror highlight style to Typst `typ-*` colors, then guarantee an
+// emphasis baseline: `*strong*` is bold, `_emph_` italic, headings bold, exactly
+// how Typst renders them (and what typst.app's editor shows). Code themes like
+// Dracula don't style markup tags at all, so without this a heading reads as
+// plain prose. The theme's own color (when it defines one) layers on top.
+const buildTokens = (style: Parameters<typeof tokenThemeFromHighlightStyle>[0]): TokenTheme => {
+  const t = tokenThemeFromHighlightStyle(style);
+  // Math delimiters/operators map to tags.bracket/operator, which most code
+  // themes leave unstyled, so a `$ ... $` reads as plain prose. Fall them back to
+  // the theme's own operator (else keyword) color so math is framed, like
+  // typst.app. Themes that do style them (GitHub's brackets) keep their choice.
+  const mathColor =
+    t[".typ-math-op"]?.["color"] ?? t[".typ-op"]?.["color"] ?? t[".typ-key"]?.["color"];
+  const math = mathColor ? { color: mathColor } : undefined;
+  return {
+    ...t,
+    ".typ-strong": { fontWeight: "bold", ...t[".typ-strong"] },
+    ".typ-emph": { fontStyle: "italic", ...t[".typ-emph"] },
+    ".typ-heading": { fontWeight: "bold", ...t[".typ-heading"] },
+    ".typ-math-delim": { ...math, ...t[".typ-math-delim"] },
+    ".typ-math-op": { ...math, ...t[".typ-math-op"] },
+  };
+};
+
 export const EDITOR_THEMES = {
   "github-light": {
     label: "GitHub Light",
     dark: false,
-    spec: { editor: githubLight, tokens: githubLightStyle },
+    spec: { editor: githubLight, tokens: buildTokens(githubLightStyle) },
     base: base(defaultSettingsGithubLight),
   },
   "github-dark": {
     label: "GitHub Dark",
     dark: true,
-    spec: { editor: githubDark, tokens: githubDarkStyle },
+    spec: { editor: githubDark, tokens: buildTokens(githubDarkStyle) },
     base: base(defaultSettingsGithubDark),
   },
   dracula: {
     label: "Dracula",
     dark: true,
-    spec: { editor: dracula, tokens: draculaDarkStyle },
+    spec: { editor: dracula, tokens: buildTokens(draculaDarkStyle) },
     base: base(defaultSettingsDracula),
   },
   nord: {
     label: "Nord",
     dark: true,
-    spec: { editor: nord, tokens: nordDarkStyle },
+    spec: { editor: nord, tokens: buildTokens(nordDarkStyle) },
     base: base(defaultSettingsNord),
   },
   "solarized-light": {
     label: "Solarized Light",
     dark: false,
-    spec: { editor: solarizedLight, tokens: solarizedLightStyle },
+    spec: { editor: solarizedLight, tokens: buildTokens(solarizedLightStyle) },
     // base01 instead of base00: readable on the cream background.
     base: base(defaultSettingsSolarizedLight, "#586E75"),
   },
   "solarized-dark": {
     label: "Solarized Dark",
     dark: true,
-    spec: { editor: solarizedDark, tokens: solarizedDarkStyle },
+    spec: { editor: solarizedDark, tokens: buildTokens(solarizedDarkStyle) },
     // base1 instead of base0: readable on the dark teal background.
     base: base(defaultSettingsSolarizedDark, "#93A1A1"),
   },
   "one-dark": {
     label: "One Dark",
     dark: true,
-    spec: { editor: atomone, tokens: atomoneDarkStyle },
+    spec: { editor: atomone, tokens: buildTokens(atomoneDarkStyle) },
     base: base(defaultSettingsAtomone),
   },
   monokai: {
     label: "Monokai",
     dark: true,
-    spec: { editor: monokai, tokens: monokaiDarkStyle },
+    spec: { editor: monokai, tokens: buildTokens(monokaiDarkStyle) },
     base: base(defaultSettingsMonokai),
   },
   "gruvbox-dark": {
     label: "Gruvbox Dark",
     dark: true,
-    spec: { editor: gruvboxDark, tokens: gruvboxDarkStyle },
+    spec: { editor: gruvboxDark, tokens: buildTokens(gruvboxDarkStyle) },
     base: base(defaultSettingsGruvboxDark),
   },
   "material-dark": {
     label: "Material Dark",
     dark: true,
-    spec: { editor: materialDark, tokens: materialDarkStyle },
+    spec: { editor: materialDark, tokens: buildTokens(materialDarkStyle) },
     base: base(defaultSettingsMaterialDark),
   },
   "material-light": {
     label: "Material Light",
     dark: false,
-    spec: { editor: materialLight, tokens: materialLightStyle },
+    spec: { editor: materialLight, tokens: buildTokens(materialLightStyle) },
     // Material's body text is a muted blue-gray; too low contrast for UI chrome.
     base: base(defaultSettingsMaterialLight, "#37474F"),
   },
@@ -152,9 +176,9 @@ export const appBaseFor = (key: EditorThemeKey): AppBase => {
 };
 
 // The theme's Typst token colors as a `.typ-*` -> CSS map, for coloring the
-// static highlighted example in the theme picker preview (no editor needed).
-export const tokenThemeFor = (key: EditorThemeKey): TokenTheme =>
-  tokenThemeFromHighlightStyle(EDITOR_THEMES[key].spec.tokens);
+// static highlighted example in the theme picker preview. Same tokens the editor
+// uses (buildTokens output), so the preview and editor stay identical.
+export const tokenThemeFor = (key: EditorThemeKey): TokenTheme => EDITOR_THEMES[key].spec.tokens;
 
 // Switchable theming for one editor: the whole registry behind one compartment,
 // with `set(view, key)` to swap live. Highlighting decorations come from
