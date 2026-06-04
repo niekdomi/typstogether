@@ -1,43 +1,28 @@
+import type { Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import {
-  atomone,
-  atomoneDarkStyle,
-  defaultSettingsAtomone,
   defaultSettingsDracula,
   defaultSettingsGithubDark,
   defaultSettingsGithubLight,
-  defaultSettingsGruvboxDark,
   defaultSettingsMaterialDark,
   defaultSettingsMaterialLight,
-  defaultSettingsMonokai,
   defaultSettingsNord,
-  defaultSettingsSolarizedDark,
-  defaultSettingsSolarizedLight,
   dracula,
   draculaDarkStyle,
   githubDark,
   githubDarkStyle,
   githubLight,
   githubLightStyle,
-  gruvboxDark,
-  gruvboxDarkStyle,
   materialDark,
   materialDarkStyle,
   materialLight,
   materialLightStyle,
-  monokai,
-  monokaiDarkStyle,
   nord,
   nordDarkStyle,
-  solarizedDark,
-  solarizedDarkStyle,
-  solarizedLight,
-  solarizedLightStyle,
 } from "@uiw/codemirror-themes-all";
 import {
   type TokenTheme,
   tokenThemeFromHighlightStyle,
-  type TypstThemeSpec,
   typstThemes,
 } from "@vedivad/codemirror-typst";
 
@@ -55,7 +40,7 @@ export interface AppBase {
 interface EditorThemeEntry {
   label: string;
   dark: boolean;
-  spec: TypstThemeSpec;
+  spec: { editor: Extension; tokens: TokenTheme };
   base: { bg: string; fg: string };
 }
 
@@ -73,7 +58,8 @@ const base = (s: { background?: string; foreground?: string }, fg?: string) => (
 // how Typst renders them (and what typst.app's editor shows). Code themes like
 // Dracula don't style markup tags at all, so without this a heading reads as
 // plain prose. The theme's own color (when it defines one) layers on top.
-const buildTokens = (style: Parameters<typeof tokenThemeFromHighlightStyle>[0]): TokenTheme => {
+type HighlightStyle = Parameters<typeof tokenThemeFromHighlightStyle>[0];
+const buildTokens = (style: HighlightStyle): TokenTheme => {
   const t = tokenThemeFromHighlightStyle(style);
   // Math delimiters/operators map to tags.bracket/operator, which most code
   // themes leave unstyled, so a `$ ... $` reads as plain prose. Fall them back to
@@ -92,82 +78,58 @@ const buildTokens = (style: Parameters<typeof tokenThemeFromHighlightStyle>[0]):
   };
 };
 
+const defineTheme = (
+  label: string,
+  dark: boolean,
+  editor: Extension,
+  style: HighlightStyle,
+  settings: { background?: string; foreground?: string },
+  fgOverride?: string
+): EditorThemeEntry => ({
+  label,
+  dark,
+  spec: { editor, tokens: buildTokens(style) },
+  base: base(settings, fgOverride),
+});
+
 export const EDITOR_THEMES = {
-  "github-light": {
-    label: "GitHub Light",
-    dark: false,
-    spec: { editor: githubLight, tokens: buildTokens(githubLightStyle) },
-    base: base(defaultSettingsGithubLight),
-  },
-  "github-dark": {
-    label: "GitHub Dark",
-    dark: true,
-    spec: { editor: githubDark, tokens: buildTokens(githubDarkStyle) },
-    base: base(defaultSettingsGithubDark),
-  },
-  dracula: {
-    label: "Dracula",
-    dark: true,
-    spec: { editor: dracula, tokens: buildTokens(draculaDarkStyle) },
-    base: base(defaultSettingsDracula),
-  },
-  nord: {
-    label: "Nord",
-    dark: true,
-    spec: { editor: nord, tokens: buildTokens(nordDarkStyle) },
-    base: base(defaultSettingsNord),
-  },
-  "solarized-light": {
-    label: "Solarized Light",
-    dark: false,
-    spec: { editor: solarizedLight, tokens: buildTokens(solarizedLightStyle) },
-    // base01 instead of base00: readable on the cream background.
-    base: base(defaultSettingsSolarizedLight, "#586E75"),
-  },
-  "solarized-dark": {
-    label: "Solarized Dark",
-    dark: true,
-    spec: { editor: solarizedDark, tokens: buildTokens(solarizedDarkStyle) },
-    // base1 instead of base0: readable on the dark teal background.
-    base: base(defaultSettingsSolarizedDark, "#93A1A1"),
-  },
-  "one-dark": {
-    label: "One Dark",
-    dark: true,
-    spec: { editor: atomone, tokens: buildTokens(atomoneDarkStyle) },
-    base: base(defaultSettingsAtomone),
-  },
-  monokai: {
-    label: "Monokai",
-    dark: true,
-    spec: { editor: monokai, tokens: buildTokens(monokaiDarkStyle) },
-    base: base(defaultSettingsMonokai),
-  },
-  "gruvbox-dark": {
-    label: "Gruvbox Dark",
-    dark: true,
-    spec: { editor: gruvboxDark, tokens: buildTokens(gruvboxDarkStyle) },
-    base: base(defaultSettingsGruvboxDark),
-  },
-  "material-dark": {
-    label: "Material Dark",
-    dark: true,
-    spec: { editor: materialDark, tokens: buildTokens(materialDarkStyle) },
-    base: base(defaultSettingsMaterialDark),
-  },
-  "material-light": {
-    label: "Material Light",
-    dark: false,
-    spec: { editor: materialLight, tokens: buildTokens(materialLightStyle) },
-    // Material's body text is a muted blue-gray; too low contrast for UI chrome.
-    base: base(defaultSettingsMaterialLight, "#37474F"),
-  },
+  "github-light": defineTheme(
+    "GitHub Light",
+    false,
+    githubLight,
+    githubLightStyle,
+    defaultSettingsGithubLight
+  ),
+  "github-dark": defineTheme(
+    "GitHub Dark",
+    true,
+    githubDark,
+    githubDarkStyle,
+    defaultSettingsGithubDark
+  ),
+  dracula: defineTheme("Dracula", true, dracula, draculaDarkStyle, defaultSettingsDracula),
+  // Material Light's body text is a muted blue-gray; too low contrast for UI chrome.
+  "material-light": defineTheme(
+    "Material Light",
+    false,
+    materialLight,
+    materialLightStyle,
+    defaultSettingsMaterialLight,
+    "#37474F"
+  ),
+  "material-dark": defineTheme(
+    "Material Dark",
+    true,
+    materialDark,
+    materialDarkStyle,
+    defaultSettingsMaterialDark
+  ),
+  nord: defineTheme("Nord", true, nord, nordDarkStyle, defaultSettingsNord),
 } satisfies Record<string, EditorThemeEntry>;
 
 export type EditorThemeKey = keyof typeof EDITOR_THEMES;
 export const EDITOR_THEME_KEYS = Object.keys(EDITOR_THEMES) as EditorThemeKey[];
 export const DEFAULT_EDITOR_THEME: EditorThemeKey = "github-dark";
-export const isDarkTheme = (key: EditorThemeKey): boolean => EDITOR_THEMES[key].dark;
 
 // The theme's base surface/text colors plus polarity, for recoloring the app.
 export const appBaseFor = (key: EditorThemeKey): AppBase => {
@@ -184,7 +146,7 @@ export const tokenThemeFor = (key: EditorThemeKey): TokenTheme => EDITOR_THEMES[
 // with `set(view, key)` to swap live. Highlighting decorations come from
 // createTypstSetup; this only carries the theme.
 export const createEditorTheming = (initial: EditorThemeKey) => {
-  const specs = {} as Record<EditorThemeKey, TypstThemeSpec>;
+  const specs = {} as Record<EditorThemeKey, EditorThemeEntry["spec"]>;
   for (const key of EDITOR_THEME_KEYS) specs[key] = EDITOR_THEMES[key].spec;
   return typstThemes(specs, initial);
 };
