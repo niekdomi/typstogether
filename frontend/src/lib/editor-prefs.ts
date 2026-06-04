@@ -1,6 +1,25 @@
 import { makePersisted } from "@solid-primitives/storage";
 import { createSignal } from "solid-js";
 
+import {
+  DEFAULT_EDITOR_THEME,
+  EDITOR_THEME_KEYS,
+  type EditorThemeKey,
+} from "../routes/project/editor-theme";
+
+// The active theme (key into EDITOR_THEMES). Source of truth for the editor
+// colors and, via App's root effect, the whole app chrome + light/dark polarity.
+export const [editorTheme, setEditorTheme] = makePersisted(
+  createSignal<EditorThemeKey>(DEFAULT_EDITOR_THEME),
+  { name: "editor.theme" }
+);
+
+// Drop a persisted theme that no longer exists (e.g. a removed one) so a stale
+// localStorage value can't break the registry lookups on load.
+if (!EDITOR_THEME_KEYS.includes(editorTheme())) {
+  setEditorTheme(DEFAULT_EDITOR_THEME);
+}
+
 export const [vimMode, setVimMode] = makePersisted(createSignal(false), {
   name: "editor.vimMode",
 });

@@ -26,6 +26,7 @@
     "@typstogether/backend": "workspace:*",
     "@typstogether/shared": "workspace:*",
     "@uiw/codemirror-theme-github": "^4.25.10",
+    "@uiw/codemirror-themes-all": "^4.25.10",
     "@vedivad/codemirror-typst": "^0.18.0",
     "@vedivad/typst-web-service": "^0.18.0",
     "@vedivad/typst-web-yjs": "^0.18.0",

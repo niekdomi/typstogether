@@ -1,7 +1,6 @@
 import { indentWithTab } from "@codemirror/commands";
 import { Compartment, type EditorSelection, EditorState, Prec } from "@codemirror/state";
 import { EditorView, keymap, lineNumbers } from "@codemirror/view";
-import { useColorMode } from "@kobalte/core/color-mode";
 import { Vim, vim } from "@replit/codemirror-vim";
 import { createTypstSetup, typstFilePath } from "@vedivad/codemirror-typst";
 import { createEffect, getOwner, onCleanup, onMount, runWithOwner } from "solid-js";
@@ -9,6 +8,7 @@ import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 import * as Y from "yjs";
 
 import {
+  editorTheme,
   lineNumbers as showLineNumbers,
   relativeLineNumbers,
   spellcheck,
@@ -60,7 +60,6 @@ const buildSpellcheck = () =>
 
 export default function CodeMirrorEditor() {
   const ctx = useProjectContext();
-  const { colorMode: theme } = useColorMode();
   let parent: HTMLDivElement | undefined;
 
   onMount(() => {
@@ -70,7 +69,7 @@ export default function CodeMirrorEditor() {
       // Editor only mounts inside `ctx.ready()`, so files + typst project are non-null.
       const files = ctx.collab.files!;
       const typstProject = ctx.typst.project!;
-      const theming = createEditorTheming(theme());
+      const theming = createEditorTheming(editorTheme());
 
       const readOnlyCompartment = new Compartment();
       const vimCompartment = new Compartment();
@@ -148,7 +147,7 @@ export default function CodeMirrorEditor() {
             spellcheckCompartment.reconfigure(buildSpellcheck()),
           ],
         });
-        theming.set(view, theme());
+        theming.set(view, editorTheme());
       };
 
       const switchTo = (path: string) => {
@@ -181,7 +180,7 @@ export default function CodeMirrorEditor() {
 
         createEffect(() => {
           // Touch reactive deps so reconfigure runs on change.
-          theme();
+          editorTheme();
           ctx.isReadOnly();
           vimMode();
           showLineNumbers();

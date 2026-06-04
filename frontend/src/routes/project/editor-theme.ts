@@ -1,26 +1,169 @@
 import { EditorView } from "@codemirror/view";
-import type { ColorMode as Theme } from "@kobalte/core/color-mode";
 import {
+  atomone,
+  atomoneDarkStyle,
+  defaultSettingsAtomone,
+  defaultSettingsDracula,
+  defaultSettingsGithubDark,
+  defaultSettingsGithubLight,
+  defaultSettingsGruvboxDark,
+  defaultSettingsMaterialDark,
+  defaultSettingsMaterialLight,
+  defaultSettingsMonokai,
+  defaultSettingsNord,
+  defaultSettingsSolarizedDark,
+  defaultSettingsSolarizedLight,
+  dracula,
+  draculaDarkStyle,
   githubDark,
   githubDarkStyle,
   githubLight,
   githubLightStyle,
-} from "@uiw/codemirror-theme-github";
-import { typstThemes } from "@vedivad/codemirror-typst";
+  gruvboxDark,
+  gruvboxDarkStyle,
+  materialDark,
+  materialDarkStyle,
+  materialLight,
+  materialLightStyle,
+  monokai,
+  monokaiDarkStyle,
+  nord,
+  nordDarkStyle,
+  solarizedDark,
+  solarizedDarkStyle,
+  solarizedLight,
+  solarizedLightStyle,
+} from "@uiw/codemirror-themes-all";
+import {
+  type TokenTheme,
+  tokenThemeFromHighlightStyle,
+  type TypstThemeSpec,
+  typstThemes,
+} from "@vedivad/codemirror-typst";
 
-// GitHub light/dark for the editor: chrome plus Typst token colors bridged from
-// the same GitHub HighlightStyle. Built per editor mount; spread the returned
-// `.extension` into the editor (via createTypstSetup's `theme`) and call
-// `.set(view, mode)` on color-mode change. Highlighting decorations themselves
-// come from createTypstSetup; this only carries the theme.
-export const createEditorTheming = (initial: Theme) =>
-  typstThemes(
-    {
-      light: { editor: githubLight, tokens: githubLightStyle },
-      dark: { editor: githubDark, tokens: githubDarkStyle },
-    },
-    initial
-  );
+// The editor theme registry. Each entry is the editor chrome + Typst token
+// colors (bridged via typstTheme), the app light/dark polarity, and the theme's
+// base surface/text colors. The app chrome is recolored generically from `base`
+// (see styles.css + applyAppTheme), so the whole UI follows the editor theme
+// without per-theme app tokens. Add a theme here and it shows up in the picker.
+export interface AppBase {
+  bg: string;
+  fg: string;
+  dark: boolean;
+}
+
+interface EditorThemeEntry {
+  label: string;
+  dark: boolean;
+  spec: TypstThemeSpec;
+  base: { bg: string; fg: string };
+}
+
+// @uiw's Settings type marks background/foreground optional; every theme we use
+// sets both, so fall back to plain black/white only to satisfy the type. `fg`
+// overrides the chrome foreground when a theme's editor body text is too low
+// contrast for UI (Solarized ships its muted base color as foreground).
+const base = (s: { background?: string; foreground?: string }, fg?: string) => ({
+  bg: s.background ?? "#ffffff",
+  fg: fg ?? s.foreground ?? "#000000",
+});
+
+export const EDITOR_THEMES = {
+  "github-light": {
+    label: "GitHub Light",
+    dark: false,
+    spec: { editor: githubLight, tokens: githubLightStyle },
+    base: base(defaultSettingsGithubLight),
+  },
+  "github-dark": {
+    label: "GitHub Dark",
+    dark: true,
+    spec: { editor: githubDark, tokens: githubDarkStyle },
+    base: base(defaultSettingsGithubDark),
+  },
+  dracula: {
+    label: "Dracula",
+    dark: true,
+    spec: { editor: dracula, tokens: draculaDarkStyle },
+    base: base(defaultSettingsDracula),
+  },
+  nord: {
+    label: "Nord",
+    dark: true,
+    spec: { editor: nord, tokens: nordDarkStyle },
+    base: base(defaultSettingsNord),
+  },
+  "solarized-light": {
+    label: "Solarized Light",
+    dark: false,
+    spec: { editor: solarizedLight, tokens: solarizedLightStyle },
+    // base01 instead of base00: readable on the cream background.
+    base: base(defaultSettingsSolarizedLight, "#586E75"),
+  },
+  "solarized-dark": {
+    label: "Solarized Dark",
+    dark: true,
+    spec: { editor: solarizedDark, tokens: solarizedDarkStyle },
+    // base1 instead of base0: readable on the dark teal background.
+    base: base(defaultSettingsSolarizedDark, "#93A1A1"),
+  },
+  "one-dark": {
+    label: "One Dark",
+    dark: true,
+    spec: { editor: atomone, tokens: atomoneDarkStyle },
+    base: base(defaultSettingsAtomone),
+  },
+  monokai: {
+    label: "Monokai",
+    dark: true,
+    spec: { editor: monokai, tokens: monokaiDarkStyle },
+    base: base(defaultSettingsMonokai),
+  },
+  "gruvbox-dark": {
+    label: "Gruvbox Dark",
+    dark: true,
+    spec: { editor: gruvboxDark, tokens: gruvboxDarkStyle },
+    base: base(defaultSettingsGruvboxDark),
+  },
+  "material-dark": {
+    label: "Material Dark",
+    dark: true,
+    spec: { editor: materialDark, tokens: materialDarkStyle },
+    base: base(defaultSettingsMaterialDark),
+  },
+  "material-light": {
+    label: "Material Light",
+    dark: false,
+    spec: { editor: materialLight, tokens: materialLightStyle },
+    // Material's body text is a muted blue-gray; too low contrast for UI chrome.
+    base: base(defaultSettingsMaterialLight, "#37474F"),
+  },
+} satisfies Record<string, EditorThemeEntry>;
+
+export type EditorThemeKey = keyof typeof EDITOR_THEMES;
+export const EDITOR_THEME_KEYS = Object.keys(EDITOR_THEMES) as EditorThemeKey[];
+export const DEFAULT_EDITOR_THEME: EditorThemeKey = "github-dark";
+export const isDarkTheme = (key: EditorThemeKey): boolean => EDITOR_THEMES[key].dark;
+
+// The theme's base surface/text colors plus polarity, for recoloring the app.
+export const appBaseFor = (key: EditorThemeKey): AppBase => {
+  const t = EDITOR_THEMES[key];
+  return { bg: t.base.bg, fg: t.base.fg, dark: t.dark };
+};
+
+// The theme's Typst token colors as a `.typ-*` -> CSS map, for coloring the
+// static highlighted example in the theme picker preview (no editor needed).
+export const tokenThemeFor = (key: EditorThemeKey): TokenTheme =>
+  tokenThemeFromHighlightStyle(EDITOR_THEMES[key].spec.tokens);
+
+// Switchable theming for one editor: the whole registry behind one compartment,
+// with `set(view, key)` to swap live. Highlighting decorations come from
+// createTypstSetup; this only carries the theme.
+export const createEditorTheming = (initial: EditorThemeKey) => {
+  const specs = {} as Record<EditorThemeKey, TypstThemeSpec>;
+  for (const key of EDITOR_THEME_KEYS) specs[key] = EDITOR_THEMES[key].spec;
+  return typstThemes(specs, initial);
+};
 
 export const fillHeight = EditorView.theme({
   "&": { height: "100%" },
