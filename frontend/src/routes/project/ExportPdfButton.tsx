@@ -21,7 +21,11 @@ export default function ExportPdfButton() {
     if (!project) return;
     setBusy(true);
     try {
-      const bytes = await project.compilePdf();
+      const bytes = await project.exportPdf();
+      if (!bytes) {
+        toast.error("Nothing to export yet, compile first.");
+        return;
+      }
       const url = URL.createObjectURL(
         new Blob([new Uint8Array(bytes)], { type: "application/pdf" })
       );

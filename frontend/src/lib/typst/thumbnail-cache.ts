@@ -3,8 +3,6 @@
 // projectId. There is no server copy, so a project shows a preview only on
 // devices where it has been opened.
 
-import { prepareSvgForStorage } from "./prepare-svg";
-
 const DB_NAME = "typstogether";
 const STORE = "thumbnails";
 const MAX_ENTRIES = 50;
@@ -105,12 +103,23 @@ async function putThumbnail(projectId: string, svg: string): Promise<void> {
   await evict(conn);
 }
 
+// typst_svg emits a self-contained standalone <svg> (raster images are already
+// base64 data URIs), so storage only needs to lift the <svg> out of the raw
+// string and confirm it parsed.
+function prepareSvgForStorage(raw: string): string {
+  const container = document.createElement("div");
+  container.innerHTML = raw;
+  const svg = container.querySelector("svg");
+  if (!svg) throw new Error("Typst renderer output had no <svg> element");
+  return svg.outerHTML;
+}
+
 // Sanitize a freshly-rendered SVG and cache it. Used by both the editor (on
 // every compile) and the dashboard cold path; errors are swallowed so a failed
 // write never disturbs the caller (the preview or the card name fallback).
 export async function storeThumbnail(projectId: string, rawSvg: string): Promise<void> {
   try {
-    await putThumbnail(projectId, await prepareSvgForStorage(rawSvg));
+    await putThumbnail(projectId, prepareSvgForStorage(rawSvg));
   } catch (error) {
     console.warn("[thumbnail] write failed", error);
   }

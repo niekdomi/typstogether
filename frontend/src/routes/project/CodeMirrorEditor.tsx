@@ -16,7 +16,7 @@ import {
 } from "../../lib/editor-prefs";
 import { fileDropHandler, formatKeymap } from "./editor-actions";
 import { editorSetup } from "./editor-setup";
-import { editorTheme, fillHeight, getHighlighting, popupTheme } from "./editor-theme";
+import { createEditorTheming, fillHeight, popupTheme } from "./editor-theme";
 import { useProjectContext } from "./ProjectContext";
 
 // Vim's `u` / `Ctrl-R` call `@codemirror/commands` undo/redo, which target the
@@ -65,15 +65,14 @@ export default function CodeMirrorEditor() {
 
   onMount(() => {
     const owner = getOwner();
-    void (async () => {
+    (() => {
       if (!parent || !owner) return;
       // Editor only mounts inside `ctx.ready()`, so files + typst project are non-null.
       const files = ctx.collab.files!;
       const typstProject = ctx.typst.project!;
-      const controller = await getHighlighting(theme());
+      const theming = createEditorTheming(theme());
 
       const readOnlyCompartment = new Compartment();
-      const themeCompartment = new Compartment();
       const vimCompartment = new Compartment();
       const lineNumberCompartment = new Compartment();
       const spellcheckCompartment = new Compartment();
@@ -81,7 +80,7 @@ export default function CodeMirrorEditor() {
       const setup = createTypstSetup({
         project: typstProject,
         sync: "external",
-        highlighting: controller,
+        theme: theming.extension,
       });
       // Per-file: undo history and last selection persist across switches. The
       // EditorState itself is rebuilt on every switch-in from text.toJSON() so
@@ -118,7 +117,6 @@ export default function CodeMirrorEditor() {
             yCollab(text, ctx.collab.awareness, { undoManager: cache.undoManager }),
             typstFilePath.of(path),
             readOnlyCompartment.of(EditorState.readOnly.of(ctx.isReadOnly())),
-            themeCompartment.of(editorTheme(theme())),
             popupTheme,
             fillHeight,
           ],
@@ -144,14 +142,13 @@ export default function CodeMirrorEditor() {
       const syncCompartments = () => {
         view.dispatch({
           effects: [
-            themeCompartment.reconfigure(editorTheme(theme())),
             readOnlyCompartment.reconfigure(EditorState.readOnly.of(ctx.isReadOnly())),
             vimCompartment.reconfigure(vimMode() ? vim() : []),
             lineNumberCompartment.reconfigure(buildLineNumbers()),
             spellcheckCompartment.reconfigure(buildSpellcheck()),
           ],
         });
-        controller.setTheme(view, theme());
+        theming.set(view, theme());
       };
 
       const switchTo = (path: string) => {
