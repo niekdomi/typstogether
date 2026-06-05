@@ -68,6 +68,16 @@ export default function FontsPanel() {
       return next;
     });
 
+  // Remove every weight of a family at once. One transaction so the sync hook
+  // resets-and-replays the engine fonts a single time, not per file.
+  const removeFamily = (members: [string, string][]) => {
+    const map = ctx.collab.fonts;
+    if (!map) return;
+    map.doc?.transact(() => {
+      for (const [filename] of members) map.delete(filename);
+    });
+  };
+
   // Upload all selected files in parallel; a font family is usually several
   // static files (one per weight/style), so multi-select avoids a file-at-a-time
   // slog. Each success writes its own entry; failures are summarized once.
@@ -200,9 +210,22 @@ export default function FontsPanel() {
                         }}
                         aria-label={`Copy font family "${name}"`}
                         title="Copy font family"
-                        class="text-muted-foreground hover:text-foreground mr-1 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                        class="text-muted-foreground hover:text-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
                       >
                         <TbOutlineCopy size={14} />
+                      </button>
+                    </Show>
+                    <Show when={!ctx.isReadOnly()}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          removeFamily(members);
+                        }}
+                        aria-label={`Remove all ${name} fonts`}
+                        title={members.length > 1 ? "Remove family" : "Remove font"}
+                        class="text-muted-foreground hover:text-destructive mr-1 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                      >
+                        <TbOutlineTrash size={14} />
                       </button>
                     </Show>
                   </div>
@@ -239,12 +262,6 @@ export default function FontsPanel() {
             }}
           </For>
         </ul>
-      </Show>
-
-      <Show when={entries().length > 0}>
-        <p class="text-muted-foreground mt-auto px-2 pt-2 text-[11px]">
-          Removing a font takes effect after reload.
-        </p>
       </Show>
     </div>
   );

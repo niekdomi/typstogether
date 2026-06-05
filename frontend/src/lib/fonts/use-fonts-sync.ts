@@ -48,14 +48,22 @@ export function useFontsSync(
       void apply(name, blobId);
     }
 
+    // The engine can't drop a single font, so a removal resets to the embedded
+    // defaults and re-adds whatever's left. Cheap and rare: the blob GET is
+    // immutable-cached, so the re-adds are cache hits.
+    const reapplyAll = async () => {
+      applied.clear();
+      await proj.clearFonts();
+      for (const [name, blobId] of map.entries()) void apply(name, blobId);
+    };
+
     const observer = (event: Y.YMapEvent<string>) => {
-      for (const [name, change] of event.changes.keys) {
-        if (change.action === "delete") {
-          // No engine unregister; just forget it so a same-named font with a new
-          // blob_id re-registers. The removed font lingers until reload.
-          applied.delete(name);
-          continue;
-        }
+      if ([...event.changes.keys.values()].some((c) => c.action === "delete")) {
+        void reapplyAll();
+        return;
+      }
+      // Additions stay incremental.
+      for (const [name] of event.changes.keys) {
         const blobId = map.get(name);
         if (blobId) void apply(name, blobId);
       }
