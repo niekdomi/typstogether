@@ -20,6 +20,7 @@ import { useAssetsSync } from "../../lib/assets/use-assets-sync";
 import { userColor } from "../../lib/collab/awareness-colors";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { useCurrentUser } from "../../lib/CurrentUserContext";
+import { useFontsSync } from "../../lib/fonts/use-fonts-sync";
 import { useProject } from "../../lib/projects/use-project";
 import { storeThumbnail } from "../../lib/typst/thumbnail-cache";
 import { useTypstProject } from "../../lib/typst/use-typst-project";
@@ -111,6 +112,12 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     projectId,
     () => typst.project,
     () => collab.assets
+  );
+
+  useFontsSync(
+    projectId,
+    () => typst.project,
+    () => collab.fonts
   );
 
   const isReadOnly = () => membership()?.role === "viewer" || collab.readOnly;

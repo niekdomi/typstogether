@@ -8,6 +8,7 @@ import {
   TbOutlineAdjustmentsHorizontal,
   TbOutlineFiles,
   TbOutlineSettings,
+  TbOutlineTypography,
 } from "solid-icons/tb";
 import { createEffect, createSignal, type JSX, Match, Show, Switch } from "solid-js";
 
@@ -35,12 +36,13 @@ import CollaboratorAvatars from "./CollaboratorAvatars";
 import DiagnosticsPanel from "./DiagnosticsPanel";
 import EditorToolbar from "./EditorToolbar";
 import FileSidebar from "./file-sidebar/FileSidebar";
+import FontsPanel from "./FontsPanel";
 import PreviewPane from "./PreviewPane";
 import { ProjectProvider, useProjectContext } from "./ProjectContext";
 import ProjectSettingsDialog from "./ProjectSettingsDialog";
 import SearchPanel from "./SearchPanel";
 
-type Panel = "files" | "search" | "diagnostics" | "config" | null;
+type Panel = "files" | "fonts" | "search" | "diagnostics" | "config" | null;
 
 function EditorPrefsPanel() {
   return (
@@ -228,6 +230,15 @@ function ProjectView() {
           />
 
           <RailButton
+            label="Fonts"
+            active={currentPanel() === "fonts"}
+            onClick={() => {
+              togglePanel("fonts");
+            }}
+            icon={<TbOutlineTypography size={16} />}
+          />
+
+          <RailButton
             label="Search"
             active={currentPanel() === "search"}
             onClick={() => {
@@ -320,6 +331,9 @@ function ProjectView() {
                   <SidebarCollapseSync open={currentPanel() !== null} />
                   <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
                     <FileSidebar />
+                  </div>
+                  <div class="h-full" classList={{ hidden: currentPanel() !== "fonts" }}>
+                    <FontsPanel />
                   </div>
                   <div class="h-full" classList={{ hidden: currentPanel() !== "search" }}>
                     <SearchPanel />

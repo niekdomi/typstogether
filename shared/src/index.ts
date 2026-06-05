@@ -10,6 +10,9 @@ export const MAIN_PATH = "/main.typ";
 // Top-level Y.Doc map keys.
 export const FILES_KEY = "files";
 export const ASSETS_KEY = "assets";
+// Custom fonts the compiler should register, keyed `filename -> blob_id` (same
+// shape as `assets`, but registered via `addFont` rather than written to the VFS).
+export const FONTS_KEY = "fonts";
 export const META_KEY = "meta";
 
 /** Key under the `meta` Y.Map holding the project's compile entry path. */

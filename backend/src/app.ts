@@ -6,6 +6,7 @@ import { HttpError } from "./errors";
 import { authRoutes } from "./modules/auth";
 import { blobRoutes } from "./modules/blobs";
 import { collabRoutes } from "./modules/collab";
+import { fontRoutes } from "./modules/fonts";
 import { inviteRoutes } from "./modules/invites";
 import { memberRoutes } from "./modules/members";
 import { projectRoutes } from "./modules/projects";
@@ -24,6 +25,7 @@ export function buildApp() {
     .use(inviteRoutes)
     .use(templateRoutes)
     .use(blobRoutes)
+    .use(fontRoutes)
     .use(collabRoutes);
 }
 
