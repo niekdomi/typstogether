@@ -9,13 +9,14 @@ import { memberService } from "../members/service";
 
 const request = requestOn(buildTestApp(fontRoutes));
 
-// Only the first 4 bytes (the sfnt magic) matter to `sniffFontMime`; the tail is
-// opaque padding. Kept >16 bytes because Bun's in-process multipart parser drops
-// very short uploads — real fonts are far larger, so this is test-transport only.
-const padFont = (magic: number[]): Uint8Array =>
+// file-type detects by leading magic bytes; the tail is opaque padding. Kept
+// >16 bytes because Bun's in-process multipart parser drops very short uploads —
+// real fonts are far larger, so this is a test-transport concern only.
+const withMagic = (magic: number[]): Uint8Array =>
   new Uint8Array([...magic, ...Array.from({ length: 24 }, () => 0)]);
-const TTF_BYTES = padFont([0x00, 0x01, 0x00, 0x00]);
-const OTF_BYTES = padFont([0x4f, 0x54, 0x54, 0x4f]); // "OTTO"
+const TTF_BYTES = withMagic([0x00, 0x01, 0x00, 0x00]);
+const OTF_BYTES = withMagic([0x4f, 0x54, 0x54, 0x4f]); // "OTTO"
+const PNG_BYTES = withMagic([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]); // not a font
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 // Browsers send unreliable MIME for fonts, so the route ignores it and sniffs
@@ -75,10 +76,7 @@ describe("POST /projects/:id/fonts", () => {
     const project = await projectFactory.create({ ownerUserId: owner.id });
     setTestUser(owner);
 
-    const res = await request(
-      `/projects/${project.id}/fonts`,
-      uploadInit(new Uint8Array([0x89, 0x50, 0x4e, 0x47]), "not.ttf") // PNG magic
-    );
+    const res = await request(`/projects/${project.id}/fonts`, uploadInit(PNG_BYTES, "not.ttf"));
 
     expect(res.status).toBe(415);
   });

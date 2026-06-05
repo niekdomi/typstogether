@@ -1,10 +1,11 @@
 import { Elysia } from "elysia";
+import { fileTypeFromBuffer } from "file-type";
 
 import { UnsupportedMediaTypeError } from "../../errors";
 import { blobMetaModel } from "../blobs/model";
 import { blobService } from "../blobs/service";
 import { projectAccessMacro } from "../projects/macro";
-import { fontModels, sniffFontMime } from "./model";
+import { FONT_MIMES, fontModels } from "./model";
 
 export const fontRoutes = new Elysia({ name: "font-routes" })
   .use(projectAccessMacro)
@@ -17,9 +18,11 @@ export const fontRoutes = new Elysia({ name: "font-routes" })
     "/projects/:id/fonts",
     async ({ project, body }) => {
       const bytes = new Uint8Array(await body.file.arrayBuffer());
-      const mime = sniffFontMime(bytes);
-      if (!mime) throw new UnsupportedMediaTypeError("Not a TTF, OTF, or TTC font");
-      return blobService.storeBytes(project.id, bytes, mime);
+      const detected = await fileTypeFromBuffer(bytes);
+      if (!detected || !FONT_MIMES.has(detected.mime)) {
+        throw new UnsupportedMediaTypeError("Not a TTF, OTF, or TTC font");
+      }
+      return blobService.storeBytes(project.id, bytes, detected.mime);
     },
     {
       body: "font.upload",
