@@ -21,8 +21,11 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 // Fonts: padded so Bun's in-process multipart parser doesn't drop tiny uploads
 // (real fonts are far larger); only the leading magic bytes drive detection.
-const withFontMagic = (magic: number[]): Uint8Array =>
-  new Uint8Array([...magic, ...Array.from({ length: 24 }, () => 0)]);
+const withFontMagic = (magic: number[]): Uint8Array => {
+  const bytes = new Uint8Array(magic.length + 24); // tail is zero padding
+  bytes.set(magic);
+  return bytes;
+};
 const TTF_BYTES = withFontMagic([0x00, 0x01, 0x00, 0x00]);
 const OTF_BYTES = withFontMagic([0x4f, 0x54, 0x54, 0x4f]); // "OTTO"
 

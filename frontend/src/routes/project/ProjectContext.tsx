@@ -65,6 +65,8 @@ interface ProjectContextValue {
   activeIsAsset: Accessor<boolean>;
   setActiveFile: (path: string) => void;
   isReadOnly: Accessor<boolean>;
+  /** blob_id -> font family name, parsed lazily as fonts load. */
+  fontFamilies: Record<string, string>;
 
   editorView: Accessor<EditorView | null>;
   setEditorView: (view: EditorView | null) => void;
@@ -114,10 +116,16 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     () => collab.assets
   );
 
+  // blob_id -> family name, parsed once by useFontsSync from the bytes it already
+  // fetched; the fonts panel reads this instead of refetching/reparsing.
+  const [fontFamilies, setFontFamilies] = createStore<Record<string, string>>({});
   useFontsSync(
     projectId,
     () => typst.project,
-    () => collab.fonts
+    () => collab.fonts,
+    (blobId, family) => {
+      setFontFamilies(blobId, family);
+    }
   );
 
   const isReadOnly = () => membership()?.role === "viewer" || collab.readOnly;
@@ -303,6 +311,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     activeIsAsset,
     setActiveFile: setRequestedFile,
     isReadOnly,
+    fontFamilies,
     editorView,
     setEditorView,
     jumpToRemoteUser,

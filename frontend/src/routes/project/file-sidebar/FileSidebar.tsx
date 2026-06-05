@@ -6,11 +6,9 @@ import {
   TbOutlineFileText,
   TbOutlineFolder,
   TbOutlinePhoto,
-  TbOutlineUpload,
 } from "solid-icons/tb";
 import { createSignal, For, type JSX, Match, Show, Switch } from "solid-js";
 
-import { Button } from "../../../components/ui/button";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -29,6 +27,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "../../../components/ui/sidebar";
+import { UploadButton } from "../../../components/UploadButton";
 import Dialogs from "./Dialogs";
 import { FileSidebarProvider, useFileSidebarController } from "./FileSidebarContext";
 import type { FlatNode } from "./types";
@@ -139,10 +138,7 @@ async function uploadOsFiles(
   e.preventDefault();
   e.stopPropagation();
 
-  for (const file of list) {
-    await upload(dir, file);
-  }
-
+  await Promise.all([...list].map((file) => upload(dir, file)));
   return true;
 }
 
@@ -169,6 +165,7 @@ function FolderRow(props: { node: FolderNode; onUpload: (dir: string) => void })
           }}
           onDragLeave={sb.clearDragOver}
           onDrop={(e: DragEvent) => {
+            sb.endFileDrag();
             void (async () => {
               if (await uploadOsFiles(e, path(), sb.handleUploadAsset)) {
                 return;
@@ -205,7 +202,7 @@ function FolderRow(props: { node: FolderNode; onUpload: (dir: string) => void })
               props.onUpload(path());
             }}
           >
-            Upload asset
+            Upload assets
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem
@@ -258,6 +255,7 @@ function RootDropZone(props: { children: JSX.Element; onUpload: (dir: string) =>
         onDragOver={sb.onRootDragOver}
         onDragLeave={sb.onRootDragLeave}
         onDrop={(e: DragEvent) => {
+          sb.endFileDrag();
           void (async () => {
             if (await uploadOsFiles(e, "", sb.handleUploadAsset)) {
               return;
@@ -292,7 +290,7 @@ function RootDropZone(props: { children: JSX.Element; onUpload: (dir: string) =>
               props.onUpload("");
             }}
           >
-            Upload asset
+            Upload assets
           </ContextMenuItem>
         </ContextMenuContent>
       </Show>
@@ -327,9 +325,8 @@ function FileSidebarBody() {
     }
 
     const dir = uploadDir();
-    for (const file of list) {
-      await sb.handleUploadAsset(dir, file);
-    }
+    // Parallel so the in-flight count ticks down (4, 3, 2, 1).
+    await Promise.all([...list].map((file) => sb.handleUploadAsset(dir, file)));
   };
 
   return (
@@ -340,17 +337,14 @@ function FileSidebarBody() {
             <SidebarGroupLabel class="flex items-center justify-between gap-1">
               <span>Files</span>
               <Show when={!sb.isReadOnly()}>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  title="Upload asset"
-                  aria-label="Upload asset"
+                <UploadButton
+                  label="Upload assets"
+                  uploading={sb.uploading()}
+                  active={sb.fileDragOver()}
                   onClick={() => {
                     triggerUpload("");
                   }}
-                >
-                  <TbOutlineUpload />
-                </Button>
+                />
               </Show>
             </SidebarGroupLabel>
             <SidebarGroupContent>
