@@ -29,7 +29,7 @@ const PREVIEW_HTML = `<code><span class="typ-comment">// Monthly report</span>
 <span class="typ-heading">= Results</span> <span class="typ-label">&lt;results&gt;</span>
 
 We saw a <span class="typ-strong">*significant*</span> rise of 12% this month,
-summarised by the table below.
+summarized by the table below.
 
 <span class="typ-key">#</span><span class="typ-key">let</span> <span class="typ-func">average</span><span class="typ-punct">(</span>xs<span class="typ-punct">)</span> <span class="typ-op">=</span> xs<span class="typ-punct">.</span><span class="typ-func">sum</span><span class="typ-punct">(</span><span class="typ-punct">)</span> <span class="typ-op">/</span> xs<span class="typ-punct">.</span><span class="typ-func">len</span><span class="typ-punct">(</span><span class="typ-punct">)</span>
 
