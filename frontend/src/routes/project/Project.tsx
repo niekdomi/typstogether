@@ -64,26 +64,29 @@ function EditorPrefsPanel() {
         <span>Line numbers</span>
       </SwitchInput>
 
+      {/* Nested under "Line numbers" */}
+      <div class="border-border ml-3 flex flex-col gap-1 border-l pl-2">
+        <SwitchInput
+          checked={relativeLineNumbers()}
+          onChange={setRelativeLineNumbers}
+          disabled={!lineNumbers()}
+          class={cx(
+            "flex w-full justify-between rounded-md px-2 py-1.5 text-sm",
+            lineNumbers()
+              ? "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer"
+              : "text-muted-foreground cursor-not-allowed"
+          )}
+        >
+          <span>Relative line numbers</span>
+        </SwitchInput>
+      </div>
+
       <SwitchInput
         checked={spellcheck()}
         onChange={setSpellcheck}
         class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full cursor-pointer justify-between rounded-md px-2 py-1.5 text-sm"
       >
         <span>Spell check</span>
-      </SwitchInput>
-
-      <SwitchInput
-        checked={relativeLineNumbers()}
-        onChange={setRelativeLineNumbers}
-        disabled={!lineNumbers()}
-        class={cx(
-          "flex w-full justify-between rounded-md px-2 py-1.5 text-sm",
-          lineNumbers()
-            ? "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer"
-            : "text-muted-foreground cursor-not-allowed"
-        )}
-      >
-        <span>Relative line numbers</span>
       </SwitchInput>
     </div>
   );
