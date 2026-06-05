@@ -27,7 +27,7 @@ import {
 } from "@vedivad/codemirror-typst";
 
 // Theme registry. App chrome is recolored from each entry's `base` (see
-// styles.css + applyAppTheme), so the whole UI follows the editor theme. Add an
+// styles.css + App's root effect), so the whole UI follows the editor theme. Add an
 // entry to add a picker option.
 export interface AppBase {
   bg: string;
@@ -119,10 +119,6 @@ export const appBaseFor = (key: EditorThemeKey): AppBase => {
   const t = EDITOR_THEMES[key];
   return { ...t.base, dark: t.dark };
 };
-
-// Token colors for the theme picker preview: the same map the editor uses, so
-// the two stay identical.
-export const tokenThemeFor = (key: EditorThemeKey): TokenTheme => EDITOR_THEMES[key].spec.tokens;
 
 // All theme specs behind one compartment; `set(view, key)` swaps live. Carries
 // only the theme; highlighting decorations come from createTypstSetup.

@@ -1,11 +1,11 @@
-import { Compartment, EditorState, type Extension } from "@codemirror/state";
+import { EditorState } from "@codemirror/state";
 import { Decoration, EditorView, lineNumbers } from "@codemirror/view";
-import { typstTheme } from "@vedivad/codemirror-typst";
 import { TbOutlineCheck } from "solid-icons/tb";
 import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 
 import { editorTheme, setEditorTheme } from "../lib/editor-prefs";
 import {
+  createEditorTheming,
   EDITOR_THEME_KEYS,
   EDITOR_THEMES,
   type EditorThemeKey,
@@ -77,18 +77,13 @@ const previewLayout = EditorView.theme({
   ".cm-content": { paddingBlock: "10px" },
 });
 
-const themeExtension = (key: EditorThemeKey): Extension => [
-  EDITOR_THEMES[key].spec.editor,
-  typstTheme(EDITOR_THEMES[key].spec.tokens),
-];
-
-// A real, read-only CodeMirror instance: same chrome, gutter, default text
-// color, and token decorations as the editor, so the preview matches exactly.
-// Hovering reconfigures the theme compartment in place.
+// A real, read-only CodeMirror instance driven by the same `createEditorTheming`
+// compartment as the editor, so the preview matches exactly: same chrome, gutter,
+// default text color, and token decorations. Hovering swaps the theme in place.
 function ThemePreview(props: { previewKey: EditorThemeKey }) {
   let host!: HTMLDivElement;
   onMount(() => {
-    const themeCompartment = new Compartment();
+    const theming = createEditorTheming(props.previewKey);
     const view = new EditorView({
       parent: host,
       state: EditorState.create({
@@ -99,12 +94,12 @@ function ThemePreview(props: { previewKey: EditorThemeKey }) {
           lineNumbers(),
           EditorView.decorations.of(SAMPLE_DECORATIONS),
           previewLayout,
-          themeCompartment.of(themeExtension(props.previewKey)),
+          theming.extension,
         ],
       }),
     });
     createEffect(() => {
-      view.dispatch({ effects: themeCompartment.reconfigure(themeExtension(props.previewKey)) });
+      theming.set(view, props.previewKey);
     });
     onCleanup(() => {
       view.destroy();
