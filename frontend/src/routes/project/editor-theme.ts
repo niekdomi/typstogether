@@ -102,7 +102,8 @@ export const EDITOR_THEMES = {
   "vscode-dark": defineTheme(
     "VS Code Dark",
     true,
-    vscodeDark,
+    // @uiw tints default text blue (#9cdcfe); restore VS Code's real #d4d4d4.
+    [vscodeDark, EditorView.theme({ ".cm-content": { color: "#d4d4d4" } })],
     vscodeDarkStyle,
     defaultSettingsVscodeDark
   ),
