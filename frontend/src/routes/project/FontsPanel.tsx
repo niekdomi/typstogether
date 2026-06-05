@@ -29,14 +29,30 @@ export default function FontsPanel() {
     });
   });
 
-  const handleFile = async (file: File | undefined) => {
+  // Upload all selected files in parallel; a font family is usually several
+  // static files (one per weight/style), so multi-select avoids a file-at-a-time
+  // slog. Each success writes its own entry; failures are summarized once.
+  const handleFiles = async (files: FileList | null) => {
     const map = ctx.collab.fonts;
-    if (!file || !map) return;
-    try {
-      const { id } = await uploadFont(ctx.projectId(), file);
-      map.set(file.name, id);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Font upload failed.");
+    if (!map || !files || files.length === 0) return;
+    const projectId = ctx.projectId();
+    let failures = 0;
+    let firstError = "";
+    await Promise.all(
+      [...files].map(async (file) => {
+        try {
+          const { id } = await uploadFont(projectId, file);
+          map.set(file.name, id);
+        } catch (error) {
+          failures += 1;
+          if (!firstError) {
+            firstError = error instanceof Error ? error.message : "Font upload failed.";
+          }
+        }
+      })
+    );
+    if (failures > 0) {
+      toast.error(failures === 1 ? firstError : `${firstError} (+${String(failures - 1)} more)`);
     }
   };
 
@@ -49,15 +65,16 @@ export default function FontsPanel() {
       <Show when={!ctx.isReadOnly()}>
         <label class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex cursor-pointer items-center gap-2 rounded-md border border-dashed px-2 py-1.5 text-sm">
           <TbOutlineUpload size={14} />
-          <span>Upload font</span>
+          <span>Upload fonts</span>
           <input
             type="file"
             accept={FONT_ACCEPT}
+            multiple
             class="sr-only"
             onChange={(e) => {
-              const file = e.currentTarget.files?.[0];
+              const { files } = e.currentTarget;
               e.currentTarget.value = "";
-              void handleFile(file);
+              void handleFiles(files);
             }}
           />
         </label>
