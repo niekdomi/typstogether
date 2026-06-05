@@ -1,14 +1,14 @@
-import type { TokenTheme } from "@vedivad/codemirror-typst";
+import { Compartment, EditorState, type Extension } from "@codemirror/state";
+import { Decoration, EditorView, lineNumbers } from "@codemirror/view";
+import { typstTheme } from "@vedivad/codemirror-typst";
 import { TbOutlineCheck } from "solid-icons/tb";
-import { createMemo, createSignal, For, Show } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 
 import { editorTheme, setEditorTheme } from "../lib/editor-prefs";
 import {
-  appBaseFor,
   EDITOR_THEME_KEYS,
   EDITOR_THEMES,
   type EditorThemeKey,
-  tokenThemeFor,
 } from "../routes/project/editor-theme";
 import { cx } from "./ui/cva";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -19,12 +19,9 @@ interface ThemePickerDialogProps {
 }
 
 // A representative Typst snippet, pre-highlighted into Typst's stable `typ-*`
-// spans by the engine and built into nested HTML once, offline. Generated from
-// the same markup-mode `highlight()` spans the editor decorates with (not the
-// code-mode highlight_html), so headings, strong markup, list markers, etc.
-// match the live editor. The token structure is theme independent; only the
-// colors change, so the preview recolors these spans per theme with no editor
-// or worker needed.
+// spans by the engine offline. Generated from the same markup-mode `highlight()`
+// spans the editor decorates with, so the token ranges below are exactly what
+// the live editor would produce, with no engine or worker needed at runtime.
 const PREVIEW_HTML = `<code><span class="typ-comment">// Monthly report</span>
 <span class="typ-key">#</span><span class="typ-key">set</span> <span class="typ-func">page</span><span class="typ-punct">(</span>margin<span class="typ-punct">:</span> <span class="typ-num">2cm</span><span class="typ-punct">)</span>
 <span class="typ-key">#</span><span class="typ-key">set</span> <span class="typ-func">text</span><span class="typ-punct">(</span>font<span class="typ-punct">:</span> <span class="typ-str">&quot;New Computer Modern&quot;</span><span class="typ-punct">)</span>
@@ -42,30 +39,93 @@ summarised by the table below.
 The growth follows <span class="typ-math-delim">$</span> y = a e<span class="typ-math-op">^</span><span class="typ-punct">(</span>k t<span class="typ-punct">)</span> <span class="typ-math-delim">$</span>.
 </code>`;
 
-const PREVIEW_SCOPE = ".typst-theme-preview";
+// Flatten the snippet HTML into plain text plus token ranges, so a real (but
+// read-only) editor can render it with the same `.typ-*` decorations the live
+// editor uses. The spans are flat (never nested), so a single pass over the
+// `<code>` child nodes suffices.
+const parsePreview = (html: string) => {
+  const code = new DOMParser().parseFromString(html, "text/html").querySelector("code");
+  let doc = "";
+  const marks = [] as { from: number; to: number; cls: string }[];
+  for (const node of code?.childNodes ?? []) {
+    const text = node.textContent ?? "";
+    if (node.nodeType === Node.ELEMENT_NODE && text) {
+      marks.push({
+        from: doc.length,
+        to: doc.length + text.length,
+        cls: (node as Element).className,
+      });
+    }
+    doc += text;
+  }
+  return { doc, marks };
+};
 
-// A TokenTheme is `.typ-* -> CSS-in-JS`; emit it as CSS scoped to the preview.
-const buildPreviewCss = (theme: TokenTheme): string =>
-  Object.entries(theme)
-    .map(([selector, decl]) => {
-      const body = Object.entries(decl)
-        .map(
-          ([prop, value]) => `${prop.replaceAll(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}:${value}`
-        )
-        .join(";");
-      return `${PREVIEW_SCOPE} ${selector}{${body}}`;
-    })
-    .join("");
+const { doc: SAMPLE_DOC, marks: SAMPLE_MARKS } = parsePreview(PREVIEW_HTML);
+const SAMPLE_DECORATIONS = Decoration.set(
+  SAMPLE_MARKS.map((m) => Decoration.mark({ class: m.cls }).range(m.from, m.to)),
+  true
+);
 
-// A centered modal of theme cards over a live syntax preview. Hovering a card
-// previews that theme in the snippet; clicking applies it, which (via App's root
-// effect) recolors the whole app, so the dialog itself is the preview. Theme is
-// a user-level pref, opened from the UserMenu.
+// Layout chrome shared by every preview; the per-theme colors come from the
+// theme's own editor extension + token theme.
+const previewLayout = EditorView.theme({
+  // No height cap: the editor sizes to its content so the whole snippet shows.
+  "&": { fontSize: "12.5px" },
+  "&.cm-focused": { outline: "none" },
+  ".cm-scroller": { overflow: "auto", fontFamily: "var(--mono)", lineHeight: "1.6" },
+  ".cm-content": { paddingBlock: "10px" },
+});
+
+const themeExtension = (key: EditorThemeKey): Extension => [
+  EDITOR_THEMES[key].spec.editor,
+  typstTheme(EDITOR_THEMES[key].spec.tokens),
+];
+
+// A real, read-only CodeMirror instance: same chrome, gutter, default text
+// color, and token decorations as the editor, so the preview matches exactly.
+// Hovering reconfigures the theme compartment in place.
+function ThemePreview(props: { previewKey: EditorThemeKey }) {
+  let host!: HTMLDivElement;
+  onMount(() => {
+    const themeCompartment = new Compartment();
+    const view = new EditorView({
+      parent: host,
+      state: EditorState.create({
+        doc: SAMPLE_DOC,
+        extensions: [
+          EditorState.readOnly.of(true),
+          EditorView.editable.of(false),
+          lineNumbers(),
+          EditorView.decorations.of(SAMPLE_DECORATIONS),
+          previewLayout,
+          themeCompartment.of(themeExtension(props.previewKey)),
+        ],
+      }),
+    });
+    createEffect(() => {
+      view.dispatch({ effects: themeCompartment.reconfigure(themeExtension(props.previewKey)) });
+    });
+    onCleanup(() => {
+      view.destroy();
+    });
+  });
+  return (
+    <div
+      ref={(el) => {
+        host = el;
+      }}
+      class="overflow-hidden rounded-lg border"
+    />
+  );
+}
+
+// A centered modal of theme cards over a live preview. Hovering a card previews
+// that theme in the snippet; clicking applies it, which (via App's root effect)
+// recolors the whole app. Theme is a user-level pref, opened from the UserMenu.
 export default function ThemePickerDialog(props: ThemePickerDialogProps) {
   const [hovered, setHovered] = createSignal<EditorThemeKey | null>(null);
   const previewKey = () => hovered() ?? editorTheme();
-  const previewBase = createMemo(() => appBaseFor(previewKey()));
-  const previewCss = createMemo(() => buildPreviewCss(tokenThemeFor(previewKey())));
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
@@ -77,12 +137,7 @@ export default function ThemePickerDialog(props: ThemePickerDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <style>{previewCss()}</style>
-        <pre
-          class="typst-theme-preview m-0 overflow-x-auto rounded-lg border p-4 font-mono text-[12.5px] leading-relaxed"
-          style={{ "background-color": previewBase().bg, color: previewBase().fg }}
-          innerHTML={PREVIEW_HTML}
-        />
+        <ThemePreview previewKey={previewKey()} />
 
         <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
           <For each={EDITOR_THEME_KEYS}>
