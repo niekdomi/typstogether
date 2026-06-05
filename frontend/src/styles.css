@@ -9,30 +9,39 @@
   --brand: oklch(0.58 0.12 200);
 
   --radius: 0.625rem;
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+
+  /* Surfaces, borders, and muted tones derive generically from the active
+     theme's --background / --foreground (set per theme in index.html, then
+     overridden at runtime from the chosen editor theme). color-mix in oklch
+     lifts the background toward the foreground by a fixed amount, so the whole
+     neutral chrome picks up each theme's background tint with no per-theme token
+     authoring. bg/fg swap by polarity, so the dark block only changes the lift
+     amounts (dark UIs elevate surfaces more than light ones). primary and the
+     *-foreground tokens are plain bg/fg, identical in both polarities. */
+  --card: var(--background);
+  --card-foreground: var(--foreground);
+  --popover: var(--background);
+  --popover-foreground: var(--foreground);
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+  --secondary: color-mix(in oklch, var(--background), var(--foreground) 4%);
+  --secondary-foreground: var(--foreground);
+  --muted: color-mix(in oklch, var(--background), var(--foreground) 4%);
+  --muted-foreground: color-mix(in oklch, var(--foreground), var(--background) 48%);
+  --accent: color-mix(in oklch, var(--background), var(--foreground) 5%);
+  --accent-foreground: var(--foreground);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --border: color-mix(in oklch, var(--background), var(--foreground) 9%);
+  --input: color-mix(in oklch, var(--background), var(--foreground) 9%);
+  --ring: color-mix(in oklch, var(--foreground), var(--background) 60%);
+  --sidebar: color-mix(in oklch, var(--background), var(--foreground) 2%);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--foreground);
+  --sidebar-primary-foreground: var(--background);
+  --sidebar-accent: color-mix(in oklch, var(--background), var(--foreground) 5%);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: color-mix(in oklch, var(--background), var(--foreground) 9%);
+  --sidebar-ring: color-mix(in oklch, var(--foreground), var(--background) 60%);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -42,30 +51,22 @@
 
 [data-kb-theme="dark"] {
   --brand: oklch(0.74 0.13 200);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+
+  /* Same derivation, larger lifts: dark surfaces sit above the background. */
+  --card: color-mix(in oklch, var(--background), var(--foreground) 7%);
+  --popover: color-mix(in oklch, var(--background), var(--foreground) 7%);
+  --secondary: color-mix(in oklch, var(--background), var(--foreground) 14%);
+  --muted: color-mix(in oklch, var(--background), var(--foreground) 14%);
+  --muted-foreground: color-mix(in oklch, var(--foreground), var(--background) 33%);
+  --accent: color-mix(in oklch, var(--background), var(--foreground) 14%);
+  --border: color-mix(in oklch, var(--background), var(--foreground) 16%);
+  --input: color-mix(in oklch, var(--background), var(--foreground) 20%);
+  --ring: color-mix(in oklch, var(--foreground), var(--background) 45%);
+  --sidebar: color-mix(in oklch, var(--background), var(--foreground) 7%);
+  --sidebar-accent: color-mix(in oklch, var(--background), var(--foreground) 14%);
+  --sidebar-border: color-mix(in oklch, var(--background), var(--foreground) 16%);
+  --sidebar-ring: color-mix(in oklch, var(--foreground), var(--background) 45%);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
