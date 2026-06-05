@@ -1,9 +1,10 @@
 import { and, eq } from "drizzle-orm";
+import { fileTypeFromBuffer } from "file-type";
 
 import { type ProjectBlob, projectBlob } from "../../db/app-schema";
 import { NotFoundError, UnsupportedMediaTypeError } from "../../errors";
 import { currentDb } from "../../transaction";
-import { ALLOWED_MIME_TYPES, type BlobMeta } from "./model";
+import { ALLOWED_MIME_TYPES, type BlobMeta, FONT_MIMES } from "./model";
 
 export class BlobService {
   // Each call creates a new row with a fresh blob_id, even if identical bytes
@@ -25,6 +26,18 @@ export class BlobService {
     }
     const bytes = new Uint8Array(await file.arrayBuffer());
     return this.storeBytes(projectId, bytes, file.type);
+  }
+
+  // Browser-supplied font MIME is unreliable, so detect by magic number with
+  // file-type (the lib Elysia's `t.File` uses): one call validates the upload and
+  // yields the canonical mime to store.
+  async storeFont(projectId: string, file: File): Promise<BlobMeta> {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const detected = await fileTypeFromBuffer(bytes);
+    if (!detected || !FONT_MIMES.has(detected.mime)) {
+      throw new UnsupportedMediaTypeError("Not a TTF, OTF, or TTC font");
+    }
+    return this.storeBytes(projectId, bytes, detected.mime);
   }
 
   async fetch(projectId: string, blobId: string): Promise<ProjectBlob> {

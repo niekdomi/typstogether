@@ -19,6 +19,13 @@ const PNG_BYTES = new Uint8Array([
 ]);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
+// Fonts: padded so Bun's in-process multipart parser doesn't drop tiny uploads
+// (real fonts are far larger); only the leading magic bytes drive detection.
+const withFontMagic = (magic: number[]): Uint8Array =>
+  new Uint8Array([...magic, ...Array.from({ length: 24 }, () => 0)]);
+const TTF_BYTES = withFontMagic([0x00, 0x01, 0x00, 0x00]);
+const OTF_BYTES = withFontMagic([0x4f, 0x54, 0x54, 0x4f]); // "OTTO"
+
 const uploadInit = (bytes: Uint8Array, mime = "image/png", name = "blob.png"): RequestInit => {
   const form = new FormData();
   form.append("file", new File([bytes], name, { type: mime }));
@@ -224,5 +231,100 @@ describe("GET /projects/:id/blobs/:blobId", () => {
     const res = await request(`/projects/${projectB.id}/blobs/${meta.id}`);
 
     expect(res.status).toBe(404);
+  });
+});
+
+describe("POST /projects/:id/fonts", () => {
+  test("401 when unauthenticated", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+
+    const res = await request(
+      `/projects/${project.id}/fonts`,
+      uploadInit(TTF_BYTES, "font/ttf", "x.ttf")
+    );
+
+    expect(res.status).toBe(401);
+  });
+
+  test("403 when caller is a viewer", async () => {
+    const owner = await userFactory.create();
+    const viewer = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    await memberService.create(project.id, viewer.id, "viewer");
+    setTestUser(viewer);
+
+    const res = await request(
+      `/projects/${project.id}/fonts`,
+      uploadInit(TTF_BYTES, "font/ttf", "x.ttf")
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  test("404 when caller is not a member", async () => {
+    const owner = await userFactory.create();
+    const stranger = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    setTestUser(stranger);
+
+    const res = await request(
+      `/projects/${project.id}/fonts`,
+      uploadInit(TTF_BYTES, "font/ttf", "x.ttf")
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("415 when the bytes are not a TTF/OTF/TTC font", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    setTestUser(owner);
+
+    // A real PNG is detected as image/png, not a font.
+    const res = await request(
+      `/projects/${project.id}/fonts`,
+      uploadInit(PNG_BYTES, "font/ttf", "x.ttf")
+    );
+
+    expect(res.status).toBe(415);
+  });
+
+  test("200 stores a TTF: magic-byte mime wins over the browser MIME", async () => {
+    const owner = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    setTestUser(owner);
+
+    // Deliberately wrong browser MIME to prove the route sniffs content.
+    const res = await request(
+      `/projects/${project.id}/fonts`,
+      uploadInit(TTF_BYTES, "application/octet-stream", "MyFont.ttf")
+    );
+    const body = (await res.json()) as UploadBody;
+
+    expect(res.status).toBe(200);
+    expect(body.id).toMatch(UUID_RE);
+    expect(body.mime).toBe("font/ttf");
+    expect(body.size).toBe(TTF_BYTES.byteLength);
+
+    const stored = await blobService.fetch(project.id, body.id);
+    expect(stored.bytes).toEqual(TTF_BYTES);
+  });
+
+  test("200 detects OTF, and an editor may upload", async () => {
+    const owner = await userFactory.create();
+    const editor = await userFactory.create();
+    const project = await projectFactory.create({ ownerUserId: owner.id });
+    await memberService.create(project.id, editor.id, "editor");
+    setTestUser(editor);
+
+    const res = await request(
+      `/projects/${project.id}/fonts`,
+      uploadInit(OTF_BYTES, "application/octet-stream", "x.otf")
+    );
+    const body = (await res.json()) as UploadBody;
+
+    expect(res.status).toBe(200);
+    expect(body.mime).toBe("font/otf");
   });
 });
