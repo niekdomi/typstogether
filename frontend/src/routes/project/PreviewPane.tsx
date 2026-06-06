@@ -1,3 +1,4 @@
+import { EditorView } from "@codemirror/view";
 import {
   TbOutlineArrowAutofitHeight,
   TbOutlineArrowAutofitWidth,
@@ -21,6 +22,26 @@ const SCROLLER_PADDING_PX = 24; // matches `p-3` (12px each side)
 
 const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 
+// Client-space center of the link nearest the cursor on a page: among links whose
+// column contains the x and whose center is within ~a line of the y, the closest,
+// or null. Lets a click land on an outline entry (a thin hit-rect) without pixel
+// precision, picking the nearest when stacked entries are close together.
+function nearestLinkCenter(pageEl: HTMLElement, clientX: number, clientY: number) {
+  let best: { x: number; y: number } | null = null;
+  let bestDy = Infinity;
+  for (const a of pageEl.querySelectorAll("a")) {
+    const r = a.getBoundingClientRect();
+    if (r.height === 0 || clientX < r.left || clientX > r.right) continue;
+    const cy = r.top + r.height / 2;
+    const dy = Math.abs(clientY - cy);
+    if (dy <= r.height && dy < bestDy) {
+      bestDy = dy;
+      best = { x: (r.left + r.right) / 2, y: cy };
+    }
+  }
+  return best;
+}
+
 export default function PreviewPane() {
   const ctx = useProjectContext();
   const render = ctx.preview;
@@ -28,6 +49,8 @@ export default function PreviewPane() {
   const [panning, setPanning] = createSignal(false);
 
   let scroller: HTMLDivElement | undefined;
+  // Page wrappers by index, so an internal link can scroll to its target page.
+  const pageEls: (HTMLElement | undefined)[] = [];
   let panOrigin: { x: number; y: number; scrollLeft: number; scrollTop: number } | null = null;
 
   /**
@@ -95,22 +118,105 @@ export default function PreviewPane() {
     });
   });
 
-  const onMouseMove = (e: MouseEvent) => {
-    if (!panOrigin || !scroller) return;
-    scroller.scrollLeft = panOrigin.scrollLeft - (e.clientX - panOrigin.x);
-    scroller.scrollTop = panOrigin.scrollTop - (e.clientY - panOrigin.y);
+  // Map a viewport point to the page under it and its position in that page's own
+  // point coordinates (the SVG viewBox unit), which is what the engine expects.
+  const pointToPage = (clientX: number, clientY: number) => {
+    const pages = render.pages;
+    if (!pages) return null;
+    for (let i = 0; i < pageEls.length; i++) {
+      const el = pageEls[i];
+      const page = pages[i];
+      if (!el || !page) continue;
+      const r = el.getBoundingClientRect();
+      if (clientX < r.left || clientX > r.right || clientY < r.top || clientY > r.bottom) continue;
+      const scale = (zoom() * BASE_WIDTH_PX) / page.width;
+      return { index: i, x: (clientX - r.left) / scale, y: (clientY - r.top) / scale };
+    }
+    return null;
   };
 
-  const onMouseUp = () => {
+  // Move the editor caret to a 1-based source location (same recipe as the
+  // diagnostics panel: switch file, then dispatch once the view has swapped).
+  const jumpToSource = (file: string, line: number, column: number) => {
+    ctx.setActiveFile(file);
+    queueMicrotask(() => {
+      const view = ctx.editorView();
+      if (!view) return;
+      const doc = view.state.doc;
+      const lineInfo = doc.line(Math.min(Math.max(line, 1), doc.lines));
+      const from = Math.min(lineInfo.from + column - 1, lineInfo.to);
+      view.dispatch({
+        selection: { anchor: from },
+        effects: EditorView.scrollIntoView(from, { y: "center" }),
+      });
+      view.focus();
+    });
+  };
+
+  // Scroll the preview so a target point (in page points) sits near the top.
+  const scrollToPosition = (page: number, yPt: number) => {
+    const target = render.pages?.[page];
+    const el = pageEls[page];
+    if (!scroller || !target || !el) return;
+    const scale = (zoom() * BASE_WIDTH_PX) / target.width;
+    const pageTop = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+    scroller.scrollTo({
+      top: scroller.scrollTop + pageTop + yPt * scale - SCROLLER_PADDING_PX,
+      behavior: "smooth",
+    });
+  };
+
+  // A plain click: ask the engine what the cursor is over and act on it. Text
+  // jumps the editor to its source; an internal link scrolls the preview; a URL
+  // opens. The SVG carries none of this, so it's a round-trip to the engine.
+  const handleClick = async (clientX: number, clientY: number) => {
+    const project = ctx.typst.project;
+    const here = pointToPage(clientX, clientY);
+    if (!project || !here) return;
+    // Snap to the nearest link so an outline entry needn't be clicked precisely;
+    // off any link, resolve the raw point (text -> source).
+    const el = pageEls[here.index];
+    const center = el ? nearestLinkCenter(el, clientX, clientY) : null;
+    const hit = center ? (pointToPage(center.x, center.y) ?? here) : here;
+    const jump = await project.clickJump(hit.index, hit.x, hit.y);
+    if (!jump) return;
+    if (jump.kind === "source") jumpToSource(jump.file, jump.line, jump.column);
+    else if (jump.kind === "position") scrollToPosition(jump.page, jump.y);
+    else globalThis.open(jump.url, "_blank", "noopener,noreferrer");
+  };
+
+  // A press that moves past this many pixels is a pan, not a click; below it we
+  // treat the release as a click and ask the engine what's under the cursor.
+  const DRAG_THRESHOLD_PX = 4;
+  let dragMoved = false;
+
+  const onMouseMove = (e: MouseEvent) => {
+    if (!panOrigin || !scroller) return;
+    const dx = e.clientX - panOrigin.x;
+    const dy = e.clientY - panOrigin.y;
+    // Only enter the panning state (grabbing cursor) once it's really a drag, so a
+    // plain click doesn't flash the hand.
+    if (!dragMoved && (Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX)) {
+      dragMoved = true;
+      setPanning(true);
+    }
+    scroller.scrollLeft = panOrigin.scrollLeft - dx;
+    scroller.scrollTop = panOrigin.scrollTop - dy;
+  };
+
+  const onMouseUp = (e: MouseEvent) => {
+    const wasClick = !dragMoved;
     panOrigin = null;
     setPanning(false);
     globalThis.removeEventListener("mousemove", onMouseMove);
     globalThis.removeEventListener("mouseup", onMouseUp);
+    if (wasClick) void handleClick(e.clientX, e.clientY);
   };
 
   const onMouseDown = (e: MouseEvent) => {
     if (e.button !== 0 || !scroller) return; // left button only
     e.preventDefault();
+    dragMoved = false;
     scroller.focus({ preventScroll: true });
     panOrigin = {
       x: e.clientX,
@@ -118,7 +224,6 @@ export default function PreviewPane() {
       scrollLeft: scroller.scrollLeft,
       scrollTop: scroller.scrollTop,
     };
-    setPanning(true);
     globalThis.addEventListener("mousemove", onMouseMove);
     globalThis.addEventListener("mouseup", onMouseUp);
   };
@@ -207,10 +312,15 @@ export default function PreviewPane() {
           scroller = el;
         }}
         tabindex={-1}
-        class="bg-muted/40 min-h-0 flex-1 cursor-grab [scrollbar-gutter:stable] overflow-auto p-3 outline-none"
+        class="bg-muted/40 min-h-0 flex-1 scrollbar-gutter-stable overflow-auto p-3 outline-none"
         classList={{ "!cursor-grabbing select-none": panning() }}
         onWheel={onWheel}
         onMouseDown={onMouseDown}
+        onClick={(e) => {
+          // We drive all navigation through the engine (handleClick), so stop the
+          // browser from also following an SVG link's native href.
+          e.preventDefault();
+        }}
       >
         <Switch fallback={<p class="text-muted-foreground text-sm">Compiling…</p>}>
           <Match when={render.pages}>
@@ -223,12 +333,22 @@ export default function PreviewPane() {
                 }}
               >
                 <For each={p()}>
-                  {(page) => (
-                    <div
-                      class="w-full bg-white shadow-md ring-1 ring-black/10 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full"
-                      innerHTML={page.svg}
-                    />
-                  )}
+                  {(page) => {
+                    // Typst draws each link as a transparent <rect> on top of the
+                    // glyphs: tint it on hover to mark the link (kept at its true
+                    // size so stacked entries never overlap) and show a pointer.
+                    // handleClick snaps to the nearest link, so the thin band
+                    // doesn't have to be hit precisely.
+                    return (
+                      <div
+                        ref={(el) => {
+                          pageEls[page.index] = el;
+                        }}
+                        class="w-full bg-white shadow-md ring-1 ring-black/10 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full [&_svg_a]:cursor-pointer [&_svg_a_rect]:[transition:fill_100ms] [&_svg_a:hover_rect]:fill-yellow-300/50"
+                        innerHTML={page.svg}
+                      />
+                    );
+                  }}
                 </For>
               </div>
             )}
