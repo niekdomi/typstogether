@@ -1,4 +1,4 @@
-import type { EditorView } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { useParams } from "@solidjs/router";
 import type { Diagnostic, TypstProject } from "@vedivad/codemirror-typst";
 import type { RenderedSvgPage } from "@vedivad/typst-web-service";
@@ -71,6 +71,8 @@ interface ProjectContextValue {
   editorView: Accessor<EditorView | null>;
   setEditorView: (view: EditorView | null) => void;
   jumpToRemoteUser: (clientId: number) => void;
+  /** Open `file` and move the caret to a 1-based line/column. */
+  gotoSource: (file: string, line: number, column: number) => void;
 
   diagnostics: Accessor<Diagnostic[]>;
   errorCount: Accessor<number>;
@@ -297,6 +299,24 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     });
   };
 
+  // Switch to `file`, then (once the view has swapped) move the caret to the
+  // 1-based line/column. Shared by the diagnostics list and preview click-to-source.
+  const gotoSource = (file: string, line: number, column: number) => {
+    setRequestedFile(file);
+    queueMicrotask(() => {
+      const view = editorView();
+      if (!view) return;
+      const doc = view.state.doc;
+      const lineInfo = doc.line(Math.min(Math.max(line, 1), doc.lines));
+      const from = Math.min(lineInfo.from + column - 1, lineInfo.to);
+      view.dispatch({
+        selection: { anchor: from },
+        effects: EditorView.scrollIntoView(from, { y: "center" }),
+      });
+      view.focus();
+    });
+  };
+
   const value: ProjectContextValue = {
     projectId,
     membership,
@@ -315,6 +335,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     editorView,
     setEditorView,
     jumpToRemoteUser,
+    gotoSource,
     diagnostics,
     errorCount,
   };

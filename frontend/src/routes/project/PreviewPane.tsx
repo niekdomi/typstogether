@@ -1,4 +1,3 @@
-import { EditorView } from "@codemirror/view";
 import {
   TbOutlineArrowAutofitHeight,
   TbOutlineArrowAutofitWidth,
@@ -135,24 +134,6 @@ export default function PreviewPane() {
     return null;
   };
 
-  // Move the editor caret to a 1-based source location (same recipe as the
-  // diagnostics panel: switch file, then dispatch once the view has swapped).
-  const jumpToSource = (file: string, line: number, column: number) => {
-    ctx.setActiveFile(file);
-    queueMicrotask(() => {
-      const view = ctx.editorView();
-      if (!view) return;
-      const doc = view.state.doc;
-      const lineInfo = doc.line(Math.min(Math.max(line, 1), doc.lines));
-      const from = Math.min(lineInfo.from + column - 1, lineInfo.to);
-      view.dispatch({
-        selection: { anchor: from },
-        effects: EditorView.scrollIntoView(from, { y: "center" }),
-      });
-      view.focus();
-    });
-  };
-
   // Scroll the preview so a target point (in page points) sits near the top.
   const scrollToPosition = (page: number, yPt: number) => {
     const target = render.pages?.[page];
@@ -180,7 +161,7 @@ export default function PreviewPane() {
     const hit = center ? (pointToPage(center.x, center.y) ?? here) : here;
     const jump = await project.clickJump(hit.index, hit.x, hit.y);
     if (!jump) return;
-    if (jump.kind === "source") jumpToSource(jump.file, jump.line, jump.column);
+    if (jump.kind === "source") ctx.gotoSource(jump.file, jump.line, jump.column);
     else if (jump.kind === "position") scrollToPosition(jump.page, jump.y);
     else globalThis.open(jump.url, "_blank", "noopener,noreferrer");
   };
