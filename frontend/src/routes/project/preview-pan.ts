@@ -1,19 +1,15 @@
 import { makeEventListener } from "@solid-primitives/event-listener";
 import { createPointerListeners } from "@solid-primitives/pointer";
 
-// Window after a middle-pan in which to swallow the X11 primary-selection paste.
-const PASTE_WINDOW_MS = 300;
-
 /**
- * Middle-drag panning for a scroll container, handling two middle-button quirks:
- * the autoscroll circle (a mousedown default), and on Linux/X11 the
- * primary-selection paste that lands on the focused editor just after a drag.
- * Toggles `cursor-grabbing` while panning. Listeners self-clean, so just call
- * this from a ref.
+ * Middle-drag panning for a scroll container, suppressing the two middle-button
+ * defaults it would otherwise trigger: the autoscroll circle (a mousedown
+ * default), and on Linux/X11 the primary-selection paste into the editor (the
+ * auxclick default - canceling it stops the paste at its source). Toggles
+ * `cursor-grabbing` while panning. Listeners self-clean, so just call from a ref.
  */
 export function attachPan(el: HTMLElement): void {
   let origin: { x: number; y: number; scrollLeft: number; scrollTop: number } | null = null;
-  let lastEnd = 0;
 
   createPointerListeners({
     target: el,
@@ -32,7 +28,6 @@ export function attachPan(el: HTMLElement): void {
     onUp: (e) => {
       if (e.button !== 1) return;
       origin = null;
-      lastEnd = performance.now();
       el.classList.remove("cursor-grabbing");
     },
   });
@@ -44,15 +39,10 @@ export function attachPan(el: HTMLElement): void {
     }
   });
 
-  // Swallow the X11 paste, stopImmediatePropagation also blocks CodeMirror's handler.
-  makeEventListener(
-    globalThis,
-    "paste",
-    (e) => {
-      if (!origin && performance.now() - lastEnd > PASTE_WINDOW_MS) return;
-      e.stopImmediatePropagation();
+  // Cancel the X11 primary-selection paste at its source.
+  makeEventListener(el, "auxclick", (e) => {
+    if (e.button === 1) {
       e.preventDefault();
-    },
-    { capture: true }
-  );
+    }
+  });
 }
