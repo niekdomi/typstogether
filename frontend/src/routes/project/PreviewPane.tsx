@@ -12,6 +12,7 @@ import { createSignal, For, Match, onCleanup, onMount, Show, Switch } from "soli
 import { Button } from "../../components/ui/button";
 import { previewDark, setPreviewDark } from "../../lib/editor-prefs";
 import ExportPdfButton from "./ExportPdfButton";
+import { attachPan } from "./preview-pan";
 import { useProjectContext } from "./ProjectContext";
 
 const BASE_WIDTH_PX = 700;
@@ -27,12 +28,10 @@ export default function PreviewPane() {
   const ctx = useProjectContext();
   const render = ctx.preview;
   const [zoom, setZoom] = createSignal(1);
-  const [panning, setPanning] = createSignal(false);
 
   let scroller: HTMLDivElement | undefined;
   // Page wrappers by index; the navigator reads these to resolve clicks and scroll.
   const pageEls: (HTMLElement | undefined)[] = [];
-  let panOrigin: { x: number; y: number; scrollLeft: number; scrollTop: number } | null = null;
   let nav: PreviewNavigator | undefined;
 
   /**
@@ -115,27 +114,6 @@ export default function PreviewPane() {
     });
   });
 
-  // Middle-mouse panning via pointer capture — no global listeners needed.
-  const onPointerDown = (e: PointerEvent) => {
-    if (e.button !== 1 || !scroller) return;
-    e.preventDefault(); // suppress browser autoscroll mode
-    scroller.setPointerCapture(e.pointerId);
-    setPanning(true);
-    panOrigin = { x: e.clientX, y: e.clientY, scrollLeft: scroller.scrollLeft, scrollTop: scroller.scrollTop };
-  };
-
-  const onPointerMove = (e: PointerEvent) => {
-    if (!panOrigin || !scroller) return;
-    scroller.scrollLeft = panOrigin.scrollLeft - (e.clientX - panOrigin.x);
-    scroller.scrollTop = panOrigin.scrollTop - (e.clientY - panOrigin.y);
-  };
-
-  const onPointerUp = (e: PointerEvent) => {
-    if (e.button !== 1 || !panOrigin) return;
-    panOrigin = null;
-    setPanning(false);
-  };
-
   onCleanup(() => nav?.dispose());
 
   return (
@@ -215,14 +193,11 @@ export default function PreviewPane() {
       <div
         ref={(el) => {
           scroller = el;
+          attachPan(el);
         }}
         tabindex={-1}
-        class="bg-muted/40 min-h-0 flex-1 scrollbar-gutter-stable overflow-auto p-3 outline-none"
-        classList={{ "!cursor-grabbing select-none": panning() }}
+        class="bg-muted/40 min-h-0 flex-1 scrollbar-gutter-stable overflow-auto p-3 outline-none select-none"
         onWheel={onWheel}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
         onClick={(e) => {
           e.preventDefault(); // stop SVG native href
           void nav?.jumpAt(e.clientX, e.clientY);

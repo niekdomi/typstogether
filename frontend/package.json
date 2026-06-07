@@ -21,6 +21,8 @@
     "@hocuspocus/provider": "^4.1.0",
     "@kobalte/core": "^0.13.11",
     "@replit/codemirror-vim": "^6.3.0",
+    "@solid-primitives/event-listener": "^2.4.5",
+    "@solid-primitives/pointer": "^0.3.5",
     "@solid-primitives/storage": "^4.3.4",
     "@solidjs/router": "^0.16.1",
     "@typstogether/backend": "workspace:*",

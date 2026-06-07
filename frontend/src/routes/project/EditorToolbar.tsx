@@ -50,7 +50,7 @@ import { useProjectContext } from "./ProjectContext";
 interface ToolbarAction {
   icon: () => JSX.Element;
   label: string;
-  /** Optional — omit for actions that aren't bound to a keymap. */
+  /** Optional, omit for actions that aren't bound to a keymap. */
   shortcut?: string;
   run: (view: EditorView) => void;
 }
