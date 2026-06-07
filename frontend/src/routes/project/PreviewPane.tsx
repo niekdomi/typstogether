@@ -101,9 +101,8 @@ export default function PreviewPane() {
   });
 
   // Forward navigation through the engine: a click resolves to a source location,
-  // an internal-link scroll, or a URL. We own pointer handling (pan vs click), so
-  // listen:false and we call jumpAt from onMouseUp. The project is read via a thunk
-  // since the context swaps the instance on file change.
+  // an internal-link scroll, or a URL. The project is read via a thunk since the
+  // context swaps the instance on file change.
   onMount(() => {
     if (!scroller) return;
     nav = PreviewNavigator.create({
@@ -116,54 +115,28 @@ export default function PreviewPane() {
     });
   });
 
-  // A press that moves past this many pixels is a pan, not a click; below it we
-  // treat the release as a click and ask the engine what's under the cursor.
-  const DRAG_THRESHOLD_PX = 4;
-  let dragMoved = false;
-
-  const onMouseMove = (e: MouseEvent) => {
-    if (!panOrigin || !scroller) return;
-    const dx = e.clientX - panOrigin.x;
-    const dy = e.clientY - panOrigin.y;
-    // Only enter the panning state (grabbing cursor) once it's really a drag, so a
-    // plain click doesn't flash the hand.
-    if (!dragMoved && (Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX)) {
-      dragMoved = true;
-      setPanning(true);
-    }
-    scroller.scrollLeft = panOrigin.scrollLeft - dx;
-    scroller.scrollTop = panOrigin.scrollTop - dy;
+  // Middle-mouse panning via pointer capture — no global listeners needed.
+  const onPointerDown = (e: PointerEvent) => {
+    if (e.button !== 1 || !scroller) return;
+    e.preventDefault(); // suppress browser autoscroll mode
+    scroller.setPointerCapture(e.pointerId);
+    setPanning(true);
+    panOrigin = { x: e.clientX, y: e.clientY, scrollLeft: scroller.scrollLeft, scrollTop: scroller.scrollTop };
   };
 
-  const onMouseUp = (e: MouseEvent) => {
-    const wasClick = !dragMoved;
+  const onPointerMove = (e: PointerEvent) => {
+    if (!panOrigin || !scroller) return;
+    scroller.scrollLeft = panOrigin.scrollLeft - (e.clientX - panOrigin.x);
+    scroller.scrollTop = panOrigin.scrollTop - (e.clientY - panOrigin.y);
+  };
+
+  const onPointerUp = (e: PointerEvent) => {
+    if (e.button !== 1 || !panOrigin) return;
     panOrigin = null;
     setPanning(false);
-    globalThis.removeEventListener("mousemove", onMouseMove);
-    globalThis.removeEventListener("mouseup", onMouseUp);
-    if (wasClick && ctx.typst.project) void nav?.jumpAt(e.clientX, e.clientY);
   };
 
-  const onMouseDown = (e: MouseEvent) => {
-    if (e.button !== 0 || !scroller) return; // left button only
-    e.preventDefault();
-    dragMoved = false;
-    scroller.focus({ preventScroll: true });
-    panOrigin = {
-      x: e.clientX,
-      y: e.clientY,
-      scrollLeft: scroller.scrollLeft,
-      scrollTop: scroller.scrollTop,
-    };
-    globalThis.addEventListener("mousemove", onMouseMove);
-    globalThis.addEventListener("mouseup", onMouseUp);
-  };
-
-  onCleanup(() => {
-    globalThis.removeEventListener("mousemove", onMouseMove);
-    globalThis.removeEventListener("mouseup", onMouseUp);
-    nav?.dispose();
-  });
+  onCleanup(() => nav?.dispose());
 
   return (
     <div class="flex h-full w-full flex-col">
@@ -247,11 +220,12 @@ export default function PreviewPane() {
         class="bg-muted/40 min-h-0 flex-1 scrollbar-gutter-stable overflow-auto p-3 outline-none"
         classList={{ "!cursor-grabbing select-none": panning() }}
         onWheel={onWheel}
-        onMouseDown={onMouseDown}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
         onClick={(e) => {
-          // We drive all navigation through the engine (the navigator), so stop
-          // the browser from also following an SVG link's native href.
-          e.preventDefault();
+          e.preventDefault(); // stop SVG native href
+          void nav?.jumpAt(e.clientX, e.clientY);
         }}
       >
         <Switch fallback={<p class="text-muted-foreground text-sm">Compiling…</p>}>
