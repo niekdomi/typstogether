@@ -22,7 +22,9 @@ export class BlobService {
 
   async store(projectId: string, file: File): Promise<BlobMeta> {
     if (!(ALLOWED_MIME_TYPES as readonly string[]).includes(file.type)) {
-      throw new UnsupportedMediaTypeError(`Unsupported mime type: ${file.type}`);
+      throw new UnsupportedMediaTypeError(
+        file.type ? `Unsupported file type: ${file.type}` : "Unsupported file type"
+      );
     }
     const bytes = new Uint8Array(await file.arrayBuffer());
     return this.storeBytes(projectId, bytes, file.type);

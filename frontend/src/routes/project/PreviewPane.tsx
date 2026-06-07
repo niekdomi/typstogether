@@ -12,6 +12,7 @@ import { createSignal, For, Match, onCleanup, onMount, Show, Switch } from "soli
 import { Button } from "../../components/ui/button";
 import { previewDark, setPreviewDark } from "../../lib/editor-prefs";
 import ExportPdfButton from "./ExportPdfButton";
+import ExportProjectButton from "./ExportProjectButton";
 import { attachPan } from "./preview-pan";
 import { useProjectContext } from "./ProjectContext";
 
@@ -186,6 +187,7 @@ export default function PreviewPane() {
               <TbOutlineSun />
             </Show>
           </Button>
+          <ExportProjectButton />
           <ExportPdfButton />
         </div>
       </div>

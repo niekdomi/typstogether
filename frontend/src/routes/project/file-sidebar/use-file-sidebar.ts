@@ -1,5 +1,6 @@
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
+import { toast } from "somoto";
 import * as Y from "yjs";
 
 import { uploadAsset } from "../../../lib/assets/upload";
@@ -318,7 +319,7 @@ export function useFileSidebar() {
 
   // Asset uploads ──────────────────────────────────────────────────────────
 
-  const handleUploadAsset = async (dir: string, file: File): Promise<string | undefined> => {
+  const uploadOne = async (dir: string, file: File): Promise<string | undefined> => {
     const path = normalizeAsset(file.name, dir);
     if (!path) return "Invalid file name.";
     if (has(path)) return existsMsg(path);
@@ -332,6 +333,17 @@ export function useFileSidebar() {
       return error instanceof Error ? error.message : "Upload failed.";
     } finally {
       setUploading((n) => n - 1);
+    }
+  };
+
+  // Upload a batch of files as assets in parallel, summarizing any failures in
+  // one toast.
+  const handleUploadAssets = async (dir: string, list: File[]): Promise<void> => {
+    const errors = await Promise.all(list.map((file) => uploadOne(dir, file)));
+    const failed = errors.filter((m): m is string => m !== undefined);
+    const first = failed[0];
+    if (first) {
+      toast.error(failed.length === 1 ? first : `${first} (+${String(failed.length - 1)} more)`);
     }
   };
 
@@ -586,7 +598,7 @@ export function useFileSidebar() {
     handleNewFolder,
     handleRenameFolder,
     handleDeleteFolder,
-    handleUploadAsset,
+    handleUploadAssets,
     togglePreview,
     onFileDragStart,
     onFolderDragStart,

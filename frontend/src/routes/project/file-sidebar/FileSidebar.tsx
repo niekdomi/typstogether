@@ -128,7 +128,7 @@ function FileRow(props: { node: FileNode }) {
 async function uploadOsFiles(
   e: DragEvent,
   dir: string,
-  upload: (dir: string, file: File) => Promise<string | undefined>
+  upload: (dir: string, files: File[]) => Promise<void>
 ): Promise<boolean> {
   const list = e.dataTransfer?.files;
   if (!list || list.length === 0) {
@@ -138,7 +138,7 @@ async function uploadOsFiles(
   e.preventDefault();
   e.stopPropagation();
 
-  await Promise.all([...list].map((file) => upload(dir, file)));
+  await upload(dir, [...list]);
   return true;
 }
 
@@ -167,7 +167,7 @@ function FolderRow(props: { node: FolderNode; onUpload: (dir: string) => void })
           onDrop={(e: DragEvent) => {
             sb.endFileDrag();
             void (async () => {
-              if (await uploadOsFiles(e, path(), sb.handleUploadAsset)) {
+              if (await uploadOsFiles(e, path(), sb.handleUploadAssets)) {
                 return;
               }
               sb.onFolderDrop(e, path());
@@ -257,7 +257,7 @@ function RootDropZone(props: { children: JSX.Element; onUpload: (dir: string) =>
         onDrop={(e: DragEvent) => {
           sb.endFileDrag();
           void (async () => {
-            if (await uploadOsFiles(e, "", sb.handleUploadAsset)) {
+            if (await uploadOsFiles(e, "", sb.handleUploadAssets)) {
               return;
             }
             sb.onRootDrop(e);
@@ -324,9 +324,7 @@ function FileSidebarBody() {
       return;
     }
 
-    const dir = uploadDir();
-    // Parallel so the in-flight count ticks down (4, 3, 2, 1).
-    await Promise.all([...list].map((file) => sb.handleUploadAsset(dir, file)));
+    await sb.handleUploadAssets(uploadDir(), [...list]);
   };
 
   return (
