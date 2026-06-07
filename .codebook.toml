@@ -2,6 +2,7 @@ dictionaries = ["en_us"]
 words = [
   "aborter",
   "accessors",
+  "auxclick",
   "affordance",
   "backend's",
   "bunx",
