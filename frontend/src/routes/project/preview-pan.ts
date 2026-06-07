@@ -5,7 +5,7 @@ import { createPointerListeners } from "@solid-primitives/pointer";
  * Middle-drag panning for a scroll container, suppressing the two middle-button
  * defaults it would otherwise trigger: the autoscroll circle (a mousedown
  * default), and on Linux/X11 the primary-selection paste into the editor (the
- * auxclick default - canceling it stops the paste at its source). Toggles
+ * auxclick default, canceling it stops the paste at its source). Toggles
  * `cursor-grabbing` while panning. Listeners self-clean, so just call from a ref.
  */
 export function attachPan(el: HTMLElement): void {
