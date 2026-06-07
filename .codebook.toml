@@ -29,6 +29,7 @@ words = [
   "lookups",
   "microtasks",
   "minmax",
+  "mousedown",
   "mousemove",
   "mouseup",
   "mql",
