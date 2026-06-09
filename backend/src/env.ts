@@ -9,6 +9,8 @@ export const authBaseUrl = env("BETTER_AUTH_URL") ?? "http://localhost:3000";
 export const authSecret = env("BETTER_AUTH_SECRET") ?? "development-secret-change-me";
 export const frontendUrl = env("FRONTEND_URL") ?? "http://localhost:5173";
 
+export const logLevel = env("LOG_LEVEL") ?? "info";
+
 export const githubOAuth = {
   clientId: env("GITHUB_CLIENT_ID") ?? "",
   clientSecret: env("GITHUB_CLIENT_SECRET") ?? "",

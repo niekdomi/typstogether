@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate } from "drizzle-orm/bun-sql/migrator";
 
 import { databaseUrl } from "./env";
+import { log } from "./logger";
 
 if (!databaseUrl) throw new Error("DATABASE_URL required for migration");
 
@@ -11,4 +12,4 @@ const db = drizzle({ client });
 
 await migrate(db, { migrationsFolder: "./drizzle" });
 await client.close();
-console.log("Migration complete");
+log.info("migration complete");

@@ -12,10 +12,11 @@ dbRegistry.set(db);
 
 const { buildApp } = await import("./app");
 const { devRoutes } = await import("./modules/dev");
+const { log } = await import("./logger");
 buildApp()
   .use(devRoutes)
   .listen(3000, ({ port }) => {
-    console.log("Backend running on port", port);
+    log.info(`Backend listening on port ${String(port)} (dev)`);
   });
 
 // HACK: Without the following line, bun won't produce a `.cpuprofile` when running with `--cpu-prof`.

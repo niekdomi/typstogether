@@ -2,12 +2,20 @@ import { Logger } from "@hocuspocus/extension-logger";
 import { Hocuspocus } from "@hocuspocus/server";
 import { Elysia } from "elysia";
 
+import { log } from "../../logger";
 import { onAuthenticate } from "./auth";
 import { blobGcExtension } from "./blob-gc";
 import { persistence } from "./persistence";
 
+const collabLog = log.child({ module: "collab" });
+const lifecycleLogger = new Logger({
+  log: (message: string) => {
+    collabLog.info(message.replace(/^\[[^\]]*\]\s*/, ""));
+  },
+});
+
 const hocuspocus = new Hocuspocus({
-  extensions: [new Logger(), persistence, blobGcExtension],
+  extensions: [lifecycleLogger, persistence, blobGcExtension],
   quiet: false,
   onAuthenticate,
 });
@@ -35,6 +43,6 @@ export const collabRoutes = new Elysia({ name: "collab-routes" }).ws("/collab", 
     connections.delete(ws.id);
   },
   error({ error }) {
-    console.error("collab ws error:", error);
+    log.error({ err: error }, "Collab ws error");
   },
 });
