@@ -18,9 +18,9 @@
     "test": "bun test"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1",
-    "oxfmt": "^0.51.0",
-    "oxlint": "^1.66.0",
+    "concurrently": "^10.0.3",
+    "oxfmt": "^0.53.0",
+    "oxlint": "^1.68.0",
     "oxlint-tsgolint": "^0.23.0",
     "typescript": "^6.0.3"
   },
