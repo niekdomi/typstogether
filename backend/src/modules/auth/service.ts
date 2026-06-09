@@ -19,7 +19,7 @@ export const auth = betterAuth({
   baseURL: authBaseUrl,
   secret: authSecret,
   trustedOrigins: [frontendUrl],
-  // Route Better Auth's own logs through pino so everything is consistent.
+  // Route Better Auth logs through pino so everything is one consistent format.
   logger: {
     log(level, message, ...args) {
       authLog[level](args.length > 0 ? { args } : {}, message);
