@@ -13,20 +13,20 @@ const options = { level: logLevel };
 const root = isProduction
   ? pino(options)
   : pino(
-    options,
-    PinoPretty({
-      colorize: true,
-      useOnlyCustomProps: false,
-      customColors: "message:white",
-      singleLine: true,
-      translateTime: "SYS:yyyy-mm-dd HH:MM:ss.l",
-      ignore: "pid,hostname,module",
-      messageFormat: "{if module}[{module}] {end}{msg}",
-      customPrettifiers: {
-        time: (ts) => styleText("gray", typeof ts === "string" ? ts : JSON.stringify(ts)),
-      },
-    })
-  );
+      options,
+      PinoPretty({
+        colorize: true,
+        useOnlyCustomProps: false,
+        customColors: "message:white",
+        singleLine: true,
+        translateTime: "SYS:yyyy-mm-dd HH:MM:ss.l",
+        ignore: "pid,hostname,module",
+        messageFormat: "{if module}[{module}] {end}{msg}",
+        customPrettifiers: {
+          time: (ts) => styleText("gray", typeof ts === "string" ? ts : JSON.stringify(ts)),
+        },
+      })
+    );
 
 // Every log carries a `module` binding: "app" by default.
 export const log = root.child({ module: "app" });
