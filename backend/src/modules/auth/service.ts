@@ -11,11 +11,20 @@ import {
   gitlabOAuth,
   googleOAuth,
 } from "../../env";
+import { log } from "../../logger";
+
+const authLog = log.child({ module: "better-auth" });
 
 export const auth = betterAuth({
   baseURL: authBaseUrl,
   secret: authSecret,
   trustedOrigins: [frontendUrl],
+  // Route Better Auth's own logs through pino so everything is consistent.
+  logger: {
+    log(level, message, ...args) {
+      authLog[level](args.length > 0 ? { args } : {}, message);
+    },
+  },
   database: drizzleAdapter(dbRegistry.get(), {
     provider: "pg",
     schema: authSchema,

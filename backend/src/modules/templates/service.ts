@@ -1,3 +1,4 @@
+import { log } from "../../logger";
 import type { Template } from "./model";
 
 interface UniverseEntry {
@@ -46,7 +47,8 @@ export class TemplateService {
       this.#fetchedAt = Date.now();
       return templates;
     } catch (error) {
-      console.error("Failed to fetch template catalog:", error);
+      // Non-fatal: serve the stale cache (or empty) so project-create still works.
+      log.warn({ err: error }, "Failed to fetch template catalog");
       return this.#cached ?? [];
     }
   }
