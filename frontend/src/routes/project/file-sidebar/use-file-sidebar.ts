@@ -1,5 +1,6 @@
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
+import { toast } from "somoto";
 import * as Y from "yjs";
 
 import { uploadAsset } from "../../../lib/assets/upload";
@@ -53,6 +54,11 @@ export function useFileSidebar() {
   // is removed from here) the moment a file lands inside.
   const [pendingFolders, setPendingFolders] = createSignal(new Set<string>());
   const [dialog, setDialog] = createSignal<DialogState | null>(null);
+  // True while an OS file (not an internal file/folder move) is dragged over the
+  // sidebar, so the upload affordance can light up.
+  const [fileDragOver, setFileDragOver] = createSignal(false);
+  // Count of asset uploads in flight (picker + drop), for the progress label.
+  const [uploading, setUploading] = createSignal(0);
   const [drag, setDrag] = createStore<{
     source: string | null;
     sourceKind: "file" | "folder" | null;
@@ -313,10 +319,11 @@ export function useFileSidebar() {
 
   // Asset uploads ──────────────────────────────────────────────────────────
 
-  const handleUploadAsset = async (dir: string, file: File): Promise<string | undefined> => {
+  const uploadOne = async (dir: string, file: File): Promise<string | undefined> => {
     const path = normalizeAsset(file.name, dir);
     if (!path) return "Invalid file name.";
     if (has(path)) return existsMsg(path);
+    setUploading((n) => n + 1);
     try {
       const { id } = await uploadAsset(projectId(), file);
       assets.set(path, id);
@@ -324,6 +331,19 @@ export function useFileSidebar() {
       return undefined;
     } catch (error) {
       return error instanceof Error ? error.message : "Upload failed.";
+    } finally {
+      setUploading((n) => n - 1);
+    }
+  };
+
+  // Upload a batch of files as assets in parallel, summarizing any failures in
+  // one toast.
+  const handleUploadAssets = async (dir: string, list: File[]): Promise<void> => {
+    const errors = await Promise.all(list.map((file) => uploadOne(dir, file)));
+    const failed = errors.filter((m): m is string => m !== undefined);
+    const first = failed[0];
+    if (first) {
+      toast.error(failed.length === 1 ? first : `${first} (+${String(failed.length - 1)} more)`);
     }
   };
 
@@ -480,7 +500,23 @@ export function useFileSidebar() {
     return !!src && folder !== src && !folder.startsWith(src + "/");
   };
 
+  // An OS file drag (vs an internal file/folder move). preventDefault makes the
+  // sidebar a real drop target so the drop fires here instead of the browser
+  // opening the file; the lit-up upload affordance is the cue.
+  const onFileDragOver = (e: DragEvent): boolean => {
+    if (!e.dataTransfer?.types.includes("Files")) return false;
+    e.preventDefault();
+    setFileDragOver(true);
+    return true;
+  };
+
+  const endFileDrag = () => setFileDragOver(false);
+
   const onFolderDragOver = (e: DragEvent, folder: string) => {
+    if (onFileDragOver(e)) {
+      e.stopPropagation();
+      return;
+    }
     if (!drag.source) {
       return;
     }
@@ -503,6 +539,9 @@ export function useFileSidebar() {
   };
 
   const onRootDragOver = (e: DragEvent) => {
+    if (onFileDragOver(e)) {
+      return;
+    }
     if (!drag.source) {
       return;
     }
@@ -513,6 +552,7 @@ export function useFileSidebar() {
   const onRootDragLeave = (e: DragEvent) => {
     if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) {
       setDrag("over", null);
+      endFileDrag();
     }
   };
 
@@ -558,7 +598,7 @@ export function useFileSidebar() {
     handleNewFolder,
     handleRenameFolder,
     handleDeleteFolder,
-    handleUploadAsset,
+    handleUploadAssets,
     togglePreview,
     onFileDragStart,
     onFolderDragStart,
@@ -569,6 +609,9 @@ export function useFileSidebar() {
     onRootDragLeave,
     onRootDrop,
     clearDragOver,
+    fileDragOver,
+    endFileDrag,
+    uploading,
   };
 }
 

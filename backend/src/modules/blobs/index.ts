@@ -14,6 +14,19 @@ export const blobRoutes = new Elysia({ name: "blob-routes" })
     response: blobMetaModel,
   })
 
+  // Fonts share the blob store and the GET below; only the upload validation
+  // differs (font magic-byte sniff + a larger size cap). Referenced from the
+  // `fonts` Y.Map and replayed into the engine via `addFont` on the frontend.
+  .post(
+    "/projects/:id/fonts",
+    ({ project, body }) => blobService.storeFont(project.id, body.file),
+    {
+      body: "font.upload",
+      projectEditor: true,
+      response: blobMetaModel,
+    }
+  )
+
   .get(
     "/projects/:id/blobs/:blobId",
     async ({ project, params, set }) => {

@@ -1,3 +1,4 @@
+import { PreviewNavigator } from "@vedivad/typst-web-service";
 import {
   TbOutlineArrowAutofitHeight,
   TbOutlineArrowAutofitWidth,
@@ -11,6 +12,8 @@ import { createSignal, For, Match, onCleanup, onMount, Show, Switch } from "soli
 import { Button } from "../../components/ui/button";
 import { previewDark, setPreviewDark } from "../../lib/editor-prefs";
 import ExportPdfButton from "./ExportPdfButton";
+import ExportProjectButton from "./ExportProjectButton";
+import { attachPan } from "./preview-pan";
 import { useProjectContext } from "./ProjectContext";
 
 const BASE_WIDTH_PX = 700;
@@ -18,6 +21,7 @@ const ZOOM_STEP = 1.1;
 const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 4;
 const SCROLLER_PADDING_PX = 24; // matches `p-3` (12px each side)
+const OUTLINE_SCROLL_MARGIN_PX = 80; // space above heading when navigating via outline/link
 
 const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 
@@ -25,10 +29,11 @@ export default function PreviewPane() {
   const ctx = useProjectContext();
   const render = ctx.preview;
   const [zoom, setZoom] = createSignal(1);
-  const [panning, setPanning] = createSignal(false);
 
   let scroller: HTMLDivElement | undefined;
-  let panOrigin: { x: number; y: number; scrollLeft: number; scrollTop: number } | null = null;
+  // Page wrappers by index; the navigator reads these to resolve clicks and scroll.
+  const pageEls: (HTMLElement | undefined)[] = [];
+  let nav: PreviewNavigator | undefined;
 
   /**
    * Zoom around an anchor point (mouse cursor when ctrl+wheel; container
@@ -95,38 +100,22 @@ export default function PreviewPane() {
     });
   });
 
-  const onMouseMove = (e: MouseEvent) => {
-    if (!panOrigin || !scroller) return;
-    scroller.scrollLeft = panOrigin.scrollLeft - (e.clientX - panOrigin.x);
-    scroller.scrollTop = panOrigin.scrollTop - (e.clientY - panOrigin.y);
-  };
-
-  const onMouseUp = () => {
-    panOrigin = null;
-    setPanning(false);
-    globalThis.removeEventListener("mousemove", onMouseMove);
-    globalThis.removeEventListener("mouseup", onMouseUp);
-  };
-
-  const onMouseDown = (e: MouseEvent) => {
-    if (e.button !== 0 || !scroller) return; // left button only
-    e.preventDefault();
-    scroller.focus({ preventScroll: true });
-    panOrigin = {
-      x: e.clientX,
-      y: e.clientY,
-      scrollLeft: scroller.scrollLeft,
-      scrollTop: scroller.scrollTop,
-    };
-    setPanning(true);
-    globalThis.addEventListener("mousemove", onMouseMove);
-    globalThis.addEventListener("mouseup", onMouseUp);
-  };
-
-  onCleanup(() => {
-    globalThis.removeEventListener("mousemove", onMouseMove);
-    globalThis.removeEventListener("mouseup", onMouseUp);
+  // Forward navigation through the engine: a click resolves to a source location,
+  // an internal-link scroll, or a URL. The project is read via a thunk since the
+  // context swaps the instance on file change.
+  onMount(() => {
+    if (!scroller) return;
+    nav = PreviewNavigator.create({
+      project: () => ctx.typst.project!,
+      scroller,
+      pages: () => pageEls,
+      listen: false,
+      onSource: ctx.gotoSource,
+      margin: OUTLINE_SCROLL_MARGIN_PX,
+    });
   });
+
+  onCleanup(() => nav?.dispose());
 
   return (
     <div class="flex h-full w-full flex-col">
@@ -198,6 +187,7 @@ export default function PreviewPane() {
               <TbOutlineSun />
             </Show>
           </Button>
+          <ExportProjectButton />
           <ExportPdfButton />
         </div>
       </div>
@@ -205,12 +195,15 @@ export default function PreviewPane() {
       <div
         ref={(el) => {
           scroller = el;
+          attachPan(el);
         }}
         tabindex={-1}
-        class="bg-muted/40 min-h-0 flex-1 cursor-grab [scrollbar-gutter:stable] overflow-auto p-3 outline-none"
-        classList={{ "!cursor-grabbing select-none": panning() }}
+        class="bg-muted/40 min-h-0 flex-1 scrollbar-gutter-stable overflow-auto p-3 outline-none select-none"
         onWheel={onWheel}
-        onMouseDown={onMouseDown}
+        onClick={(e) => {
+          e.preventDefault(); // stop SVG native href
+          void nav?.jumpAt(e.clientX, e.clientY);
+        }}
       >
         <Switch fallback={<p class="text-muted-foreground text-sm">Compiling…</p>}>
           <Match when={render.pages}>
@@ -223,12 +216,20 @@ export default function PreviewPane() {
                 }}
               >
                 <For each={p()}>
-                  {(page) => (
-                    <div
-                      class="w-full bg-white shadow-md ring-1 ring-black/10 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full"
-                      innerHTML={page.svg}
-                    />
-                  )}
+                  {(page) => {
+                    // Typst draws each link as a transparent <rect> on top of the
+                    // glyphs: tint it on hover to mark the link (kept at its true
+                    // size so stacked entries never overlap) and show a pointer.
+                    return (
+                      <div
+                        ref={(el) => {
+                          pageEls[page.index] = el;
+                        }}
+                        class="w-full bg-white shadow-md ring-1 ring-black/10 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full [&_svg_a]:cursor-pointer [&_svg_a_rect]:[transition:fill_100ms] [&_svg_a:hover_rect]:fill-yellow-300/50"
+                        innerHTML={page.svg}
+                      />
+                    );
+                  }}
                 </For>
               </div>
             )}

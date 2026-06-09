@@ -1,4 +1,3 @@
-import { EditorView } from "@codemirror/view";
 import type { Diagnostic } from "@vedivad/codemirror-typst";
 import { TbOutlineAlertCircle, TbOutlineAlertTriangle } from "solid-icons/tb";
 import { createMemo, For, Show } from "solid-js";
@@ -43,22 +42,7 @@ export default function DiagnosticsPanel() {
   });
 
   const jumpTo = (d: Diagnostic) => {
-    if (!d.location) return;
-    const loc = d.location;
-    ctx.setActiveFile(loc.file);
-    queueMicrotask(() => {
-      const view = ctx.editorView();
-      if (!view) return;
-      const doc = view.state.doc;
-      const line = Math.min(loc.line, doc.lines);
-      const lineInfo = doc.line(line);
-      const from = Math.min(lineInfo.from + loc.column - 1, lineInfo.to);
-      view.dispatch({
-        selection: { anchor: from },
-        effects: EditorView.scrollIntoView(from, { y: "center" }),
-      });
-      view.focus();
-    });
+    if (d.location) ctx.gotoSource(d.location.file, d.location.line, d.location.column);
   };
 
   return (

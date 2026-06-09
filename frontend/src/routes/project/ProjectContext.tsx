@@ -1,4 +1,4 @@
-import type { EditorView } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { useParams } from "@solidjs/router";
 import type { Diagnostic, TypstProject } from "@vedivad/codemirror-typst";
 import type { RenderedSvgPage } from "@vedivad/typst-web-service";
@@ -20,6 +20,7 @@ import { useAssetsSync } from "../../lib/assets/use-assets-sync";
 import { userColor } from "../../lib/collab/awareness-colors";
 import { useCollabDoc } from "../../lib/collab/use-collab-doc";
 import { useCurrentUser } from "../../lib/CurrentUserContext";
+import { useFontsSync } from "../../lib/fonts/use-fonts-sync";
 import { useProject } from "../../lib/projects/use-project";
 import { storeThumbnail } from "../../lib/typst/thumbnail-cache";
 import { useTypstProject } from "../../lib/typst/use-typst-project";
@@ -64,10 +65,14 @@ interface ProjectContextValue {
   activeIsAsset: Accessor<boolean>;
   setActiveFile: (path: string) => void;
   isReadOnly: Accessor<boolean>;
+  /** blob_id -> font family name, parsed lazily as fonts load. */
+  fontFamilies: Record<string, string>;
 
   editorView: Accessor<EditorView | null>;
   setEditorView: (view: EditorView | null) => void;
   jumpToRemoteUser: (clientId: number) => void;
+  /** Open `file` and move the caret to a 1-based line/column. */
+  gotoSource: (file: string, line: number, column: number) => void;
 
   diagnostics: Accessor<Diagnostic[]>;
   errorCount: Accessor<number>;
@@ -111,6 +116,18 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     projectId,
     () => typst.project,
     () => collab.assets
+  );
+
+  // blob_id -> family name, parsed once by useFontsSync from the bytes it already
+  // fetched; the fonts panel reads this instead of refetching/reparsing.
+  const [fontFamilies, setFontFamilies] = createStore<Record<string, string>>({});
+  useFontsSync(
+    projectId,
+    () => typst.project,
+    () => collab.fonts,
+    (blobId, family) => {
+      setFontFamilies(blobId, family);
+    }
   );
 
   const isReadOnly = () => membership()?.role === "viewer" || collab.readOnly;
@@ -282,6 +299,24 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     });
   };
 
+  // Switch to `file`, then (once the view has swapped) move the caret to the
+  // 1-based line/column. Shared by the diagnostics list and preview click-to-source.
+  const gotoSource = (file: string, line: number, column: number) => {
+    setRequestedFile(file);
+    queueMicrotask(() => {
+      const view = editorView();
+      if (!view) return;
+      const doc = view.state.doc;
+      const lineInfo = doc.line(Math.min(Math.max(line, 1), doc.lines));
+      const from = Math.min(lineInfo.from + column - 1, lineInfo.to);
+      view.dispatch({
+        selection: { anchor: from },
+        effects: EditorView.scrollIntoView(from, { y: "center" }),
+      });
+      view.focus();
+    });
+  };
+
   const value: ProjectContextValue = {
     projectId,
     membership,
@@ -296,9 +331,11 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     activeIsAsset,
     setActiveFile: setRequestedFile,
     isReadOnly,
+    fontFamilies,
     editorView,
     setEditorView,
     jumpToRemoteUser,
+    gotoSource,
     diagnostics,
     errorCount,
   };

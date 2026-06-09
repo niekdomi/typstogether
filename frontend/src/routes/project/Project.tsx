@@ -8,6 +8,7 @@ import {
   TbOutlineAdjustmentsHorizontal,
   TbOutlineFiles,
   TbOutlineSettings,
+  TbOutlineTypography,
 } from "solid-icons/tb";
 import { createEffect, createSignal, type JSX, Match, Show, Switch } from "solid-js";
 
@@ -15,6 +16,7 @@ import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Badge } from "../../components/ui/badge";
 import { cx } from "../../components/ui/cva";
 import { Resizable, ResizableHandle, ResizablePanel } from "../../components/ui/resizable";
+import { SidebarGroupLabel } from "../../components/ui/sidebar";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Switch as SwitchInput } from "../../components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip";
@@ -35,19 +37,18 @@ import CollaboratorAvatars from "./CollaboratorAvatars";
 import DiagnosticsPanel from "./DiagnosticsPanel";
 import EditorToolbar from "./EditorToolbar";
 import FileSidebar from "./file-sidebar/FileSidebar";
+import FontsPanel from "./FontsPanel";
 import PreviewPane from "./PreviewPane";
 import { ProjectProvider, useProjectContext } from "./ProjectContext";
 import ProjectSettingsDialog from "./ProjectSettingsDialog";
 import SearchPanel from "./SearchPanel";
 
-type Panel = "files" | "search" | "diagnostics" | "config" | null;
+type Panel = "files" | "fonts" | "search" | "diagnostics" | "config" | null;
 
 function EditorPrefsPanel() {
   return (
-    <div class="flex flex-col gap-1 p-3">
-      <p class="text-muted-foreground px-1 py-1.5 text-xs font-medium tracking-wide uppercase">
-        Editor
-      </p>
+    <div class="flex h-full flex-col gap-1 p-2">
+      <SidebarGroupLabel>Editor</SidebarGroupLabel>
       <SwitchInput
         checked={vimMode()}
         onChange={setVimMode}
@@ -228,6 +229,15 @@ function ProjectView() {
           />
 
           <RailButton
+            label="Fonts"
+            active={currentPanel() === "fonts"}
+            onClick={() => {
+              togglePanel("fonts");
+            }}
+            icon={<TbOutlineTypography size={16} />}
+          />
+
+          <RailButton
             label="Search"
             active={currentPanel() === "search"}
             onClick={() => {
@@ -320,6 +330,9 @@ function ProjectView() {
                   <SidebarCollapseSync open={currentPanel() !== null} />
                   <div class="h-full" classList={{ hidden: currentPanel() !== "files" }}>
                     <FileSidebar />
+                  </div>
+                  <div class="h-full" classList={{ hidden: currentPanel() !== "fonts" }}>
+                    <FontsPanel />
                   </div>
                   <div class="h-full" classList={{ hidden: currentPanel() !== "search" }}>
                     <SearchPanel />
