@@ -28,6 +28,7 @@ import {
   SidebarProvider,
 } from "../../../components/ui/sidebar";
 import { UploadButton } from "../../../components/UploadButton";
+import { joinPath } from "../../../lib/paths";
 import Dialogs from "./Dialogs";
 import { FileSidebarProvider, useFileSidebarController } from "./FileSidebarContext";
 import type { FlatNode } from "./types";
@@ -125,20 +126,109 @@ function FileRow(props: { node: FileNode }) {
   );
 }
 
+// A dropped file paired with the sub-directory (relative to the drop target) it
+// should land in. Top-level files carry `""`; files inside a dropped folder
+// carry that folder's relative path so the structure is preserved.
+interface DroppedFile {
+  file: File;
+  subDir: string;
+}
+
+/** Promisified `FileSystemFileEntry.file`. */
+function entryFile(entry: FileSystemFileEntry): Promise<File> {
+  return new Promise((resolve, reject) => {
+    entry.file(resolve, reject);
+  });
+}
+
+/** Read a directory entry fully - `readEntries` yields at most ~100 per call. */
+function readAllEntries(reader: FileSystemDirectoryReader): Promise<FileSystemEntry[]> {
+  return new Promise((resolve, reject) => {
+    const all: FileSystemEntry[] = [];
+    const next = () => {
+      reader.readEntries((batch) => {
+        if (batch.length === 0) {
+          resolve(all);
+          return;
+        }
+        all.push(...batch);
+        next();
+      }, reject);
+    };
+    next();
+  });
+}
+
+// Recurse a dropped entry into concrete files, accumulating each one's relative
+// sub-directory. Directory entries are walked rather than handed to the uploader
+// (an unreadable directory "file" would hang the upload).
+async function walkEntry(
+  entry: FileSystemEntry,
+  prefix: string,
+  out: DroppedFile[]
+): Promise<void> {
+  if (entry.isFile) {
+    out.push({ file: await entryFile(entry as FileSystemFileEntry), subDir: prefix });
+    return;
+  }
+  if (entry.isDirectory) {
+    const childPrefix = prefix ? `${prefix}/${entry.name}` : entry.name;
+    const children = await readAllEntries((entry as FileSystemDirectoryEntry).createReader());
+    for (const child of children) {
+      await walkEntry(child, childPrefix, out);
+    }
+  }
+}
+
 async function uploadOsFiles(
   e: DragEvent,
   dir: string,
   upload: (dir: string, files: File[]) => Promise<void>
 ): Promise<boolean> {
-  const list = e.dataTransfer?.files;
-  if (!list || list.length === 0) {
+  const dt = e.dataTransfer;
+  if (!dt) {
+    return false;
+  }
+
+  // Capture entries synchronously, DataTransfer items and their entry handles
+  // are only valid during the event tick, before we await anything below.
+  const entries = [...dt.items].map((it) => it.webkitGetAsEntry());
+  const hasEntries = entries.some(Boolean);
+  const flatFiles = [...dt.files];
+  if (!hasEntries && flatFiles.length === 0) {
     return false;
   }
 
   e.preventDefault();
   e.stopPropagation();
 
-  await upload(dir, [...list]);
+  const collected: DroppedFile[] = [];
+  if (hasEntries) {
+    // Entry API available: recurse so dropped folders bring their contents.
+    for (const entry of entries) {
+      if (entry) {
+        await walkEntry(entry, "", collected);
+      }
+    }
+  } else {
+    // Fallback (no entry API): flat files only, folders aren't reachable here.
+    collected.push(...flatFiles.map((file) => ({ file, subDir: "" })));
+  }
+
+  // Route each file to its target directory (drop dir + relative sub-path) and
+  // upload per-directory so structure is preserved.
+  const byDir = new Map<string, File[]>();
+  for (const { file, subDir } of collected) {
+    const target = subDir ? joinPath(dir, subDir) : dir;
+    const group = byDir.get(target);
+    if (group) {
+      group.push(file);
+    } else {
+      byDir.set(target, [file]);
+    }
+  }
+
+  await Promise.all([...byDir].map(([target, files]) => upload(target, files)));
   return true;
 }
 
