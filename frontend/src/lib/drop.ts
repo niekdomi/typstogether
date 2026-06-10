@@ -11,7 +11,7 @@ export interface DroppedFile {
   subDir: string;
 }
 
-/** Promisified `FileSystemFileEntry.file`. */
+/** Promised `FileSystemFileEntry.file`. */
 function entryFile(entry: FileSystemFileEntry): Promise<File> {
   return new Promise((resolve, reject) => {
     entry.file(resolve, reject);
