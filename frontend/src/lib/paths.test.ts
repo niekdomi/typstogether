@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { normalizeFile, normalizeFolder } from "./paths";
+import { isTextUpload, normalizeFile, normalizeFolder } from "./paths";
 
 describe("normalizeFile", () => {
   test("appends .typ when missing", () => {
@@ -9,6 +9,16 @@ describe("normalizeFile", () => {
 
   test("keeps .typ when already present", () => {
     expect(normalizeFile("foo.typ", "")).toBe("/foo.typ");
+  });
+
+  test("preserves recognized text extensions", () => {
+    expect(normalizeFile("refs.bib", "")).toBe("/refs.bib");
+    expect(normalizeFile("data.toml", "/a")).toBe("/a/data.toml");
+    expect(normalizeFile("notes.txt", "")).toBe("/notes.txt");
+  });
+
+  test("appends .typ for an unrecognized extension", () => {
+    expect(normalizeFile("foo.bar", "")).toBe("/foo.bar.typ");
   });
 
   test("places file under dir", () => {
@@ -89,5 +99,23 @@ describe("normalizeFolder", () => {
     test(".. in the middle of a path is resolved", () => {
       expect(normalizeFolder("sub/../other", "/a")).toBe("/a/other");
     });
+  });
+});
+
+describe("isTextUpload", () => {
+  test("true for allowlisted text extensions", () => {
+    for (const name of ["main.typ", "refs.bib", "style.csl", "data.toml", "table.csv", "x.yaml"]) {
+      expect(isTextUpload(name)).toBe(true);
+    }
+  });
+
+  test("is case-insensitive", () => {
+    expect(isTextUpload("DATA.TOML")).toBe(true);
+  });
+
+  test("false for binary assets and extensionless names", () => {
+    for (const name of ["photo.png", "icon.svg", "blob.cbor", "Makefile"]) {
+      expect(isTextUpload(name)).toBe(false);
+    }
   });
 });

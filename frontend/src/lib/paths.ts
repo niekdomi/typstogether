@@ -14,6 +14,36 @@ export function isTypFile(path: string): boolean {
   return path.endsWith(".typ");
 }
 
+// Text files a Typst project meaningfully uses, beyond `.typ` source: `.bib`
+// (BibTeX) and `.yml`/`.yaml` (Hayagriva) bibliographies, `.csl` citation
+// styles, the `csv`/`json`/`toml`/`yaml`/`xml` data loaders, and plain text via
+// `read()`. These live as `Y.Text` in the files map (the Y.Doc is their source
+// of truth), unlike binary assets/fonts which take the blob store. `.svg` is
+// excluded on purpose - it is wired as an image asset; `.cbor` is binary.
+const TEXT_EXTENSIONS = new Set([
+  ".typ",
+  ".txt",
+  ".toml",
+  ".bib",
+  ".csl",
+  ".csv",
+  ".json",
+  ".yaml",
+  ".yml",
+  ".xml",
+  ".md",
+]);
+
+/** Whether an uploaded file name is a text file (-> files map) rather than a binary asset (-> blob store). */
+export function isTextUpload(name: string): boolean {
+  const dot = name.lastIndexOf(".");
+  return dot !== -1 && TEXT_EXTENSIONS.has(name.slice(dot).toLowerCase());
+}
+
+// Text files are stored inline in the persisted, synced Y.Doc, so they get a
+// tighter cap than blobs (`MAX_BLOB_SIZE`, 10MB) to keep the doc from bloating.
+export const MAX_TEXT_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
 /** The directory part of a path. Returns "" for root-level paths, which is falsy and acts as the loop terminator when walking ancestors. */
 export function dirOf(path: string): string {
   return path.split("/").slice(0, -1).join("/");
@@ -57,7 +87,10 @@ export function normalizeFile(input: string, dir: string): string {
   if (!name) {
     return "";
   }
-  if (!isTypFile(name)) {
+  // Bare names default to `.typ`; an already-recognized text extension (e.g.
+  // `refs.bib`, `data.toml`) is preserved so the New File dialog can create
+  // non-`.typ` text files directly.
+  if (!isTextUpload(name)) {
     name += ".typ";
   }
 

@@ -6,9 +6,11 @@ import * as Y from "yjs";
 import { uploadAsset } from "../../../lib/assets/upload";
 import {
   dirOf,
+  isTextUpload,
   isTypFile,
   joinPath,
   leafOf,
+  MAX_TEXT_FILE_SIZE,
   normalizeAsset,
   normalizeFile,
   normalizeFolder,
@@ -25,6 +27,12 @@ const copyText = (src: Y.Text): Y.Text => {
   copy.insert(0, src.toJSON());
   return copy;
 };
+
+// Path normalizer for rename/duplicate: `.typ` source files get the bare-name
+// `.typ` convenience; everything else (binary assets and non-`.typ` text files
+// like `data.toml`) preserves the typed name verbatim.
+const normalizeForPath = (path: string, rawName: string, dir: string): string =>
+  isTypFile(path) ? normalizeFile(rawName, dir) : normalizeAsset(rawName, dir);
 
 /**
  * Owns all reactive state and operations for the file sidebar. Returns plain
@@ -236,11 +244,6 @@ export function useFileSidebar() {
     return undefined;
   };
 
-  // Pick the right path normalizer: text files force `.typ`; assets preserve
-  // their original extension.
-  const normalizeForPath = (path: string, rawName: string, dir: string): string =>
-    isAsset(path) ? normalizeAsset(rawName, dir) : normalizeFile(rawName, dir);
-
   const handleRenameFile = (oldPath: string, rawName: string): string | undefined => {
     if (isLocked(oldPath)) {
       return undefined;
@@ -317,7 +320,29 @@ export function useFileSidebar() {
     close();
   };
 
-  // Asset uploads ──────────────────────────────────────────────────────────
+  // Uploads ──────────────────────────────────────────────────────────────────
+  // Two lanes: text files become a `Y.Text` in the files map (client-only, the
+  // Y.Doc is their source of truth) while binary files go through the blob
+  // store and land in the assets map. Classification is by extension.
+
+  const addTextFile = async (dir: string, file: File): Promise<string | undefined> => {
+    const path = normalizeFile(file.name, dir);
+    if (!path) return "Invalid file name.";
+    if (has(path)) return existsMsg(path);
+    if (file.size > MAX_TEXT_FILE_SIZE) return `"${file.name}" is too large.`;
+    setUploading((n) => n + 1);
+    try {
+      const text = new Y.Text();
+      text.insert(0, await file.text());
+      files.set(path, text);
+      ctx.setActiveFile(path);
+      return undefined;
+    } catch (error) {
+      return error instanceof Error ? error.message : "Upload failed.";
+    } finally {
+      setUploading((n) => n - 1);
+    }
+  };
 
   const uploadOne = async (dir: string, file: File): Promise<string | undefined> => {
     const path = normalizeAsset(file.name, dir);
@@ -336,10 +361,12 @@ export function useFileSidebar() {
     }
   };
 
-  // Upload a batch of files as assets in parallel, summarizing any failures in
-  // one toast.
-  const handleUploadAssets = async (dir: string, list: File[]): Promise<void> => {
-    const errors = await Promise.all(list.map((file) => uploadOne(dir, file)));
+  // Upload a batch in parallel, routing each file to the text or blob lane by
+  // extension, and summarizing any failures in one toast.
+  const handleUpload = async (dir: string, list: File[]): Promise<void> => {
+    const errors = await Promise.all(
+      list.map((file) => (isTextUpload(file.name) ? addTextFile(dir, file) : uploadOne(dir, file)))
+    );
     const failed = errors.filter((m): m is string => m !== undefined);
     const first = failed[0];
     if (first) {
@@ -598,7 +625,7 @@ export function useFileSidebar() {
     handleNewFolder,
     handleRenameFolder,
     handleDeleteFolder,
-    handleUploadAssets,
+    handleUpload,
     togglePreview,
     onFileDragStart,
     onFolderDragStart,
