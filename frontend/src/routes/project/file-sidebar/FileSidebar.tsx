@@ -28,6 +28,8 @@ import {
   SidebarProvider,
 } from "../../../components/ui/sidebar";
 import { UploadButton } from "../../../components/UploadButton";
+import { collectDroppedFiles } from "../../../lib/drop";
+import { joinPath } from "../../../lib/paths";
 import Dialogs from "./Dialogs";
 import { FileSidebarProvider, useFileSidebarController } from "./FileSidebarContext";
 import type { FlatNode } from "./types";
@@ -130,15 +132,32 @@ async function uploadOsFiles(
   dir: string,
   upload: (dir: string, files: File[]) => Promise<void>
 ): Promise<boolean> {
-  const list = e.dataTransfer?.files;
-  if (!list || list.length === 0) {
+  const dt = e.dataTransfer;
+  // Only handle OS file/folder drops here; internal file/folder moves (which
+  // carry "text/plain", not "Files") fall through to the move handlers.
+  if (!dt || !dt.types.includes("Files")) {
     return false;
   }
 
   e.preventDefault();
   e.stopPropagation();
 
-  await upload(dir, [...list]);
+  // Recurse dropped folders synchronously-captured entries, then route each
+  // file to its target directory (drop dir + relative sub-path) and upload
+  // per-directory so a dropped folder's structure is preserved.
+  const collected = await collectDroppedFiles(dt);
+  const byDir = new Map<string, File[]>();
+  for (const { file, subDir } of collected) {
+    const target = subDir ? joinPath(dir, subDir) : dir;
+    const group = byDir.get(target);
+    if (group) {
+      group.push(file);
+    } else {
+      byDir.set(target, [file]);
+    }
+  }
+
+  await Promise.all([...byDir].map(([target, files]) => upload(target, files)));
   return true;
 }
 
