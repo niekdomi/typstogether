@@ -34,8 +34,12 @@ const TEXT_EXTENSIONS = new Set([
   ".md",
 ]);
 
-/** Whether an uploaded file name is a text file (-> files map) rather than a binary asset (-> blob store). */
-export function isTextUpload(name: string): boolean {
+/**
+ * Whether a file name/path ends in a recognized text extension
+ * (`TEXT_EXTENSIONS`). Drives upload routing (text -> files map, binary -> blob
+ * store) and the New File `.typ` default.
+ */
+export function hasTextExtension(name: string): boolean {
   const dot = name.lastIndexOf(".");
   return dot !== -1 && TEXT_EXTENSIONS.has(name.slice(dot).toLowerCase());
 }
@@ -90,7 +94,7 @@ export function normalizeFile(input: string, dir: string): string {
   // Bare names default to `.typ`; an already-recognized text extension (e.g.
   // `refs.bib`, `data.toml`) is preserved so the New File dialog can create
   // non-`.typ` text files directly.
-  if (!isTextUpload(name)) {
+  if (!hasTextExtension(name)) {
     name += ".typ";
   }
 

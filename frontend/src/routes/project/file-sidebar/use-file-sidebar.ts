@@ -6,7 +6,7 @@ import * as Y from "yjs";
 import { uploadAsset } from "../../../lib/assets/upload";
 import {
   dirOf,
-  isTextUpload,
+  hasTextExtension,
   isTypFile,
   joinPath,
   leafOf,
@@ -321,20 +321,25 @@ export function useFileSidebar() {
   };
 
   // Uploads ──────────────────────────────────────────────────────────────────
-  // Two lanes: text files become a `Y.Text` in the files map (client-only, the
-  // Y.Doc is their source of truth) while binary files go through the blob
-  // store and land in the assets map. Classification is by extension.
+  // Two lanes sharing one driver: text files become a `Y.Text` in the files map
+  // (client-only, the Y.Doc is their source of truth) while binary files go
+  // through the blob store and land in the assets map. Classification is by
+  // extension; the per-lane `store` callback is the only difference.
 
-  const addTextFile = async (dir: string, file: File): Promise<string | undefined> => {
-    const path = normalizeFile(file.name, dir);
+  const runUpload = async (
+    dir: string,
+    file: File,
+    normalize: (name: string, dir: string) => string,
+    store: (path: string, file: File) => Promise<void>,
+    maxSize?: number
+  ): Promise<string | undefined> => {
+    const path = normalize(file.name, dir);
     if (!path) return "Invalid file name.";
     if (has(path)) return existsMsg(path);
-    if (file.size > MAX_TEXT_FILE_SIZE) return `"${file.name}" is too large.`;
+    if (maxSize !== undefined && file.size > maxSize) return `"${file.name}" is too large.`;
     setUploading((n) => n + 1);
     try {
-      const text = new Y.Text();
-      text.insert(0, await file.text());
-      files.set(path, text);
+      await store(path, file);
       ctx.setActiveFile(path);
       return undefined;
     } catch (error) {
@@ -344,28 +349,33 @@ export function useFileSidebar() {
     }
   };
 
-  const uploadOne = async (dir: string, file: File): Promise<string | undefined> => {
-    const path = normalizeAsset(file.name, dir);
-    if (!path) return "Invalid file name.";
-    if (has(path)) return existsMsg(path);
-    setUploading((n) => n + 1);
-    try {
-      const { id } = await uploadAsset(projectId(), file);
+  const addTextFile = (dir: string, file: File): Promise<string | undefined> =>
+    runUpload(
+      dir,
+      file,
+      normalizeFile,
+      async (path, f) => {
+        const content = await f.text();
+        const text = new Y.Text();
+        text.insert(0, content);
+        files.set(path, text);
+      },
+      MAX_TEXT_FILE_SIZE
+    );
+
+  const uploadOne = (dir: string, file: File): Promise<string | undefined> =>
+    runUpload(dir, file, normalizeAsset, async (path, f) => {
+      const { id } = await uploadAsset(projectId(), f);
       assets.set(path, id);
-      ctx.setActiveFile(path);
-      return undefined;
-    } catch (error) {
-      return error instanceof Error ? error.message : "Upload failed.";
-    } finally {
-      setUploading((n) => n - 1);
-    }
-  };
+    });
 
   // Upload a batch in parallel, routing each file to the text or blob lane by
   // extension, and summarizing any failures in one toast.
   const handleUpload = async (dir: string, list: File[]): Promise<void> => {
     const errors = await Promise.all(
-      list.map((file) => (isTextUpload(file.name) ? addTextFile(dir, file) : uploadOne(dir, file)))
+      list.map((file) =>
+        hasTextExtension(file.name) ? addTextFile(dir, file) : uploadOne(dir, file)
+      )
     );
     const failed = errors.filter((m): m is string => m !== undefined);
     const first = failed[0];

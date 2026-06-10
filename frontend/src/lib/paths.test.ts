@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { isTextUpload, normalizeFile, normalizeFolder } from "./paths";
+import { hasTextExtension, normalizeFile, normalizeFolder } from "./paths";
 
 describe("normalizeFile", () => {
   test("appends .typ when missing", () => {
@@ -102,20 +102,20 @@ describe("normalizeFolder", () => {
   });
 });
 
-describe("isTextUpload", () => {
+describe("hasTextExtension", () => {
   test("true for allowlisted text extensions", () => {
     for (const name of ["main.typ", "refs.bib", "style.csl", "data.toml", "table.csv", "x.yaml"]) {
-      expect(isTextUpload(name)).toBe(true);
+      expect(hasTextExtension(name)).toBe(true);
     }
   });
 
   test("is case-insensitive", () => {
-    expect(isTextUpload("DATA.TOML")).toBe(true);
+    expect(hasTextExtension("DATA.TOML")).toBe(true);
   });
 
   test("false for binary assets and extensionless names", () => {
     for (const name of ["photo.png", "icon.svg", "blob.cbor", "Makefile"]) {
-      expect(isTextUpload(name)).toBe(false);
+      expect(hasTextExtension(name)).toBe(false);
     }
   });
 });
