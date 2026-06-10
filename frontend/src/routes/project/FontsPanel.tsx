@@ -9,10 +9,14 @@ import { toast } from "somoto";
 
 import { SidebarGroupLabel } from "../../components/ui/sidebar";
 import { UploadButton } from "../../components/UploadButton";
+import { collectDroppedFiles } from "../../lib/drop";
 import { uploadFont } from "../../lib/fonts/upload";
 import { useProjectContext } from "./ProjectContext";
 
-const FONT_ACCEPT = ".ttf,.otf,.ttc";
+const FONT_EXTENSIONS = [".ttf", ".otf", ".ttc"];
+const FONT_ACCEPT = FONT_EXTENSIONS.join(",");
+const isFontFile = (name: string) =>
+  FONT_EXTENSIONS.some((ext) => name.toLowerCase().endsWith(ext));
 
 const copyFamily = (family: string) => {
   void navigator.clipboard.writeText(family);
@@ -81,11 +85,10 @@ export default function FontsPanel() {
   // Upload all selected files in parallel; a font family is usually several
   // static files (one per weight/style), so multi-select avoids a file-at-a-time
   // slog. Each success writes its own entry; failures are summarized once.
-  const handleFiles = async (files: FileList | null) => {
+  const handleFiles = async (list: File[]) => {
     const map = ctx.collab.fonts;
-    if (!map || !files || files.length === 0) return;
+    if (!map || list.length === 0) return;
     const projectId = ctx.projectId();
-    const list = [...files];
     setPending((p) => p + list.length);
     const errors = await Promise.all(
       list.map(async (file): Promise<string | null> => {
@@ -127,7 +130,22 @@ export default function FontsPanel() {
       onDrop={(e) => {
         e.preventDefault();
         setDragging(false);
-        if (!ctx.isReadOnly()) void handleFiles(e.dataTransfer?.files ?? null);
+        if (ctx.isReadOnly()) return;
+        const dt = e.dataTransfer;
+        if (!dt) return;
+        // Recurse dropped folders and keep only font files, so dropping a font
+        // family folder (or a mix) uploads just the .ttf/.otf/.ttc inside.
+        void (async () => {
+          const collected = await collectDroppedFiles(dt);
+          const fonts = collected.map((c) => c.file).filter((f) => isFontFile(f.name));
+          if (fonts.length === 0) {
+            if (collected.length > 0) {
+              toast.error("Not a font file. Upload a .ttf, .otf, or .ttc.");
+            }
+            return;
+          }
+          await handleFiles(fonts);
+        })();
       }}
     >
       <SidebarGroupLabel class="flex items-center justify-between gap-1">
@@ -154,7 +172,7 @@ export default function FontsPanel() {
           onChange={(e) => {
             const { files } = e.currentTarget;
             e.currentTarget.value = "";
-            void handleFiles(files);
+            void handleFiles(files ? [...files] : []);
           }}
         />
       </Show>
