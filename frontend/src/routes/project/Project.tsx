@@ -253,7 +253,10 @@ function ProjectView() {
               togglePanel("diagnostics");
             }}
             icon={
-              <Show when={ctx.errorCount() > 0} fallback={<TbOutlineAlertTriangle size={16} />}>
+              <Show
+                when={ctx.previewReady() && ctx.errorCount() > 0}
+                fallback={<TbOutlineAlertTriangle size={16} />}
+              >
                 <TbOutlineAlertTriangle size={16} color="red" />
               </Show>
             }

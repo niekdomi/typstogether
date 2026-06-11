@@ -9,6 +9,7 @@ import {
 } from "solid-icons/tb";
 import { createSignal, Index, onCleanup, onMount, Show } from "solid-js";
 
+import { Spinner } from "../../components/Spinner";
 import { Button } from "../../components/ui/button";
 import { previewDark, setPreviewDark } from "../../lib/editor-prefs";
 import { placeholderAspectRatio, usePreviewRender } from "../../lib/typst/use-preview-render";
@@ -215,7 +216,9 @@ export default function PreviewPane() {
           void nav?.jumpAt(e.clientX, e.clientY);
         }}
       >
-        <Show when={render.error}>
+        {/* Until assets/fonts finish loading, compiles report them as missing
+            files; suppress those transient errors and show a loading state. */}
+        <Show when={ctx.previewReady() && render.error}>
           {(reason) => (
             <div class="bg-destructive/10 text-destructive ring-destructive/20 sticky top-0 z-10 mb-3 rounded-md px-3 py-2 ring-1">
               <pre class="font-mono text-xs whitespace-pre-wrap">{reason()}</pre>
@@ -225,8 +228,18 @@ export default function PreviewPane() {
         <Show
           when={render.pages}
           fallback={
-            <Show when={!render.error}>
-              <p class="text-muted-foreground text-sm">Compiling…</p>
+            <Show
+              when={ctx.previewReady()}
+              fallback={
+                <div class="text-muted-foreground flex items-center gap-2 text-sm">
+                  <Spinner />
+                  Loading project…
+                </div>
+              }
+            >
+              <Show when={!render.error}>
+                <p class="text-muted-foreground text-sm">Compiling…</p>
+              </Show>
             </Show>
           }
         >

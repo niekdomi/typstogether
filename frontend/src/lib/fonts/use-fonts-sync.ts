@@ -10,11 +10,15 @@ import { blobUrl } from "../assets/upload";
 // until reload. The blob_id is the cache key; we never refetch unless it changes.
 // `addFont` returns the canonical family the engine assigned (the name Typst
 // groups and matches by), which we hand to `onFamily` for the picker.
+// `onReady` fires once the initial batch of fonts present at load has settled
+// (each fetch/register resolved or failed), so callers can wait for the preview
+// to reflect custom fonts before treating compile output as final.
 export function useFontsSync(
   projectId: () => string,
   project: () => TypstProject | null,
   fonts: () => Y.Map<string> | null,
-  onFamily: (blobId: string, family: string) => void
+  onFamily: (blobId: string, family: string) => void,
+  onReady?: () => void
 ): void {
   createEffect(() => {
     const id = projectId();
@@ -44,9 +48,11 @@ export function useFontsSync(
       }
     };
 
-    for (const [name, blobId] of map.entries()) {
-      void apply(name, blobId);
-    }
+    const initial = [...map.entries()].map(([name, blobId]) => apply(name, blobId));
+    void (async () => {
+      await Promise.allSettled(initial);
+      if (!aborter.signal.aborted) onReady?.();
+    })();
 
     // The engine can't drop a single font, so a removal resets to the embedded
     // defaults and re-adds whatever's left. Cheap and rare: the blob GET is

@@ -88,6 +88,13 @@ interface ProjectContextValue {
 
   diagnostics: Accessor<Diagnostic[]>;
   errorCount: Accessor<number>;
+  /**
+   * True once the preview output is trustworthy: the project has either compiled
+   * cleanly, or produced an error *after* all assets/fonts finished loading into
+   * the VFS. Until then, compiles report not-yet-loaded assets as missing files,
+   * so those transient diagnostics are hidden behind a loading state.
+   */
+  previewReady: Accessor<boolean>;
 }
 
 const ProjectContext = createContext<ProjectContextValue>();
@@ -124,10 +131,23 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     });
   });
 
+  // Latches true once the initial assets *and* fonts are in the VFS. Used to
+  // trigger the one authoritative compile that settles the preview (see below).
+  const [resourcesReady, setResourcesReady] = createSignal(false);
+  let assetsReady = false;
+  let fontsReady = false;
+  const markResourcesReady = () => {
+    if (assetsReady && fontsReady) setResourcesReady(true);
+  };
+
   useAssetsSync(
     projectId,
     () => typst.project,
-    () => collab.assets
+    () => collab.assets,
+    () => {
+      assetsReady = true;
+      markResourcesReady();
+    }
   );
 
   // blob_id -> family name, parsed once by useFontsSync from the bytes it already
@@ -139,6 +159,10 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     () => collab.fonts,
     (blobId, family) => {
       setFontFamilies(blobId, family);
+    },
+    () => {
+      fontsReady = true;
+      markResourcesReady();
     }
   );
 
@@ -226,11 +250,18 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     version: 0,
     error: null,
   });
+  // Drives the loading state and gates the error surfaces, so transient
+  // missing-file errors during the initial asset/font load stay hidden. Latches
+  // true from a trustworthy result: a clean compile (below), or the authoritative
+  // post-resource compile (further below) for a document that never compiles
+  // cleanly. Never flipped by an errored compile during load.
+  const [previewReady, setPreviewReady] = createSignal(false);
   let lastStored: string | undefined;
   createEffect(() => {
     const project = typst.project;
     // Reset on project swap so a new document doesn't show the old layout.
     setPreview({ pages: null, version: 0, error: null });
+    setPreviewReady(false);
     lastStored = undefined;
     if (!project) return;
     const off = project.onCompile((result) => {
@@ -242,19 +273,40 @@ export function ProjectProvider(props: { children: JSX.Element }) {
         // Keep the last-good `pages` so the preview stays visible; just surface
         // the error. `result.pages` is stale on a failed compile.
         setPreview("error", errorMessage);
-        return;
+      } else {
+        // Successful compile: replace layout and bump the version, which
+        // invalidates the per-page SVG cache in the render hook.
+        setPreview(
+          produce((s) => {
+            s.pages = result.pages.map((p) => ({ width: p.width, height: p.height }));
+            s.version += 1;
+            s.error = null;
+          })
+        );
       }
-      // Successful compile: replace layout and bump the version, which
-      // invalidates the per-page SVG cache in the render hook.
-      setPreview(
-        produce((s) => {
-          s.pages = result.pages.map((p) => ({ width: p.width, height: p.height }));
-          s.version += 1;
-          s.error = null;
-        })
-      );
+      // A clean compile produced pages, so it's trustworthy. An errored compile
+      // is NOT trusted here: during load it may just be a not-yet-loaded asset
+      // (transient "file not found"). Genuinely-broken documents are revealed by
+      // the authoritative compile below.
+      if (!errorMessage) setPreviewReady(true);
     });
     onCleanup(off);
+  });
+
+  // Once every asset/font has been written into the VFS, run one compile whose
+  // result is guaranteed to see them: the engine's worker queue is FIFO, so a
+  // compile issued after all `setBinary`/`addFont` round-trips is ordered after
+  // them. That makes this result authoritative - any error now is real, not a
+  // not-yet-loaded asset - so we trust the preview from here on, even for a
+  // genuinely-broken document that never compiles cleanly.
+  createEffect(() => {
+    if (!resourcesReady()) return;
+    const project = typst.project;
+    if (!project) return;
+    void (async () => {
+      await project.compile();
+      if (typst.project === project) setPreviewReady(true);
+    })();
   });
 
   // Refresh the dashboard thumbnail from page 1. The preview no longer renders
@@ -371,6 +423,7 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     gotoSource,
     diagnostics,
     errorCount,
+    previewReady,
   };
 
   return <ProjectContext.Provider value={value}>{props.children}</ProjectContext.Provider>;
