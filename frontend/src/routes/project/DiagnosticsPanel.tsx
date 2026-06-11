@@ -2,6 +2,7 @@ import type { Diagnostic } from "@vedivad/codemirror-typst";
 import { TbOutlineAlertCircle, TbOutlineAlertTriangle } from "solid-icons/tb";
 import { createMemo, For, Show } from "solid-js";
 
+import { Spinner } from "../../components/Spinner";
 import { SidebarGroupLabel } from "../../components/ui/sidebar";
 import { useProjectContext } from "./ProjectContext";
 
@@ -50,43 +51,53 @@ export default function DiagnosticsPanel() {
       <SidebarGroupLabel>Problems</SidebarGroupLabel>
       <div class="min-h-0 flex-1 overflow-auto">
         <Show
-          when={ctx.diagnostics().length > 0}
+          when={ctx.previewReady()}
           fallback={
-            <p class="text-muted-foreground px-3 py-2 text-sm italic">No problems detected.</p>
+            <p class="text-muted-foreground flex items-center gap-2 px-3 py-2 text-sm italic">
+              <Spinner />
+              Loading project resources…
+            </p>
           }
         >
-          <For each={byFile()}>
-            {([path, list]) => (
-              <div class="py-1">
-                <div class="text-muted-foreground truncate px-3 py-1 text-xs font-medium">
-                  {path}
+          <Show
+            when={ctx.diagnostics().length > 0}
+            fallback={
+              <p class="text-muted-foreground px-3 py-2 text-sm italic">No problems detected.</p>
+            }
+          >
+            <For each={byFile()}>
+              {([path, list]) => (
+                <div class="py-1">
+                  <div class="text-muted-foreground truncate px-3 py-1 text-xs font-medium">
+                    {path}
+                  </div>
+                  <For each={list}>
+                    {(d) => (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          jumpTo(d);
+                        }}
+                        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-start gap-2 px-3 py-1.5 text-left text-sm"
+                      >
+                        <SeverityIcon severity={d.severity} />
+                        <div class="min-w-0 flex-1">
+                          <div class="line-clamp-2 leading-snug">{d.message}</div>
+                          <Show when={d.location}>
+                            {(loc) => (
+                              <div class="text-muted-foreground mt-0.5 text-xs">
+                                Line {loc().line}, col {loc().column}
+                              </div>
+                            )}
+                          </Show>
+                        </div>
+                      </button>
+                    )}
+                  </For>
                 </div>
-                <For each={list}>
-                  {(d) => (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        jumpTo(d);
-                      }}
-                      class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-start gap-2 px-3 py-1.5 text-left text-sm"
-                    >
-                      <SeverityIcon severity={d.severity} />
-                      <div class="min-w-0 flex-1">
-                        <div class="line-clamp-2 leading-snug">{d.message}</div>
-                        <Show when={d.location}>
-                          {(loc) => (
-                            <div class="text-muted-foreground mt-0.5 text-xs">
-                              Line {loc().line}, col {loc().column}
-                            </div>
-                          )}
-                        </Show>
-                      </div>
-                    </button>
-                  )}
-                </For>
-              </div>
-            )}
-          </For>
+              )}
+            </For>
+          </Show>
         </Show>
       </div>
     </div>
