@@ -1,7 +1,6 @@
 import { EditorView } from "@codemirror/view";
 import { useParams } from "@solidjs/router";
 import type { Diagnostic, TypstProject } from "@vedivad/codemirror-typst";
-import type { RenderedSvgPage } from "@vedivad/typst-web-service";
 import {
   type Accessor,
   createContext,
@@ -12,7 +11,7 @@ import {
   onCleanup,
   useContext,
 } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createStore, produce } from "solid-js/store";
 import { toast } from "somoto";
 import * as Y from "yjs";
 
@@ -31,8 +30,20 @@ export interface Ready {
   typstProject: TypstProject;
 }
 
+/** Layout of one renderable page, in points (no SVG; rendered on demand). */
+export interface PreviewPage {
+  width: number;
+  height: number;
+}
+
 export interface PreviewState {
-  pages: RenderedSvgPage[] | null;
+  /** One entry per renderable page, in order. Layout only - SVG is rendered
+   * lazily per page by `use-preview-render`. Null until the first compile. */
+  pages: PreviewPage[] | null;
+  /** Bumps on every successful compile; invalidates the per-page SVG cache. */
+  version: number;
+  /** Set on a failed compile *without* clearing `pages`, so the last-good
+   * preview stays visible while the error is surfaced. */
   error: string | null;
 }
 
@@ -44,8 +55,9 @@ interface ProjectContextValue {
 
   ready: Accessor<Ready | null>;
   /**
-   * First-page render of the live preview. Owned here (not in PreviewPane) so a
-   * single render per compile feeds both the preview and the thumbnail cache.
+   * Page layout + version of the live preview. Owned here (not in PreviewPane)
+   * so the compile subscription and the thumbnail cache share one source of
+   * truth; SVG itself is rendered lazily per visible page in PreviewPane.
    */
   preview: PreviewState;
   /**
@@ -206,44 +218,65 @@ export function ProjectProvider(props: { children: JSX.Element }) {
     onCleanup(off);
   });
 
-  // Render every compile to SVG pages once, here, so PreviewPane and the
-  // thumbnail cache both consume a single render.
-  const [preview, setPreview] = createStore<PreviewState>({ pages: null, error: null });
+  // Track page layout (dimensions) + a version counter per compile. The actual
+  // SVG is rendered lazily, per visible page, by PreviewPane's render hook, so
+  // editing a long document no longer re-rasterizes every page.
+  const [preview, setPreview] = createStore<PreviewState>({
+    pages: null,
+    version: 0,
+    error: null,
+  });
   let lastStored: string | undefined;
   createEffect(() => {
     const project = typst.project;
-    setPreview({ pages: null, error: null });
+    // Reset on project swap so a new document doesn't show the old layout.
+    setPreview({ pages: null, version: 0, error: null });
     lastStored = undefined;
     if (!project) return;
     const off = project.onCompile((result) => {
-      if (result.pages.length === 0) {
-        setPreview(
-          "error",
-          result.diagnostics.find((d) => d.severity === "error")?.message ?? null
-        );
+      // useTypstProject replaces the project on file change; a late listener
+      // from the previous project must not touch the current state.
+      if (typst.project !== project) return;
+      const errorMessage = result.diagnostics.find((d) => d.severity === "error")?.message;
+      if (errorMessage) {
+        // Keep the last-good `pages` so the preview stays visible; just surface
+        // the error. `result.pages` is stale on a failed compile.
+        setPreview("error", errorMessage);
         return;
       }
-      void (async () => {
-        // useTypstProject replaces the project on every change, so an identity
-        // check drops a render that resolves after we've switched away.
-        try {
-          const pages = await project.renderedPages(0, result.pages.length);
-          if (typst.project === project) setPreview({ pages, error: null });
-        } catch (error) {
-          if (typst.project === project) setPreview("error", String(error));
-        }
-      })();
+      // Successful compile: replace layout and bump the version, which
+      // invalidates the per-page SVG cache in the render hook.
+      setPreview(
+        produce((s) => {
+          s.pages = result.pages.map((p) => ({ width: p.width, height: p.height }));
+          s.version += 1;
+          s.error = null;
+        })
+      );
     });
     onCleanup(off);
   });
 
-  // Refresh the dashboard thumbnail from the live first-page render. Page 1
-  // rarely changes, so only write when its rendered SVG actually differs.
+  // Refresh the dashboard thumbnail from page 1. The preview no longer renders
+  // every page, so render page 0 explicitly here; it rarely changes, so only
+  // write when its rendered SVG actually differs.
   createEffect(() => {
-    const svg = preview.pages?.[0]?.svg;
-    if (!svg || svg === lastStored) return;
-    lastStored = svg;
-    void storeThumbnail(projectId(), svg);
+    const project = typst.project;
+    const version = preview.version;
+    if (!project || version === 0) return;
+    if ((preview.pages?.length ?? 0) === 0) return;
+    void (async () => {
+      try {
+        const svg = await project.renderPage(0);
+        // Drop a render that resolved after a project swap or a newer compile.
+        if (typst.project !== project || preview.version !== version) return;
+        if (!svg || svg === lastStored) return;
+        lastStored = svg;
+        await storeThumbnail(projectId(), svg);
+      } catch {
+        // Thumbnails are best-effort; a render failure just skips this update.
+      }
+    })();
   });
 
   const jumpToRemoteUser = (clientId: number) => {
