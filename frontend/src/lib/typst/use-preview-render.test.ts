@@ -40,9 +40,17 @@ describe("reconcileCache", () => {
     expect(toEvict).toEqual([2]);
   });
 
-  test("keeps a current-version off-screen page cached (no eviction without an edit)", () => {
-    const { toRender, toEvict } = reconcileCache(rendered([[2, 1]]), 1, set(), 3, set());
-    expect(toRender).toEqual([]);
+  test("evicts a current-version page once it scrolls out of the visible window", () => {
+    // No edit (version unchanged), but page 2 is no longer visible: drop its SVG
+    // so the DOM stays bounded while scrolling.
+    const { toRender, toEvict } = reconcileCache(rendered([[2, 1]]), 1, set(0), 3, set());
+    expect(toRender).toEqual([0]);
+    expect(toEvict).toEqual([2]);
+  });
+
+  test("keeps a current-version page that is still visible", () => {
+    const { toRender, toEvict } = reconcileCache(rendered([[1, 1]]), 1, set(0, 1, 2), 3, set());
+    expect(toRender).toEqual([0, 2]); // 1 already current; 0 and 2 need rendering
     expect(toEvict).toEqual([]);
   });
 

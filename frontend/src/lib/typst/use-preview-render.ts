@@ -4,7 +4,7 @@ import { createStore } from "solid-js/store";
 
 /** Extra space above and below the viewport (px) treated as "visible", so a
  * page renders just before it scrolls into view. */
-const DEFAULT_OVERSCAN_PX = 600;
+const DEFAULT_OVERSCAN_PX = 1200;
 
 export interface UsePreviewRenderOptions {
   /** Live compiler instance; swaps on file change (`null` between projects). */
@@ -45,9 +45,12 @@ function pageIndexOf(el: HTMLElement): number {
  *
  * - A page is rendered when it is visible, in range, not already in-flight, and
  *   its cached SVG (if any) is from an older version.
- * - A cached SVG is evicted when its page is gone (past `pageCount`) or it is
- *   both stale *and* off-screen. A *visible* stale page is kept (its old SVG
- *   stays on screen until the fresh render resolves, avoiding a blank flash).
+ * - A cached SVG is evicted as soon as its page leaves the visible (overscan)
+ *   window, or its page is gone (past `pageCount`). This bounds how many page
+ *   SVGs live in the DOM at once: without it, scrolling accumulates every page's
+ *   SVG and reflows (e.g. dragging the panel handle) get progressively janky.
+ *   Visible pages are always kept - including stale ones, whose old SVG stays on
+ *   screen until the fresh render lands, avoiding a blank flash.
  */
 export function reconcileCache(
   renderedVersion: ReadonlyMap<number, number>,
@@ -65,10 +68,8 @@ export function reconcileCache(
   }
 
   const toEvict: number[] = [];
-  for (const [idx, ver] of renderedVersion) {
-    const gone = idx >= pageCount;
-    const staleAndOffscreen = ver !== currentVersion && !visible.has(idx);
-    if (gone || staleAndOffscreen) toEvict.push(idx);
+  for (const idx of renderedVersion.keys()) {
+    if (idx >= pageCount || !visible.has(idx)) toEvict.push(idx);
   }
 
   return { toRender, toEvict };

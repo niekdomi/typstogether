@@ -228,19 +228,21 @@ export default function PreviewPane() {
         <Show
           when={render.pages}
           fallback={
-            <Show
-              when={ctx.previewReady()}
-              fallback={
-                <div class="text-muted-foreground flex items-center gap-2 text-sm">
-                  <Spinner />
-                  Loading project…
-                </div>
-              }
-            >
-              <Show when={!render.error}>
-                <p class="text-muted-foreground text-sm">Compiling…</p>
+            <div class="flex h-full items-center justify-center">
+              <Show
+                when={ctx.previewReady()}
+                fallback={
+                  <div class="text-muted-foreground flex items-center gap-2 text-sm">
+                    <Spinner />
+                    Loading project…
+                  </div>
+                }
+              >
+                <Show when={!render.error}>
+                  <p class="text-muted-foreground text-sm">Compiling…</p>
+                </Show>
               </Show>
-            </Show>
+            </div>
           }
         >
           {(p) => (
