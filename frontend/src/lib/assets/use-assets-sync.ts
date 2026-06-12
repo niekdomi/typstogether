@@ -8,10 +8,16 @@ import { blobUrl } from "./upload";
 // virtual filesystem in sync by fetching binary blobs from the backend and
 // calling `setBinary`. The blob_id is the cache key; we never refetch for a
 // path unless its id changes.
+//
+// `onReady` fires once the initial batch of assets present at load has settled
+// (each fetch resolved or failed). Until then, compiles report the not-yet-
+// loaded assets as missing files; callers use this to suppress those transient
+// errors and show a loading state.
 export function useAssetsSync(
   projectId: () => string,
   project: () => TypstProject | null,
-  assets: () => Y.Map<string> | null
+  assets: () => Y.Map<string> | null,
+  onReady?: () => void
 ): void {
   createEffect(() => {
     const id = projectId();
@@ -40,9 +46,11 @@ export function useAssetsSync(
       }
     };
 
-    for (const [path, blobId] of map.entries()) {
-      void apply(path, blobId);
-    }
+    const initial = [...map.entries()].map(([path, blobId]) => apply(path, blobId));
+    void (async () => {
+      await Promise.allSettled(initial);
+      if (!aborter.signal.aborted) onReady?.();
+    })();
 
     const observer = (event: Y.YMapEvent<string>) => {
       for (const [path, change] of event.changes.keys) {

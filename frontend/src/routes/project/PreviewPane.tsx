@@ -7,10 +7,12 @@ import {
   TbOutlineZoomIn,
   TbOutlineZoomOut,
 } from "solid-icons/tb";
-import { createSignal, For, Match, onCleanup, onMount, Show, Switch } from "solid-js";
+import { createSignal, Index, onCleanup, onMount, Show } from "solid-js";
 
+import { Spinner } from "../../components/Spinner";
 import { Button } from "../../components/ui/button";
 import { previewDark, setPreviewDark } from "../../lib/editor-prefs";
+import { placeholderAspectRatio, usePreviewRender } from "../../lib/typst/use-preview-render";
 import ExportPdfButton from "./ExportPdfButton";
 import ExportProjectButton from "./ExportProjectButton";
 import { attachPan } from "./preview-pan";
@@ -34,6 +36,15 @@ export default function PreviewPane() {
   // Page wrappers by index; the navigator reads these to resolve clicks and scroll.
   const pageEls: (HTMLElement | undefined)[] = [];
   let nav: PreviewNavigator | undefined;
+
+  // Lazily render only the pages near the viewport; `svgs[i]` fills in as each
+  // page scrolls into range, and clears when a new compile invalidates it.
+  const { svgs, observe, unobserve } = usePreviewRender({
+    project: () => ctx.typst.project,
+    version: () => render.version,
+    pageCount: () => render.pages?.length ?? 0,
+    scroller: () => scroller,
+  });
 
   /**
    * Zoom around an anchor point (mouse cursor when ctrl+wheel; container
@@ -205,41 +216,70 @@ export default function PreviewPane() {
           void nav?.jumpAt(e.clientX, e.clientY);
         }}
       >
-        <Switch fallback={<p class="text-muted-foreground text-sm">Compiling…</p>}>
-          <Match when={render.pages}>
-            {(p) => (
-              <div
-                class="mx-auto flex flex-col items-center gap-6"
-                style={{
-                  width: `${String(zoom() * BASE_WIDTH_PX)}px`,
-                  ...(previewDark() ? { filter: "invert(0.85) hue-rotate(180deg)" } : {}),
-                }}
+        {/* Until assets/fonts finish loading, compiles report them as missing
+            files; suppress those transient errors and show a loading state. */}
+        <Show when={ctx.previewReady() && render.error}>
+          {(reason) => (
+            <div class="bg-destructive/10 text-destructive ring-destructive/20 sticky top-0 z-10 mb-3 rounded-md px-3 py-2 ring-1">
+              <pre class="font-mono text-xs whitespace-pre-wrap">{reason()}</pre>
+            </div>
+          )}
+        </Show>
+        <Show
+          when={render.pages}
+          fallback={
+            <div class="flex h-full items-center justify-center">
+              <Show
+                when={ctx.previewReady()}
+                fallback={
+                  <div class="text-muted-foreground flex items-center gap-2 text-sm">
+                    <Spinner />
+                    Loading project…
+                  </div>
+                }
               >
-                <For each={p()}>
-                  {(page) => {
-                    // Typst draws each link as a transparent <rect> on top of the
-                    // glyphs: tint it on hover to mark the link (kept at its true
-                    // size so stacked entries never overlap) and show a pointer.
-                    return (
-                      <div
-                        ref={(el) => {
-                          pageEls[page.index] = el;
-                        }}
-                        class="w-full bg-white shadow-md ring-1 ring-black/10 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full [&_svg_a]:cursor-pointer [&_svg_a_rect]:[transition:fill_100ms] [&_svg_a:hover_rect]:fill-yellow-300/50"
-                        innerHTML={page.svg}
-                      />
-                    );
-                  }}
-                </For>
-              </div>
-            )}
-          </Match>
-          <Match when={render.error}>
-            {(reason) => (
-              <pre class="text-destructive font-mono text-sm whitespace-pre-wrap">{reason()}</pre>
-            )}
-          </Match>
-        </Switch>
+                <Show when={!render.error}>
+                  <p class="text-muted-foreground text-sm">Compiling…</p>
+                </Show>
+              </Show>
+            </div>
+          }
+        >
+          {(p) => (
+            <div
+              class="mx-auto flex flex-col items-center gap-6"
+              style={{
+                width: `${String(zoom() * BASE_WIDTH_PX)}px`,
+                ...(previewDark() ? { filter: "invert(0.85) hue-rotate(180deg)" } : {}),
+              }}
+            >
+              <Index each={p()}>
+                {(page, i) => {
+                  // Placeholder box sized from the page's point dimensions so
+                  // scroll height, zoom, and navigation stay correct before the
+                  // SVG arrives. Typst draws each link as a transparent <rect>
+                  // over the glyphs: tint it on hover and show a pointer.
+                  return (
+                    <div
+                      data-page-index={i}
+                      ref={(el) => {
+                        pageEls[i] = el;
+                        observe(el, i);
+                        onCleanup(() => {
+                          unobserve(el);
+                          if (pageEls[i] === el) pageEls[i] = undefined;
+                        });
+                      }}
+                      class="w-full bg-white shadow-md ring-1 ring-black/10 [&_svg]:block [&_svg]:h-auto [&_svg]:w-full [&_svg_a]:cursor-pointer [&_svg_a_rect]:[transition:fill_100ms] [&_svg_a:hover_rect]:fill-yellow-300/50"
+                      style={{ "aspect-ratio": placeholderAspectRatio(page()) }}
+                      innerHTML={svgs[i] ?? ""}
+                    />
+                  );
+                }}
+              </Index>
+            </div>
+          )}
+        </Show>
       </div>
     </div>
   );
